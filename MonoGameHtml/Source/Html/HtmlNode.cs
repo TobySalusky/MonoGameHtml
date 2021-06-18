@@ -95,11 +95,15 @@ namespace MonoGameHtml {
 						this.textContent = str;
 						break;
 					case Func<string> strFunc:
-						bindAction(() => {
+
+						Action generateText = () => {
 							string initText = this.textContent;
 							this.textContent = strFunc();
 							if (initText != this.textContent) onFontChange();
-						});
+						};
+
+						generateText();
+						bindAction(generateText);
 						break;
 				}
 			}
@@ -138,7 +142,7 @@ namespace MonoGameHtml {
 
 					if (DynamicHeight) {
 						height = 0;
-						onHeightChange();
+						onHeightChange(); 
 					}
 				}
 			}
@@ -699,8 +703,6 @@ namespace MonoGameHtml {
 				}
 			}
 
-
-
 			foreach (HtmlNode child in children) {
 				child.layoutDown();
 			}
@@ -726,7 +728,7 @@ namespace MonoGameHtml {
 		}
 
 		internal void update(float deltaTime, MouseInfo mouse) {
-
+			
 			onTick?.Invoke();
 			
 			if (actionList != null) {

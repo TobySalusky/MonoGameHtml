@@ -22,6 +22,11 @@ namespace MonoGameHtml {
 			StatePack.deltaTime = deltaTime;
 			
 			node.update(deltaTime, mouse);
+			if (mouse.leftPressed) {
+				node.clickRecurse(mouse.pos);
+			}
+
+			lastMouseState = mouseState;
 		}
 
 		public void Render(SpriteBatch spriteBatch) { 

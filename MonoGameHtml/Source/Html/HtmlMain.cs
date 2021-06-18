@@ -23,11 +23,12 @@ namespace MonoGameHtml {
 			HtmlMain.fontPath = HtmlMain.fontPath.Replace("\\", "/");
 
 			// TODO: handle fullscreen
-			screenDimen = new Vector2(GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height);
+			screenDimen = new Vector2(game.GraphicsDevice.PresentationParameters.Bounds.Width, game.GraphicsDevice.PresentationParameters.Bounds.Height);
 			screenCenter = screenDimen / 2;
 			screenWidth = (int) screenDimen.X;
 			screenHeight = (int) screenDimen.Y;
 			
+			Logger.log("Dimensions:", screenDimen);
 			Textures.loadTextures();
 		}
 	}

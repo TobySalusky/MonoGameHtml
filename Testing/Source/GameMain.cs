@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -25,53 +27,79 @@ namespace Testing
             // TODO: Add your initialization logic here
             base.Initialize();
             
-            _graphics.PreferredBackBufferHeight = 1080;
-            _graphics.PreferredBackBufferWidth = 1920;
-            _graphics.IsFullScreen = true;
+            _graphics.PreferredBackBufferHeight = 1080/2;
+            _graphics.PreferredBackBufferWidth = 1920/2;
+            _graphics.IsFullScreen = false;
             Window.IsBorderless = false;
             Window.AllowUserResizing = true;
             _graphics.ApplyChanges();
             
+            Console.WriteLine("test: " + Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName);
+            
             HtmlMain.Initialize(this, 
                 fontPath: @"D:\Users\Tobafett\Documents\GitHub\MonoGameHtml\Testing\Assets\Fonts\",
-                logOutput: false);
-
+                logOutput: true);
+            
             SetUpHtml();
         }
 
-        public async void SetUpHtml() { 
-            const string stateTest = @"
-                const Test = (string name, int number) => {
+        public async void SetUpHtml() {
+            const string container = @"
+const Container = (List^^string^ strs) => {
 
-                    return (
-                        <h3 backgroundColor='green' borderRadius='50%' borderColor='#FFFFFF'  borderWidth={5}>
-                            {name}: {number}
-                        </h3>
-                    );
-                }
-                ";
+    List^^string^ [rows, setRows] = useState($strs);
+
+    return (
+        <div alignX='center' alignY='flexStart' dimens='100%'>
+            {rows.map((str, i) =^ 
+                <Row rows={rows} setRows={setRows} i={i}/>
+            )}
+            <div onPress={() =^ {
+                rows.Add($'new {random()}');
+                setRows(rows);
+            }} textAlign='center' width='50%' height={$h} backgroundColor='white' borderColor='#888888' borderWidth={2}>+</div>
+        </div>
+    );
+}
+";
+            const string row = @"
+const Row = (List^^string^ rows, Action<List<string>> setRows, int i = -1) => {
+    return (
+        <div flexDirection='row' alignItems='center' width='50%' height={$h}>
+            <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white'>
+                <p>{rows[i]}</p>
+            </div>
+            <div onPress={() =^ {
+                rows.RemoveAt(i);
+                setRows(rows);
+            }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white'>
+                <p>-</p>
+            </div>
+        </div>
+    );
+}
+";
             
-
             const string html = @"
-                <div flexDirection='row' dimens='100%' alignX='center' alignY='flexStart'>
+<div flexDirection='row' dimens='100%' alignX='center' alignY='flexStart'>
 
-                    <div dimens={500} backgroundColor='red'>HI</div>
-                    
-                    {$array.map((name, i) => 
-                        <Test name={name} number={i}/>
-                    )}
-                </div>
-                ";
+    <Container rows={$strs}/>
+</div>
+";
+            var list = new List<string> {"pe", "walk", "code"};
             
             var statePack = new StatePack(
-                "array", new []{"hi", "hello"}
+                "strs", list,
+                "h", 50
             );
 
+            //CSSHandler.addCSS();
+            
             htmlInstance = await HtmlProcessor.GenerateRunner(html, statePack, 
                 macros: Macros.create(
-                "div(html)", "<div>$$html</div>"
+                
             ), components: HtmlComponents.Create(
-                stateTest
+                row, container
             ));
         }
 

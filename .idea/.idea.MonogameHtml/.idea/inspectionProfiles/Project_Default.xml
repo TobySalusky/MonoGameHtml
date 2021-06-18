@@ -4,7 +4,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="8">
+          <list size="14">
             <item index="0" class="java.lang.String" itemvalue="backgroundcolor" />
             <item index="1" class="java.lang.String" itemvalue="borderradius" />
             <item index="2" class="java.lang.String" itemvalue="bordercolor" />
@@ -13,6 +13,12 @@
             <item index="5" class="java.lang.String" itemvalue="flexdirection" />
             <item index="6" class="java.lang.String" itemvalue="alignx" />
             <item index="7" class="java.lang.String" itemvalue="aligny" />
+            <item index="8" class="java.lang.String" itemvalue="-backgroundcolor" />
+            <item index="9" class="java.lang.String" itemvalue="onpress" />
+            <item index="10" class="java.lang.String" itemvalue="flex" />
+            <item index="11" class="java.lang.String" itemvalue="alignitems" />
+            <item index="12" class="java.lang.String" itemvalue="width" />
+            <item index="13" class="java.lang.String" itemvalue="height" />
           </list>
         </value>
       </option>

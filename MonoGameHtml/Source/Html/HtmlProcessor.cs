@@ -267,14 +267,16 @@ namespace MonoGameHtml {
 				int firstSpace = customPropDefinition.indexOf(" ");
 				string type = customPropDefinition.Substring(0, firstSpace);
 				
-				// MAKES ALL TYPES NULLABLE TODO: figure out if this is a good thing?! (maybe don't do it there is a default/if object)
-				if (!type.EndsWith("?")) type += "?"; 
 				string afterType = customPropDefinition.Substring(firstSpace + 1).Trim();
 				bool hasDefault = customPropDefinition.Contains("=");
 				string variableName = hasDefault ? afterType.Substring(0, afterType.indexOf("=")).Trim() : afterType;
+				
+				if (!hasDefault && !type.EndsWith("?")) type += "?"; // makes non-defaulted types nullable
+
 				extraPropsString += $", {type} {variableName} = ";
 				extraPropsString += (hasDefault) ? afterType.Substring(afterType.indexOf("=") + 1).Trim() : "null";
 
+				
 				if (!extras.componentProps.ContainsKey(tag)) extras.componentProps[tag] = new List<string>();
 				extras.componentProps[tag].Add(variableName);
 			}
