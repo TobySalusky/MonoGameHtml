@@ -12,22 +12,6 @@ public static string[] CachedInput() {
     <Container init={$strs}/>
 </div>
 ", @"
-const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
-    return (
-        <div flexDirection='row' alignItems='center' width='50%' height={$h}>
-            <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
-                {rows[i]}
-            </div>
-            <div onPress={() =^ {  
-                rows.RemoveAt(i);
-                setRows(rows);
-            }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
-                -
-            </div>
-        </div>
-    );
-}
-", @"
 const Container = (List<string> init) => {
 
     List^^string^ [rows, setRows] = useState(init);
@@ -43,22 +27,27 @@ const Container = (List<string> init) => {
             }} textAlign='center' width='50%' height={$h} backgroundColor='white' borderColor='#888888' borderWidth={2}>+</div>
         </div>
     );
-}
-" };
+}", @"
+
+const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
+    return (
+        <div flexDirection='row' alignItems='center' width='50%' height={$h}>
+            <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
+                {rows[i]}
+            </div>
+            <div onPress={() =^ {  
+                rows.RemoveAt(i);
+                setRows(rows);
+            }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
+                -
+            </div>
+        </div>
+    );
+}" };
 }
 
 public static HtmlNode CachedNode() {
 	/*IMPORTS_DONE*/
-
-HtmlNode CreateRow(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, List<string>? rows = null, Action<List<string>>? setRows = null, int i = -1) {
-	HtmlNode ___node = null;
-	
-	___node = newNode("div", props: new Dictionary<string, object> {["flexDirection"]="row", ["alignItems"]="center", ["width"]="50%", ["height"]=(((System.Int32)___vars["h"]))}, children: nodeArr(newNode("div", props: new Dictionary<string, object> {["flex"]=(5), ["alignY"]="center", ["borderColor"]="#888888", ["borderWidth"]=(2), ["backgroundColor"]="white", ["textAlign"]="center"}, textContent: (Func<string>)(()=> ""+(rows[i])+"")), newNode("div", props: new Dictionary<string, object> {["onPress"]=((Action)(()=>{  
-                rows.RemoveAt(i);
-                setRows(rows);
-            })), ["flex"]=(1), ["align"]="center", ["borderColor"]="#888888", ["borderWidth"]=(2), ["backgroundColor"]="white", ["textAlign"]="center"}, textContent: "-")));
-	return ___node;
-}
 
 HtmlNode CreateContainer(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, List<string>? init = null) {
 	HtmlNode ___node = null;
@@ -75,6 +64,16 @@ Action<List<string>> setRows = (___val) => {
                 rows.Add($"new {random()}");
                 setRows(rows);
             })), ["textAlign"]="center", ["width"]="50%", ["height"]=(((System.Int32)___vars["h"])), ["backgroundColor"]="white", ["borderColor"]="#888888", ["borderWidth"]=(2)}, textContent: "+"))));
+	return ___node;
+}
+
+HtmlNode CreateRow(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, List<string>? rows = null, Action<List<string>>? setRows = null, int i = -1) {
+	HtmlNode ___node = null;
+	
+	___node = newNode("div", props: new Dictionary<string, object> {["flexDirection"]="row", ["alignItems"]="center", ["width"]="50%", ["height"]=(((System.Int32)___vars["h"]))}, children: nodeArr(newNode("div", props: new Dictionary<string, object> {["flex"]=(5), ["alignY"]="center", ["borderColor"]="#888888", ["borderWidth"]=(2), ["backgroundColor"]="white", ["textAlign"]="center"}, textContent: (Func<string>)(()=> ""+(rows[i])+"")), newNode("div", props: new Dictionary<string, object> {["onPress"]=((Action)(()=>{  
+                rows.RemoveAt(i);
+                setRows(rows);
+            })), ["flex"]=(1), ["align"]="center", ["borderColor"]="#888888", ["borderWidth"]=(2), ["backgroundColor"]="white", ["textAlign"]="center"}, textContent: "-")));
 	return ___node;
 }
 HtmlNode node = newNode("div", props: new Dictionary<string, object> {["flexDirection"]="row", ["dimens"]="100%", ["alignX"]="center", ["alignY"]="spaceBetween"}, children: nodeArr(CreateContainer("Container", props: new Dictionary<string, object> {["init"]=(((System.Collections.Generic.List<System.String>)___vars["strs"]))}, textContent: "", init: (((System.Collections.Generic.List<System.String>)___vars["strs"])))));

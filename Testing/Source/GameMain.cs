@@ -50,7 +50,8 @@ namespace Testing
         }
 
         public async void SetUpHtml() {
-            const string container = @"
+            
+            const string components = @"
 const Container = (List<string> init) => {
 
     List^^string^ [rows, setRows] = useState(init);
@@ -67,8 +68,7 @@ const Container = (List<string> init) => {
         </div>
     );
 }
-";
-            const string row = @"
+
 const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
     return (
         <div flexDirection='row' alignItems='center' width='50%' height={$h}>
@@ -85,6 +85,7 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
     );
 }
 ";
+            
             const string html = @"
 <div flexDirection='row' dimens='100%' alignX='center' alignY='spaceBetween'>
     <Container init={$strs}/>
@@ -102,7 +103,7 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
                 macros: Macros.create(
                 
             ), components: HtmlComponents.Create(
-                row, container
+                components
             ));
         }
 

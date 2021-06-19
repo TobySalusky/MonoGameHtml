@@ -44,7 +44,7 @@ namespace MonoGameHtml {
 
 		internal static void readInCSSFile(string filePath, Dictionary<string, string> aggregateCSS) { 
 			// read lines from CSS file
-			string[] lines = System.IO.File.ReadAllLines(filePath);
+			string[] lines = File.ReadAllLines(filePath);
 				
 			// condense into one line (remove tabs and empty lines)
 			string fileContents = "";

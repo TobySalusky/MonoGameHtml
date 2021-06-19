@@ -43,7 +43,7 @@ namespace MonoGameHtml {
 				___vars[name] = obj;
 				___types[name] = type;
 				
-				Logger.log($"{name} ({type}): {obj}");
+				Logger.log($"\t\"{name}\" ({type}): {obj}");
 			}
 			Logger.log("===================");
 		}
@@ -90,10 +90,6 @@ namespace MonoGameHtml {
 			htmlNode.topDownInit();
 			htmlNode.bottomUpInit();
 			htmlNode.layoutDown();
-		}
-
-		public static string StatePackAbsolutePath() {
-			return FileUtil.TraceFilePath();
 		}
 	}
 }
