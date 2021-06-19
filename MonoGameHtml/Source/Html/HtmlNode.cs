@@ -21,9 +21,6 @@ namespace MonoGameHtml {
 		public Dictionary<string, object> funcs; // TODO:
 		
 		public List<Action> actionList;
-
-		// STATIC
-		public static readonly Dictionary<string, object> nullProps = new Dictionary<string, object>();
 		
 		// Position
 		public PositionType position;
@@ -73,21 +70,10 @@ namespace MonoGameHtml {
 			flexStart, flexEnd, start, end, center, spaceBetween, spaceAround, spaceEvenly
 		}
 		
-		// DEFAULTS
-		public Dictionary<string, int> fontSizeDefaults = new Dictionary<string, int> {
-			["p"] = 18,
-			["h1"] = 100,
-			["h2"] = 80,
-			["h3"] = 60,
-			["h4"] = 40,
-			["h5"] = 30,
-			["h6"] = 26,
-		};
-
 		public HtmlNode(string tag, Dictionary<string, object> props = null, object textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
 			this.tag = tag;
 			this.props = props;
-			if (props == null) this.props = nullProps;
+			this.props ??= new Dictionary<string, object>();
 
 			if (textContent != null) {
 				switch (textContent) {
@@ -260,25 +246,17 @@ namespace MonoGameHtml {
 				CSSDefinition classDefinition = CSSHandler.classes[prop<string>("class")];
 				addCSSUnder(classDefinition);
 			}
-			
+
 			if (CSSHandler.tags.ContainsKey(tag)) {
 				CSSDefinition tagDefinition = CSSHandler.tags[tag];
 				addCSSUnder(tagDefinition);
-			}
-
-
-
-			// load props
-			if (fontSizeDefaults.ContainsKey(tag)) {
-				fontSize = fontSizeDefaults[tag];
-				if (textContent != null) onFontChange();
 			}
 
 			processProps: {
 				if (textContent == "") textContent = null;
 				if (textContent != null) font = Fonts.getFontSafe(fontFamily, fontSize); // default
 				
-				if (props == nullProps) goto finishProps;
+				if (props.Keys.Count == 0) goto finishProps;
 				
 				if (props.ContainsKey("position")) position = Enum.Parse<PositionType>(prop<string>("position"));
 				
@@ -308,7 +286,7 @@ namespace MonoGameHtml {
 				if (props.ContainsKey("fontFamily")) fontFamily = (string) props["fontFamily"];
 				if (props.ContainsKey("fontSize")) fontSize = (int) props["fontSize"];
 				if (props.ContainsKey("textAlign")) textAlign = Enum.Parse<TextAlignType>((string) props["textAlign"]);
-
+				
 				if (textContent != null) onFontChange();
 				
 
@@ -572,20 +550,33 @@ namespace MonoGameHtml {
 						}
 						break;
 					}
-					case AlignType.flexStart: { 
-						int thisX = x;
-						for (int i = 0; i < children.Length; i++) {
-							children[i].x = thisX;
-							thisX += children[i].width;
+					case AlignType.flexStart: {
+						if (flexDirection == DirectionType.row) { 
+							int thisX = x;
+							for (int i = 0; i < children.Length; i++) {
+								children[i].x = thisX;
+								thisX += children[i].width;
+							}
+						} else { 
+							foreach (HtmlNode child in children) {
+								child.x = x;
+							}
 						}
 						break;
 					}
 					case AlignType.flexEnd: { 
-						int thisX = x + width;
-						for (int i = children.Length - 1; i >= 0; i--) {
-							thisX -= children[i].width;
-							children[i].x = thisX;
+						if (flexDirection == DirectionType.row) { 
+							int thisX = x + width;
+							for (int i = children.Length - 1; i >= 0; i--) {
+								thisX -= children[i].width;
+								children[i].x = thisX;
+							}
+						} else { 
+							foreach (HtmlNode child in children) {
+								child.x = x + width - child.width;
+							}
 						}
+						
 						break;
 					}
 				}
@@ -670,19 +661,31 @@ namespace MonoGameHtml {
 						}
 						break;
 					}
-					case AlignType.flexStart: { 
-						int thisY = y;
-						for (int i = 0; i < children.Length; i++) {
-							children[i].y = thisY;
-							thisY += children[i].height;
+					case AlignType.flexStart: {
+						if (flexDirection == DirectionType.column) { 
+							int thisY = y;
+							for (int i = 0; i < children.Length; i++) {
+								children[i].y = thisY;
+								thisY += children[i].height;
+							}
+						} else { 
+							foreach (HtmlNode child in children) {
+								child.y = y;
+							}
 						}
 						break;
 					}
 					case AlignType.flexEnd: { 
-						int thisY = y + height;
-						for (int i = children.Length - 1; i >= 0; i--) {
-							thisY -= children[i].height;
-							children[i].y = thisY;
+						if (flexDirection == DirectionType.column) { 
+							int thisY = y + height;
+							for (int i = children.Length - 1; i >= 0; i--) {
+								thisY -= children[i].height;
+								children[i].y = thisY;
+							}
+						} else { 
+							foreach (HtmlNode child in children) {
+								child.y = y + height - child.height;
+							}
 						}
 						break;
 					}

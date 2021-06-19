@@ -15,6 +15,8 @@ namespace Testing
 
         public HtmlRunner htmlInstance;
 
+        public string cssPath;
+
         public GameMain()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -35,9 +37,14 @@ namespace Testing
             _graphics.ApplyChanges();
             
             Console.WriteLine("test: " + Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName);
+
+            string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName,
+                "Assets");
+
+            cssPath = Path.Join(assetPath, "CSS");
             
             HtmlMain.Initialize(this, 
-                fontPath: @"D:\Users\Tobafett\Documents\GitHub\MonoGameHtml\Testing\Assets\Fonts\",
+                fontPath: Path.Join(assetPath, "Fonts"),
                 logOutput: true);
             
             SetUpHtml();
@@ -45,12 +52,12 @@ namespace Testing
 
         public async void SetUpHtml() {
             const string container = @"
-const Container = (List^^string^ strs) => {
+const Container = (List<string> strs) => {
 
     List^^string^ [rows, setRows] = useState($strs);
 
     return (
-        <div alignX='center' alignY='flexStart' dimens='100%'>
+        <div alignX='center' alignY='flexStart' width='100%'>
             {rows.map((str, i) =^ 
                 <Row rows={rows} setRows={setRows} i={i}/>
             )}
@@ -63,38 +70,35 @@ const Container = (List^^string^ strs) => {
 }
 ";
             const string row = @"
-const Row = (List^^string^ rows, Action<List<string>> setRows, int i = -1) => {
+const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
     return (
         <div flexDirection='row' alignItems='center' width='50%' height={$h}>
-            <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white'>
-                <p>{rows[i]}</p>
+            <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
+                {rows[i]}
             </div>
             <div onPress={() =^ {
                 rows.RemoveAt(i);
                 setRows(rows);
-            }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white'>
-                <p>-</p>
+            }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
+                -
             </div>
         </div>
     );
 }
 ";
-            
             const string html = @"
-<div flexDirection='row' dimens='100%' alignX='center' alignY='flexStart'>
-
+<div flexDirection='row' dimens='100%' alignX='center' alignY='spaceBetween'>
     <Container rows={$strs}/>
 </div>
 ";
-            var list = new List<string> {"pe", "walk", "code"};
+            var list = new List<string> {"Task 1", "Task 2", "Task 3"};
             
             var statePack = new StatePack(
                 "strs", list,
                 "h", 50
             );
 
-            //CSSHandler.addCSS();
-            
+            CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
             htmlInstance = await HtmlProcessor.GenerateRunner(html, statePack, 
                 macros: Macros.create(
                 

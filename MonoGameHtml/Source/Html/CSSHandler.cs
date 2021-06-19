@@ -1,5 +1,6 @@
 ﻿﻿﻿using System.Collections.Generic;
-using System.Linq;
+  using System.IO;
+  using System.Linq;
 
 namespace MonoGameHtml {
 	public static class CSSHandler {
@@ -7,11 +8,26 @@ namespace MonoGameHtml {
 		public static Dictionary<string, CSSDefinition> classes = new Dictionary<string, CSSDefinition>();
 		public static Dictionary<string, CSSDefinition> tags = new Dictionary<string, CSSDefinition>();
 
-		public static void addCSS(params string[] filePaths) {
+		internal static string defaultCssPath;
+		
+		static CSSHandler() {
+			defaultCssPath = FileUtil.TraceFilePath();
+			defaultCssPath = defaultCssPath.Substring(0, defaultCssPath.indexOf("Source"));
+			defaultCssPath = Path.Join(defaultCssPath, "Assets", "CSS", "Default.css");
+			SetCSS(defaultCssPath);
+		}
+
+		public static void SetCSS(params string[] filePaths) {
+			SetCSS((IEnumerable<string>)filePaths);
+		}
+
+		public static void SetCSS(IEnumerable<string> filePathEnumerable) {
 
 			Dictionary<string, string> data = new Dictionary<string, string>();
+
+			var allFilePaths = new[]{defaultCssPath}.Concat(filePathEnumerable);
 			
-			foreach (string filePath in filePaths) {
+			foreach (string filePath in allFilePaths) {
 				readInCSSFile(filePath, data);
 			}
 
@@ -26,7 +42,7 @@ namespace MonoGameHtml {
 			}
 		}
 
-		public static void readInCSSFile(string filePath, Dictionary<string, string> aggregateCSS) { 
+		internal static void readInCSSFile(string filePath, Dictionary<string, string> aggregateCSS) { 
 			// read lines from CSS file
 			string[] lines = System.IO.File.ReadAllLines(filePath);
 				
@@ -73,7 +89,7 @@ namespace MonoGameHtml {
 			}
 		}
 
-		public string camelCase(string identifier) {
+		internal string camelCase(string identifier) {
 			static string upperFirstChar(string str) {
 				return str.Substring(0, 1).ToUpper() + str.Substring(1).ToLower();
 			}
@@ -84,7 +100,7 @@ namespace MonoGameHtml {
 			return string.Join("", segments);
 		}
 
-		public object parseValue(string value) {
+		internal object parseValue(string value) {
 			
 			if (int.TryParse(value, out int intVal)) {
 				return intVal;

@@ -35,7 +35,7 @@ namespace MonoGameHtml {
             if (fontDict.ContainsKey(fontName) && fontDict[fontName].ContainsKey(size)) return;
             
             string fullPath = $"{HtmlMain.fontPath}{fontName}.ttf";
-            Logger.log(fullPath);
+            //Logger.log(fullPath);
             var fontBakeResult = TtfFontBaker.Bake(File.ReadAllBytes(fullPath),
                 size,
                 1024,
