@@ -8,9 +8,13 @@ namespace MonoGameHtmlGeneratedCode {
 	/*CACHE_START*/
 public static string[] CachedInput() {
 	return new string[]{ @"
-<div flexDirection='row' dimens='100%' alignX='center' alignY='spaceBetween'>
-    <Container init={$strs}/>
-</div>
+<body>
+    <div class='Container'>
+        {nStream(10).map(i =>
+            <h5 class='Text'>text {i}</h5>
+        )}
+    </div>
+</body>
 ", @"
 const Container = (List<string> init) => {
 
@@ -40,7 +44,7 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
                 setRows(rows);
             }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
                 -
-            </div>
+            </div> 
         </div>
     );
 }" };
@@ -76,7 +80,9 @@ HtmlNode CreateRow(string tag, Dictionary<string, object> props = null, string t
             })), ["flex"]=(1), ["align"]="center", ["borderColor"]="#888888", ["borderWidth"]=(2), ["backgroundColor"]="white", ["textAlign"]="center"}, textContent: "-")));
 	return ___node;
 }
-HtmlNode node = newNode("div", props: new Dictionary<string, object> {["flexDirection"]="row", ["dimens"]="100%", ["alignX"]="center", ["alignY"]="spaceBetween"}, children: nodeArr(CreateContainer("Container", props: new Dictionary<string, object> {["init"]=(((System.Collections.Generic.List<System.String>)___vars["strs"]))}, textContent: "", init: (((System.Collections.Generic.List<System.String>)___vars["strs"])))));
+HtmlNode node = newNode("body", children: nodeArr(newNode("div", props: new Dictionary<string, object> {["class"]="Container"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((nStream(10).Select(i =>
+            newNode("h5", props: new Dictionary<string, object> {["class"]="Text"}, textContent: (Func<string>)(()=> "text "+(i)+""))
+        ).ToArray()))))));
 setupNode(node);
 return node;
 }/*CACHE_END*/

@@ -1,1 +1,21 @@
-﻿
+﻿body {
+    align-items: center;
+    background-color: palevioletred;
+}
+
+.Text {
+    background-color: #421b1b;
+    color: antiquewhite;
+    padding: 10px;
+    border-radius: 20%;
+}
+
+.Container {
+    background-color: #1d0d11;
+    padding: 70px;
+    border-radius: 20%;
+    width: 700px;
+    height: 1000px;
+    align-items: center;
+    justify-content: space-between;
+}

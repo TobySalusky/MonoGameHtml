@@ -80,16 +80,20 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
                 setRows(rows);
             }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
                 -
-            </div>
+            </div> 
         </div>
     );
 }
 ";
             
             const string html = @"
-<div flexDirection='row' dimens='100%' alignX='center' alignY='spaceBetween'>
-    <Container init={$strs}/>
-</div>
+<body>
+    <div class='Container'>
+        {nStream(10).map(i =>
+            <h5 class='Text'>text {i}</h5>
+        )}
+    </div>
+</body>
 ";
             var list = new List<string> {"Task 1", "Task 2", "Task 3"};
             
@@ -100,10 +104,10 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
 
             CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
             htmlInstance = await HtmlProcessor.GenerateRunner(html, statePack, 
-                macros: Macros.create(
-                
-            ), components: HtmlComponents.Create(
+                components: HtmlComponents.Create(
                 components
+            ), macros: Macros.create(
+                
             ));
         }
 

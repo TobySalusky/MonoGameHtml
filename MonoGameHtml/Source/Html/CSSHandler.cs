@@ -14,7 +14,7 @@ namespace MonoGameHtml {
 			defaultCssPath = FileUtil.TraceFilePath();
 			defaultCssPath = defaultCssPath.Substring(0, defaultCssPath.indexOf("Source"));
 			defaultCssPath = Path.Join(defaultCssPath, "Assets", "CSS", "Default.css");
-			SetCSS(defaultCssPath);
+			SetCSS();
 		}
 
 		public static void SetCSS(params string[] filePaths) {
@@ -25,6 +25,10 @@ namespace MonoGameHtml {
 
 			Dictionary<string, string> data = new Dictionary<string, string>();
 
+			classes = new Dictionary<string, CSSDefinition>();
+			tags = new Dictionary<string, CSSDefinition>();
+
+			
 			var allFilePaths = new[]{defaultCssPath}.Concat(filePathEnumerable);
 			
 			foreach (string filePath in allFilePaths) {

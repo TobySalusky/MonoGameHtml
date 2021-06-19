@@ -27,9 +27,29 @@ namespace MonoGameHtml {
 		public int x, y;
 		public int width, height;
 
-		public Vector2 PosVec => new Vector2(x, y);
-		public Vector2 DimenVec => new Vector2(width, height);
+		public int paddingLeft, paddingRight, paddingTop, paddingBottom;
+		public int marginLeft, marginRight, marginTop, marginBottom;
 
+		public int PaddedX => x + marginLeft + borderWidth;
+		public int PaddedY => y + marginTop + borderWidth;
+		public Vector2 PaddedCorner => new Vector2(PaddedX, PaddedY);
+
+		public int UnpaddedX => PaddedX + paddingLeft;
+		public int UnpaddedY => PaddedY + paddingTop;
+		public Vector2 UnpaddedCorner => new Vector2(UnpaddedX, UnpaddedY);
+		public Vector2 UnpaddedDimens => new Vector2(width, height);
+		
+		public int PaddedWidth => width + paddingLeft + paddingRight;
+		public int PaddedHeight => height + paddingTop + paddingBottom;
+		public Vector2 PaddedDimens => new Vector2(PaddedWidth, PaddedHeight);
+
+		public int BorderedWidth => PaddedWidth + 2 * borderWidth;
+		public int BorderedHeight => PaddedHeight + 2 * borderWidth;
+
+		public int FullWidth => BorderedWidth + marginLeft + marginRight;
+		public int FullHeight => BorderedHeight + marginTop + marginBottom;
+
+		
 		// Text
 		public string fontFamily = "JetbrainsMono";
 		public int fontSize = 18;
@@ -38,8 +58,8 @@ namespace MonoGameHtml {
 		// TODO: font weight
 
 		// Appearance
-		public int borderRadius = 0;
-		public int borderWidth = 0;
+		public int borderRadius;
+		public int borderWidth;
 		public Color borderColor = Color.Black;
 
 		public Color backgroundColor = Color.Transparent, color = Color.Black;
@@ -174,7 +194,7 @@ namespace MonoGameHtml {
 			if (props.ContainsKey("borderRadius")) { // TODO: abstract to method
 				if (props["borderRadius"] is string str) {
 					float mult = NodeUtil.percentAsFloat(str);
-					borderRadius = (int) Math.Min(mult * width, mult * height);
+					borderRadius = (int) Math.Min(mult * FullWidth, mult * FullHeight);
 				} else { 
 					borderRadius = (int) props["borderRadius"];
 				}
@@ -219,13 +239,13 @@ namespace MonoGameHtml {
 
 			if (children != null) { 
 				if (DynamicWidth) {
-					width = flexDirection == DirectionType.row ? children.Select(child => child.width).Sum() : 
-						children.Select(child => child.width).Max();
+					width = flexDirection == DirectionType.row ? children.Select(child => child.FullWidth).Sum() : 
+						children.Select(child => child.FullWidth).Max();
 					onWidthChange();
 				}
 				if (DynamicHeight) {
-					height = flexDirection == DirectionType.column ? children.Select(child => child.height).Sum() : 
-						children.Select(child => child.height).Max();
+					height = flexDirection == DirectionType.column ? children.Select(child => child.FullHeight).Sum() : 
+						children.Select(child => child.FullHeight).Max();
 					onHeightChange();
 				}
 			}
@@ -239,7 +259,7 @@ namespace MonoGameHtml {
 			}
 		}
 
-		public void topDownInit() { // INITIALIZE USING PROPS (and such) =================
+		public void topDownInit() { // INITIALIZE USING PROPS (and such) ================= // TODO: convert to switch statement
 
 			// Load tag/class CSS (class has precedence over tags)
 			if (props.ContainsKey("class") && CSSHandler.classes.ContainsKey(prop<string>("class"))) { // currently no support for dynamic class // TODO: ADD THIS
@@ -268,8 +288,67 @@ namespace MonoGameHtml {
 					height = NodeUtil.heightFromProp(props["dimens"], parent);
 				}
 
-				if (props.ContainsKey("width")) width = NodeUtil.widthFromProp(props["width"], parent);
-				if (props.ContainsKey("height")) height = NodeUtil.heightFromProp(props["height"], parent);
+				// static dimensions
+				void tryWidthProp(ref int widthVar, string propName) { 
+					if (props.ContainsKey(propName)) widthVar = NodeUtil.widthFromProp(props[propName], parent);
+				}
+				void tryHeightProp(ref int heightVar, string propName) { 
+					if (props.ContainsKey(propName)) heightVar = NodeUtil.widthFromProp(props[propName], parent);
+				}
+
+				tryWidthProp(ref width, "width");
+				tryHeightProp(ref height, "height");
+				
+				if (props.ContainsKey("padding")) {
+					object val = props["padding"];
+					paddingLeft = NodeUtil.widthFromProp(val, parent);
+					paddingRight = NodeUtil.widthFromProp(val, parent);
+					paddingTop = NodeUtil.heightFromProp(val, parent);
+					paddingBottom = NodeUtil.heightFromProp(val, parent);
+				}
+				
+				if (props.ContainsKey("paddingBlock")) {
+					object val = props["paddingBlock"];
+					paddingTop = NodeUtil.heightFromProp(val, parent);
+					paddingBottom = NodeUtil.heightFromProp(val, parent);
+				}
+				
+				if (props.ContainsKey("paddingInline")) {
+					object val = props["paddingInline"];
+					paddingLeft = NodeUtil.widthFromProp(val, parent);
+					paddingRight = NodeUtil.widthFromProp(val, parent);
+				}
+				
+				tryWidthProp(ref paddingLeft, "paddingLeft");
+				tryWidthProp(ref paddingRight, "paddingRight");
+				tryHeightProp(ref paddingTop, "paddingTop");
+				tryHeightProp(ref paddingBottom, "paddingBottom");
+				
+				if (props.ContainsKey("margin")) {
+					object val = props["margin"];
+					marginLeft = NodeUtil.widthFromProp(val, parent);
+					marginRight = NodeUtil.widthFromProp(val, parent);
+					marginTop = NodeUtil.heightFromProp(val, parent);
+					marginBottom = NodeUtil.heightFromProp(val, parent);
+				}
+				
+				if (props.ContainsKey("marginBlock")) {
+					object val = props["marginBlock"];
+					marginTop = NodeUtil.heightFromProp(val, parent);
+					marginBottom = NodeUtil.heightFromProp(val, parent);
+				}
+				
+				if (props.ContainsKey("marginInline")) {
+					object val = props["marginInline"];
+					marginLeft = NodeUtil.widthFromProp(val, parent);
+					marginRight = NodeUtil.widthFromProp(val, parent);
+				}
+				
+				tryWidthProp(ref marginLeft, "marginLeft");
+				tryWidthProp(ref marginRight, "marginRight");
+				tryHeightProp(ref marginTop, "marginTop");
+				tryHeightProp(ref marginBottom, "marginBottom");
+
 				if (props.ContainsKey("flex")) {
 					if (parent.flexDirection == DirectionType.column) {
 						if (!propHasAny("width") && !propHasAny("dimens")) {
@@ -289,7 +368,6 @@ namespace MonoGameHtml {
 				
 				if (textContent != null) onFontChange();
 				
-
 				if (props.ContainsKey("-fontSize")) {
 					object funcProp = props["-fontSize"];
 					if (funcProp is Func<int> intFunc) { 
@@ -359,6 +437,9 @@ namespace MonoGameHtml {
 					}
 				}
 
+				
+				
+				// dynamic width/heights
 				if (props.ContainsKey("-width")) {
 					object widthFuncProp = props["-width"];
 					if (widthFuncProp is Func<string> strFunc) {
@@ -375,6 +456,7 @@ namespace MonoGameHtml {
 						});
 					}
 				}
+				
 				
 				if (props.ContainsKey("-height")) {
 					object funcProp = props["-height"];
@@ -394,7 +476,7 @@ namespace MonoGameHtml {
 				if (props.ContainsKey("borderRadius")) {
 					if (props["borderRadius"] is string str) {
 						float mult = NodeUtil.percentAsFloat(str);
-						borderRadius = (int) Math.Min(mult * width, mult * height);
+						borderRadius = (int) Math.Min(mult * FullWidth, mult * FullHeight);
 					} else { 
 						borderRadius = (int) props["borderRadius"];
 					}
@@ -481,10 +563,13 @@ namespace MonoGameHtml {
 			int sumWidth = 0, sumHeight = 0;
 			float sumFlex = 0;
 			foreach (HtmlNode child in children) {
-				sumWidth += child.width;
-				sumHeight += child.height;
+				sumWidth += child.FullWidth;
+				sumHeight += child.FullHeight;
 				sumFlex += child.flex;
 			}
+
+			int x = UnpaddedX;
+			int y = UnpaddedY;
 
 			if (flexDirection == DirectionType.column || sumFlex < 0.0001F) {
 				switch (alignX) {
@@ -499,7 +584,7 @@ namespace MonoGameHtml {
 						int thisX = x;
 						foreach (HtmlNode child in children) {
 							child.x = thisX;
-							thisX += child.width + gap;
+							thisX += child.FullWidth + gap;
 						}
 						break;
 					}
@@ -509,7 +594,7 @@ namespace MonoGameHtml {
 						int thisX = x + gap / 2;
 						foreach (HtmlNode child in children) {
 							child.x = thisX;
-							thisX += child.width + gap;
+							thisX += child.FullWidth + gap;
 						}
 						break;
 					}
@@ -519,14 +604,14 @@ namespace MonoGameHtml {
 						int thisX = x + gap;
 						foreach (HtmlNode child in children) {
 							child.x = thisX;
-							thisX += child.width + gap;
+							thisX += child.FullWidth + gap;
 						}
 						break;
 					}
 					case AlignType.center: {
 						if (flexDirection == DirectionType.column) {
 							foreach (HtmlNode child in children) {
-								child.x = (x + width / 2) - child.width / 2;
+								child.x = (x + width / 2) - child.FullWidth / 2;
 							}
 							break;
 						}
@@ -534,7 +619,7 @@ namespace MonoGameHtml {
 						int thisX = (x + width / 2) - sumWidth / 2;
 						foreach (HtmlNode child in children) {
 							child.x = thisX;
-							thisX += child.width;
+							thisX += child.FullWidth;
 						}
 						break;
 					}
@@ -546,16 +631,16 @@ namespace MonoGameHtml {
 					}
 					case AlignType.end: { 
 						foreach (HtmlNode child in children) {
-							child.x = x + width - child.width;
+							child.x = x + width - child.FullWidth;
 						}
 						break;
 					}
 					case AlignType.flexStart: {
 						if (flexDirection == DirectionType.row) { 
 							int thisX = x;
-							for (int i = 0; i < children.Length; i++) {
-								children[i].x = thisX;
-								thisX += children[i].width;
+							foreach (HtmlNode child in children) {
+								child.x = thisX;
+								thisX += child.FullWidth;
 							}
 						} else { 
 							foreach (HtmlNode child in children) {
@@ -568,12 +653,12 @@ namespace MonoGameHtml {
 						if (flexDirection == DirectionType.row) { 
 							int thisX = x + width;
 							for (int i = children.Length - 1; i >= 0; i--) {
-								thisX -= children[i].width;
+								thisX -= children[i].FullWidth;
 								children[i].x = thisX;
 							}
 						} else { 
 							foreach (HtmlNode child in children) {
-								child.x = x + width - child.width;
+								child.x = x + width - child.FullWidth;
 							}
 						}
 						
@@ -584,7 +669,7 @@ namespace MonoGameHtml {
 
 				int nonFlexWidth = 0;
 				foreach (HtmlNode child in children) {
-					if (child.flex <= 0) nonFlexWidth += child.width;
+					nonFlexWidth += (child.flex <= 0) ? child.FullWidth : (child.FullWidth - child.width);
 				}
 				
 				float perFlex = (width - nonFlexWidth) / sumFlex;
@@ -593,7 +678,7 @@ namespace MonoGameHtml {
 				foreach (HtmlNode child in children) {
 					child.x = thisX;
 					if (child.flex > 0) child.width = (int) (perFlex * child.flex);
-					thisX += child.width;
+					thisX += child.FullWidth;
 				}
 			}
 
@@ -610,7 +695,7 @@ namespace MonoGameHtml {
 						int thisY = y;
 						foreach (HtmlNode child in children) {
 							child.y = thisY;
-							thisY += child.height + gap;
+							thisY += child.FullHeight + gap;
 						}
 						break;
 					}
@@ -620,7 +705,7 @@ namespace MonoGameHtml {
 						int thisY = y + gap / 2;
 						foreach (HtmlNode child in children) {
 							child.y = thisY;
-							thisY += child.height + gap;
+							thisY += child.FullHeight + gap;
 						}
 						break;
 					}
@@ -630,14 +715,14 @@ namespace MonoGameHtml {
 						int thisY = y + gap;
 						foreach (HtmlNode child in children) {
 							child.y = thisY;
-							thisY += child.height + gap;
+							thisY += child.FullHeight + gap;
 						}
 						break;
 					}
 					case AlignType.center: {
 						if (flexDirection == DirectionType.row) {
 							foreach (HtmlNode child in children) {
-								child.y = (y + height / 2) - child.height / 2;
+								child.y = (y + height / 2) - child.FullHeight / 2;
 							}
 							break;
 						}
@@ -645,7 +730,7 @@ namespace MonoGameHtml {
 						int thisY = (y + height / 2) - sumHeight / 2;
 						foreach (HtmlNode child in children) {
 							child.y = thisY;
-							thisY += child.height;
+							thisY += child.FullHeight;
 						}
 						break;
 					}
@@ -657,16 +742,16 @@ namespace MonoGameHtml {
 					}
 					case AlignType.end: { 
 						foreach (HtmlNode child in children) {
-							child.y = y + height - child.height;
+							child.y = y + height - child.FullHeight;
 						}
 						break;
 					}
 					case AlignType.flexStart: {
 						if (flexDirection == DirectionType.column) { 
 							int thisY = y;
-							for (int i = 0; i < children.Length; i++) {
-								children[i].y = thisY;
-								thisY += children[i].height;
+							foreach (HtmlNode child in children) {
+								child.y = thisY;
+								thisY += child.FullHeight;
 							}
 						} else { 
 							foreach (HtmlNode child in children) {
@@ -679,30 +764,30 @@ namespace MonoGameHtml {
 						if (flexDirection == DirectionType.column) { 
 							int thisY = y + height;
 							for (int i = children.Length - 1; i >= 0; i--) {
-								thisY -= children[i].height;
+								thisY -= children[i].FullHeight;
 								children[i].y = thisY;
 							}
 						} else { 
 							foreach (HtmlNode child in children) {
-								child.y = y + height - child.height;
+								child.y = y + height - child.FullHeight;
 							}
 						}
 						break;
 					}
 				}
 			} else {
-				int nonFlexHeight = 0;
+				int noneFlexHeight = 0;
 				foreach (HtmlNode child in children) {
-					if (child.flex <= 0) nonFlexHeight += child.height;
+					noneFlexHeight += (child.flex <= 0) ? child.FullHeight : (child.FullHeight - child.height);
 				}
 				
-				float perFlex = (height - nonFlexHeight) / sumFlex;
+				float perFlex = (height - noneFlexHeight) / sumFlex;
 
-				int thisY = y;
+				int thisY = x;
 				foreach (HtmlNode child in children) {
 					child.y = thisY;
 					if (child.flex > 0) child.height = (int) (perFlex * child.flex);
-					thisY += child.height;
+					thisY += child.FullHeight;
 				}
 			}
 
@@ -794,13 +879,21 @@ namespace MonoGameHtml {
 			
 			if (textContent == null) return;
 			if (color == Color.Transparent) return;
+
+			Vector2 pos = UnpaddedCorner;
 			
 			spriteBatch.DrawString(font, textContent, 
-				(textAlign == TextAlignType.topLeft) ? PosVec : PosVec + DimenVec/2F - textDimens/2F, color);
+				(textAlign == TextAlignType.topLeft) ? pos : pos + UnpaddedDimens/2F - textDimens/2F, color);
 		}
 
 		public void renderSelf(SpriteBatch spriteBatch) {
 
+			int x = PaddedX;
+			int y = PaddedY;
+			int width = PaddedWidth;
+			int height = PaddedHeight;
+			
+			// draw border
 			if (borderWidth != 0 && borderColor != Color.Transparent) {
 				if (borderRadius == 0) { 
 					int doubleBorder = 2 * borderWidth;
@@ -847,8 +940,9 @@ namespace MonoGameHtml {
 				}
 			}
 			
+			// Draw background color
 			if (backgroundColor != Color.Transparent) {
-				if (borderRadius == 0) { 
+				if (borderRadius == 0) {
 					Rectangle renderRect = new Rectangle(x, y, width, height);
 					spriteBatch.Draw(Textures.rect, renderRect, backgroundColor);
 				} else { 
