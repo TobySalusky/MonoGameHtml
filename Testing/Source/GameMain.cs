@@ -52,6 +52,23 @@ namespace Testing
         public async void SetUpHtml() {
             
             const string components = @"
+const Move = (string text) => {
+    
+    const float c = 150;
+    float lastX = -1;
+    float width = 400;
+
+    return (
+        <div -width={int~: width} -backgroundColor={Color: Color.Lerp(Color.Cyan, Color.Orange, (width - c) / (ScreenWidth-2*c))} onMouseExit={()=^lastX = -1} onHover={()=^ {
+             float x = @mp.X;
+             if (lastX != -1) width = Math.Clamp(width + (x - lastX), c, ScreenWidth-c);
+             lastX = x;
+        }}>
+            {text}
+        </div>
+    );
+}
+
 const Container = (List<string> init) => {
 
     List^^string^ [rows, setRows] = useState(init);
@@ -85,14 +102,13 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
     );
 }
 ";
-            
+
             const string html = @"
 <body>
-    <div class='Container'>
-        {nStream(10).map(i =>
-            <h5 class='Text'>text {i}</h5>
-        )}
-    </div>
+    <Move text='hello'/>
+    <Move text='o/'/>
+    <Move text='what is up my guy'/>
+    <Move text='l:O'/>
 </body>
 ";
             var list = new List<string> {"Task 1", "Task 2", "Task 3"};

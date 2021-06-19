@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Xna.Framework;
 using MonoGameHtml;
 
 namespace MonoGameHtmlGeneratedCode {
@@ -9,13 +10,29 @@ namespace MonoGameHtmlGeneratedCode {
 public static string[] CachedInput() {
 	return new string[]{ @"
 <body>
-    <div class='Container'>
-        {nStream(10).map(i =>
-            <h5 class='Text'>text {i}</h5>
-        )}
-    </div>
+    <Move text='hello'/>
+    <Move text='o/'/>
+    <Move text='what is up my guy'/>
+    <Move text='l:O'/>
 </body>
 ", @"
+const Move = (string text) => {
+    
+    const float c = 150;
+    float lastX = -1;
+    float width = 400;
+
+    return (
+        <div -width={int~: width} -backgroundColor={Color: Color.Lerp(Color.Cyan, Color.Orange, (width - c) / (ScreenWidth-2*c))} onMouseExit={()=^lastX = -1} onHover={()=^ {
+             float x = @mp.X;
+             if (lastX != -1) width = Math.Clamp(width + (x - lastX), c, ScreenWidth-c);
+             lastX = x;
+        }}>
+            {text}
+        </div>
+    );
+}", @"
+
 const Container = (List<string> init) => {
 
     List^^string^ [rows, setRows] = useState(init);
@@ -53,6 +70,20 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
 public static HtmlNode CachedNode() {
 	/*IMPORTS_DONE*/
 
+HtmlNode CreateMove(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, string? text = null) {
+	HtmlNode ___node = null;
+	
+const float c = 150;
+float lastX = -1;
+float width = 400;
+	___node = newNode("div", props: new Dictionary<string, object> {["-width"]=((Func<int>)(() => ((int)(width)))), ["-backgroundColor"]=((Func<Color>)(() => (Color.Lerp(Color.Cyan, Color.Orange, (width - c) / (ScreenWidth-2*c))))), ["onMouseExit"]=((Action)(()=>lastX = -1)), ["onHover"]=((Action)(()=>{
+             float x = mousePos.X;
+             if (lastX != -1) width = Math.Clamp(width + (x - lastX), c, ScreenWidth-c);
+             lastX = x;
+        }))}, textContent: (Func<string>)(()=> ""+(text)+""));
+	return ___node;
+}
+
 HtmlNode CreateContainer(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, List<string>? init = null) {
 	HtmlNode ___node = null;
 	
@@ -80,9 +111,7 @@ HtmlNode CreateRow(string tag, Dictionary<string, object> props = null, string t
             })), ["flex"]=(1), ["align"]="center", ["borderColor"]="#888888", ["borderWidth"]=(2), ["backgroundColor"]="white", ["textAlign"]="center"}, textContent: "-")));
 	return ___node;
 }
-HtmlNode node = newNode("body", children: nodeArr(newNode("div", props: new Dictionary<string, object> {["class"]="Container"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((nStream(10).Select(i =>
-            newNode("h5", props: new Dictionary<string, object> {["class"]="Text"}, textContent: (Func<string>)(()=> "text "+(i)+""))
-        ).ToArray()))))));
+HtmlNode node = newNode("body", children: nodeArr(CreateMove("Move", props: new Dictionary<string, object> {["text"]="hello"}, textContent: "", text: "hello"), CreateMove("Move", props: new Dictionary<string, object> {["text"]="o/"}, textContent: "", text: "o/"), CreateMove("Move", props: new Dictionary<string, object> {["text"]="what is up my guy"}, textContent: "", text: "what is up my guy"), CreateMove("Move", props: new Dictionary<string, object> {["text"]="l:O"}, textContent: "", text: "l:O")));
 setupNode(node);
 return node;
 }/*CACHE_END*/

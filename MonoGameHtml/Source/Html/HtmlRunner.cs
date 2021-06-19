@@ -20,6 +20,7 @@ namespace MonoGameHtml {
 
 			StatePack.timePassed += deltaTime;
 			StatePack.deltaTime = deltaTime;
+			StatePack.mousePos = mouse.pos;
 			
 			node.update(deltaTime, mouse);
 			if (mouse.leftPressed) {

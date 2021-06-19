@@ -844,6 +844,7 @@ namespace MonoGameHtml {
 		}
 
 		public bool posInside(Vector2 vec) {
+			int x = PaddedX, y = PaddedY, width = PaddedWidth, height = PaddedHeight;
 			return vec.X > x && vec.Y > y && vec.X < x + width && vec.Y < y + height;
 		}
 

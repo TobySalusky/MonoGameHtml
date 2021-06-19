@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Microsoft.Xna.Framework;
 
 namespace MonoGameHtml {
 	public class StatePack {
@@ -15,10 +16,15 @@ namespace MonoGameHtml {
 		public static Func<float, float> sin = (rad) => (float) Math.Sin(rad);
 		public static Func<float, float> cos = (rad) => (float) Math.Cos(rad);
 
+		public static Vector2 mousePos;
+
+		public static int ScreenWidth => HtmlMain.screenWidth;
+		public static int ScreenHeight => HtmlMain.screenHeight;
+		
 		public static float random(float max = 1F) {
 			return Util.random(max);
 		}
-		
+
 		public static float random(float min, float max) {
 			return Util.random(min, max);
 		}
