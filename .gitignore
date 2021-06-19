@@ -1,13 +1,19 @@
-**/obj
-**/bin
+bin/
+obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
  .mgstats
-SpacePotato/Content/.mgstats
-.idea/.idea.SpacePotato/.idea/indexLayout.xml
-.idea/.idea.SpacePotato/.idea/.name
-.idea/.idea.SpacePotato/.idea/discord.xml
+
+MonoGameHtml/Content/.mgstats
+.idea/.idea.MonoGameHtml/.idea/indexLayout.xml
+.idea/.idea.MonoGameHtml/.idea/.name
+.idea/.idea.MonoGameHtml/.idea/discord.xml
+
+Testing/Content/.mgstats
+.idea/.idea.Testing/.idea/indexLayout.xml
+.idea/.idea.Testing/.idea/.name
+.idea/.idea.Testing/.idea/discord.xml
 
 # content below from: https://github.com/github/gitignore/blob/main/Global/macOS.gitignore
 # General

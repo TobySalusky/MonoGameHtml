@@ -26,6 +26,10 @@ namespace MonoGameHtml {
 		public StatePack(params object[] varList) {
 			___vars = new Dictionary<string, object>();
 			___types = new Dictionary<string, string>();
+			
+			if (varList.Length < 2) return;
+			
+			Logger.log("Global Variables=========");
 			for (int i = 0; i < varList.Length; i += 2) {
 				object obj = varList[i + 1];
 				
@@ -39,8 +43,9 @@ namespace MonoGameHtml {
 				___vars[name] = obj;
 				___types[name] = type;
 				
-				Logger.log($"{name}({type}): {obj}");
+				Logger.log($"{name} ({type}): {obj}");
 			}
+			Logger.log("===================");
 		}
 
 		public static HtmlNode newNode(string tag, Dictionary<string, object> props = null, object textContent = null, 

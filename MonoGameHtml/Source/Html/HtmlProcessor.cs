@@ -243,7 +243,6 @@ namespace MonoGameHtml {
 				var customProps = extras.componentProps[tag];
 				foreach (string key in props.Keys) {
 					foreach ((string test, string test2) in customProps) {
-						Logger.log($":{key}:", $":{test}:", test2);
 					}
 					if (customProps.Any(pair => pair.Item1 == key)) output += $", {key}: {props[key]}";
 				}
@@ -424,12 +423,9 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 
 						string content = pair.contents(str);
 						var valStrs = content.Split(",").Select(str => str.Trim()).ToArray();
-								
-						Logger.log(valStrs.Length);
-								
+						
 						string macroStr = macros[macroID];
 						for (int i = 0; i < paramNames.Length; i++) {
-							Logger.log("hello",paramNames[i], valStrs[i]);
 							macroStr = macroStr.Replace($"$${paramNames[i]}", valStrs[i]);
 						}
 
@@ -547,7 +543,7 @@ using Microsoft.Xna.Framework;
 				}
 			}
 			
-			Logger.log("OUTPUT C#===============\n\n" + code);
+			Logger.log("OUTPUT C#===============\n\n" + code + "\nEND OUTPUT===============");
 			
 			object htmlObj = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports("System", "System.Collections.Generic").AddReferences(
 				typeof(HtmlNode).Assembly
@@ -567,8 +563,15 @@ using Microsoft.Xna.Framework;
 		
 		public static async Task<HtmlRunner> GenerateRunner(string code, StatePack pack, Dictionary<string, string> macros = null, string[] components = null) {
 
+			var watch = new System.Diagnostics.Stopwatch();
+			watch.Start();
+			
 			HtmlNode node = await genHTML(code, pack, macros, components);
 
+			watch.Stop();
+			Logger.log($"generating HTML took: {watch.Elapsed.TotalSeconds} seconds");
+
+			
 			return new HtmlRunner { node=node, statePack=pack};
 		}
 	}

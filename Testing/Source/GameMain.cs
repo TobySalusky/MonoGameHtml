@@ -36,8 +36,6 @@ namespace Testing
             Window.AllowUserResizing = true;
             _graphics.ApplyChanges();
             
-            Console.WriteLine("test: " + Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName);
-
             string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName,
                 "Assets");
 
@@ -62,7 +60,7 @@ const Container = (List<string> init) => {
             {rows.map((str, i) =^
                 <Row rows={rows} setRows={setRows} i={i}/>
             )}
-            <div onPress={() =^ {
+            <div onPress={() =^ { 
                 rows.Add($'new {random()}');
                 setRows(rows);
             }} textAlign='center' width='50%' height={$h} backgroundColor='white' borderColor='#888888' borderWidth={2}>+</div>
@@ -77,7 +75,7 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
             <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
                 {rows[i]}
             </div>
-            <div onPress={() =^ { 
+            <div onPress={() =^ {  
                 rows.RemoveAt(i);
                 setRows(rows);
             }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
