@@ -18,7 +18,7 @@ namespace MonoGameHtml {
 		public Func<HtmlNode[]> childrenFunc;
 		
 		public Dictionary<string, object> props;
-		public Dictionary<string, object> funcs; // TODO:
+		//public Dictionary<string, object> funcs; // TODO:
 		
 		public List<Action> actionList;
 		

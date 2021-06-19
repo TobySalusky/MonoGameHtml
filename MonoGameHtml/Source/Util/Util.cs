@@ -29,7 +29,7 @@ namespace MonoGameHtml {
             foreach (char c in chars) {
                 if (c != ' ') newStr += c;
             }
-
+        
             return newStr;
         }
 

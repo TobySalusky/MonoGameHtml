@@ -555,6 +555,7 @@ using Microsoft.Xna.Framework;
 			
 			HtmlNode returnNode = (HtmlNode) htmlObj;
 			
+			// Caching
 			if (HtmlSettings.generateCache) { // Only caches when node generation is successful
 				string toCache = code.Substring(code.indexOf("/*IMPORTS_DONE*/"));
 				HtmlCache.CacheHtml(inputArr, toCache);

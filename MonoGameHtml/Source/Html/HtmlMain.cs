@@ -8,19 +8,21 @@ namespace MonoGameHtml {
 		internal static Vector2 screenDimen, screenCenter;
 		internal static int screenWidth, screenHeight;
 
-		internal static string fontPath;
+		internal static string fontPath, cachePath;
 
 		internal static bool logOutput;
 
-		public static void Initialize(Game game, string fontPath = "NoPathSpecified", bool logOutput = false) {
+		public static void Initialize(Game game, string fontPath = null, bool logOutput = false, bool cache = true, string cachePath = null) {
 
 			HtmlMain.logOutput = logOutput;
 			graphicsDevice = game.GraphicsDevice;
-			
-			HtmlMain.fontPath = fontPath.Trim();
-			HtmlMain.fontPath = HtmlMain.fontPath.Replace("/", "\\");
-			if (!HtmlMain.fontPath.EndsWith("\\")) HtmlMain.fontPath += "\\";
-			HtmlMain.fontPath = HtmlMain.fontPath.Replace("\\", "/");
+
+			HtmlMain.fontPath = FileUtil.correctDirPath(fontPath);
+			HtmlMain.cachePath = FileUtil.correctDirPath(cachePath);
+
+			if (cachePath == null) cache = false;
+			HtmlSettings.generateCache = cache;
+			HtmlSettings.useCache = cache;
 
 			// TODO: handle fullscreen
 			screenDimen = new Vector2(game.GraphicsDevice.PresentationParameters.Bounds.Width, game.GraphicsDevice.PresentationParameters.Bounds.Height);

@@ -90,48 +90,5 @@ namespace MonoGameHtml {
 		public static string StatePackAbsolutePath() {
 			return FileUtil.TraceFilePath();
 		}
-
-		/*CACHE_START*/
-		public static class CacheData {
-
-			public static string[] CachedInput() {
-				return new string[]{ @"
-<div flexDirection='row' dimens='100%' alignX='center' alignY='flexStart'>
-
-    <div dimens={500} backgroundColor='red'>Hello</div>
-    
-    {$array.map((name, i) => 
-        <Test name={name} number={i}/>
-    )}
-</div>
-", @"
-const Test = (string name, int number) => {
-
-    return (
-        <h3 backgroundColor='green' borderRadius='50%' borderColor='#FFFFFF'  borderWidth={5}>
-            {name}: {number}
-        </h3>
-    );
-}
-" };
-			}
-
-			public static HtmlNode CachedNode() {
-				/*IMPORTS_DONE*/
-
-HtmlNode CreateTest(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, string? name = null, int? number = null) {
-	HtmlNode ___node = null;
-	
-	___node = newNode("h3", props: new Dictionary<string, object> {["backgroundColor"]="green", ["borderRadius"]="50%", ["borderColor"]="#FFFFFF", ["borderWidth"]=(5)}, textContent: (Func<string>)(()=> ""+(name)+": "+(number)+""));
-	return ___node;
-}
-HtmlNode node = newNode("div", props: new Dictionary<string, object> {["flexDirection"]="row", ["dimens"]="100%", ["alignX"]="center", ["alignY"]="flexStart"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("div", props: new Dictionary<string, object> {["dimens"]=(500), ["backgroundColor"]="red"}, textContent: "Hello"), (((System.String[])___vars["array"]).Select((name, i) => 
-        CreateTest("Test", props: new Dictionary<string, object> {["name"]=(name), ["number"]=(i)}, textContent: "", name: (name), number: (i))
-    ).ToArray()))));
-setupNode(node);
-return node;
-			}
-		}
-/*CACHE_END*/
 	}
 }

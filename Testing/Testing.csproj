@@ -30,4 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MonogameHtml\MonoGameHtml.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Assets\Cache" />
+  </ItemGroup>
 </Project>

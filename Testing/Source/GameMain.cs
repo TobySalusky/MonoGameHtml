@@ -45,6 +45,7 @@ namespace Testing
             
             HtmlMain.Initialize(this, 
                 fontPath: Path.Join(assetPath, "Fonts"),
+                cachePath: Path.Join(assetPath, "Cache"),
                 logOutput: true);
             
             SetUpHtml();
@@ -58,7 +59,7 @@ const Container = (List<string> init) => {
 
     return (
         <div alignX='center' alignY='flexStart' width='100%'>
-            {rows.map((str, i) =^ 
+            {rows.map((str, i) =^
                 <Row rows={rows} setRows={setRows} i={i}/>
             )}
             <div onPress={() =^ {
@@ -76,7 +77,7 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
             <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
                 {rows[i]}
             </div>
-            <div onPress={() =^ {
+            <div onPress={() =^ { 
                 rows.RemoveAt(i);
                 setRows(rows);
             }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
