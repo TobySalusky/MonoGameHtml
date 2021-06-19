@@ -52,9 +52,9 @@ namespace Testing
 
         public async void SetUpHtml() {
             const string container = @"
-const Container = (List<string> strs) => {
+const Container = (List<string> init) => {
 
-    List^^string^ [rows, setRows] = useState($strs);
+    List^^string^ [rows, setRows] = useState(init);
 
     return (
         <div alignX='center' alignY='flexStart' width='100%'>
@@ -88,7 +88,7 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
 ";
             const string html = @"
 <div flexDirection='row' dimens='100%' alignX='center' alignY='spaceBetween'>
-    <Container rows={$strs}/>
+    <Container init={$strs}/>
 </div>
 ";
             var list = new List<string> {"Task 1", "Task 2", "Task 3"};

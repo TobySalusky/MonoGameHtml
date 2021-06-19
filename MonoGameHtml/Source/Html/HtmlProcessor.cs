@@ -17,7 +17,8 @@ namespace MonoGameHtml {
 		public static HtmlProcessorExtras extras;
 
 		public class HtmlProcessorExtras {
-			public Dictionary<string, List<string>> componentProps = new Dictionary<string, List<string>>();
+			// in each tuple, first string is variable name, second is declaration
+			public Dictionary<string, List<(string, string)>> componentProps = new Dictionary<string, List<(string, string)>>();
 		}
 
 		public static string stringifyNode(string node) {
@@ -241,7 +242,10 @@ namespace MonoGameHtml {
 			if (customComponent && extras.componentProps.ContainsKey(tag)) {
 				var customProps = extras.componentProps[tag];
 				foreach (string key in props.Keys) {
-					if (customProps.Contains(key)) output += $", {key}: {props[key]}";
+					foreach ((string test, string test2) in customProps) {
+						Logger.log($":{key}:", $":{test}:", test2);
+					}
+					if (customProps.Any(pair => pair.Item1 == key)) output += $", {key}: {props[key]}";
 				}
 			}
 
@@ -253,16 +257,14 @@ namespace MonoGameHtml {
 				(carrotDict[htmlPair.closeIndex].closeIndex + 1) - htmlPair.openIndex);
 		}
 
-		public static string defineComponent(string code) {
+		public static void addComponentPropNames(string code) { 
 			
 			string before = "const ";
 			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
 			string tag = tagEtc.sub(0, tagEtc.minValidIndex(" ", "="));
 
-			// contents of first parenthesis (define the props you want to grab)
 			var customPropDefinitions = code.searchPairs(DelimPair.Parens, code.indexOf("(")).contents(code).Split(",")
 				.Select(str => str.Trim());
-			string extraPropsString = "";
 			foreach (string customPropDefinition in customPropDefinitions) {
 				int firstSpace = customPropDefinition.indexOf(" ");
 				string type = customPropDefinition.Substring(0, firstSpace);
@@ -272,16 +274,29 @@ namespace MonoGameHtml {
 				string variableName = hasDefault ? afterType.Substring(0, afterType.indexOf("=")).Trim() : afterType;
 				
 				if (!hasDefault && !type.EndsWith("?")) type += "?"; // makes non-defaulted types nullable
-
-				extraPropsString += $", {type} {variableName} = ";
-				extraPropsString += (hasDefault) ? afterType.Substring(afterType.indexOf("=") + 1).Trim() : "null";
-
 				
-				if (!extras.componentProps.ContainsKey(tag)) extras.componentProps[tag] = new List<string>();
-				extras.componentProps[tag].Add(variableName);
+				string declaration = $", {type} {variableName} = ";
+				declaration += (hasDefault) ? afterType.Substring(afterType.indexOf("=") + 1).Trim() : "null";
+				
+				if (!extras.componentProps.ContainsKey(tag)) extras.componentProps[tag] = new List<(string, string)>();
+				extras.componentProps[tag].Add((variableName, declaration));
 			}
+		}
+
+		public static string defineComponent(string code) {
 			
-			
+			string before = "const ";
+			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
+			string tag = tagEtc.sub(0, tagEtc.minValidIndex(" ", "="));
+
+			// contents of first parenthesis (define the props you want to grab)
+			string extraPropsString = "";
+			if (extras.componentProps.ContainsKey(tag)) { 
+				foreach ((string _, string declaration) in extras.componentProps[tag]) {
+					extraPropsString += declaration;
+				}
+			}
+
 			before = "return"; // TODO: check nesting b/c returns in functions are possible
 			string afterReturn = code.Substring(code.indexOf(before) + before.Length).Trim();
 			DelimPair pair = DelimPair.genPairDict(afterReturn, "(", ")")[0];
@@ -477,9 +492,15 @@ using MonoGameHtml;
 using Microsoft.Xna.Framework;
 /*IMPORTS_DONE*/
 ";
-			if (components != null) { 
+			if (components != null) {
 				foreach (string component in components) {
-					preHTML += defineComponent((macros == null) ? component : applyMacros(component, macros));
+					string componentString = (macros == null) ? component : applyMacros(component, macros);
+					addComponentPropNames(componentString);
+				}
+				
+				foreach (string component in components) {
+					string componentString = (macros == null) ? component : applyMacros(component, macros);
+					preHTML += defineComponent(componentString);
 				}
 			}
 			
