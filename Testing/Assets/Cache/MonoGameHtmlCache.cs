@@ -10,10 +10,9 @@ namespace MonoGameHtmlGeneratedCode {
 public static string[] CachedInput() {
 	return new string[]{ @"
 <body>
-    <Move text='hello'/>
-    <Move text='o/'/>
-    <Move text='what is up my guy'/>
-    <Move text='l:O'/>
+    {nStream(5).map(i =>
+        <texture src={$bush} -tint={Color: new Color(@r, @r, @r, 1F)} flex={random()} width={500}/>
+    )}
 </body>
 ", @"
 const Move = (string text) => {
@@ -111,7 +110,9 @@ HtmlNode CreateRow(string tag, Dictionary<string, object> props = null, string t
             })), ["flex"]=(1), ["align"]="center", ["borderColor"]="#888888", ["borderWidth"]=(2), ["backgroundColor"]="white", ["textAlign"]="center"}, textContent: "-")));
 	return ___node;
 }
-HtmlNode node = newNode("body", children: nodeArr(CreateMove("Move", props: new Dictionary<string, object> {["text"]="hello"}, textContent: "", text: "hello"), CreateMove("Move", props: new Dictionary<string, object> {["text"]="o/"}, textContent: "", text: "o/"), CreateMove("Move", props: new Dictionary<string, object> {["text"]="what is up my guy"}, textContent: "", text: "what is up my guy"), CreateMove("Move", props: new Dictionary<string, object> {["text"]="l:O"}, textContent: "", text: "l:O")));
+HtmlNode node = newNode("body", childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((nStream(5).Select(i =>
+        newNode("texture", props: new Dictionary<string, object> {["src"]=(((Microsoft.Xna.Framework.Graphics.Texture2D)___vars["bush"])), ["-tint"]=((Func<Color>)(() => (new Color(random(), random(), random(), 1F)))), ["flex"]=(random()), ["width"]=(500)}, textContent: "")
+    ).ToArray()))));
 setupNode(node);
 return node;
 }/*CACHE_END*/

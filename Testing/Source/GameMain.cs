@@ -16,6 +16,10 @@ namespace Testing
         public HtmlRunner htmlInstance;
 
         public string cssPath;
+        
+        // test objects
+        public Texture2D bush;
+        
 
         public GameMain()
         {
@@ -105,17 +109,17 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
 
             const string html = @"
 <body>
-    <Move text='hello'/>
-    <Move text='o/'/>
-    <Move text='what is up my guy'/>
-    <Move text='l:O'/>
+    {nStream(5).map(i =>
+        <texture src={$bush} tint={new Color(@r, @r, @r, 1F)} flex={random()} width={500}/>
+    )}
 </body>
 ";
             var list = new List<string> {"Task 1", "Task 2", "Task 3"};
             
             var statePack = new StatePack(
                 "strs", list,
-                "h", 50
+                "h", 50,
+                "bush", bush
             );
 
             CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
@@ -130,6 +134,8 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            bush = Content.Load<Texture2D>("bush");
 
             // TODO: use this.Content to load your game content here
         }

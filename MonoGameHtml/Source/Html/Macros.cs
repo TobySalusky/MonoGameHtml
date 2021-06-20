@@ -9,7 +9,8 @@ namespace MonoGameHtml {
 			"t", "timePassed()",
 			"deltaTime", "deltaTime()",
 			"dt", "deltaTime()",
-			"mp", "mousePos"
+			"mp", "mousePos",
+			"r", "random()"
 		};
 		
 		public static Dictionary<string, string> create(params string[] macroList) {

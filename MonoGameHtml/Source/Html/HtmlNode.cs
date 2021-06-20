@@ -62,8 +62,14 @@ namespace MonoGameHtml {
 		public int borderWidth;
 		public Color borderColor = Color.Black;
 
-		public Color backgroundColor = Color.Transparent, color = Color.Black;
+		public Color backgroundColor = Color.Transparent, color = Color.Black, tint = Color.White;
 
+		// TEXTURE SPECIFIC
+		public Texture2D imgTexture;
+		public TextureFitMode textureFitMode = TextureFitMode.none;
+		
+		
+		
 		// Layout
 		public float flex;
 		public AlignType alignX = AlignType.flexStart, alignY = AlignType.flexStart;
@@ -89,7 +95,11 @@ namespace MonoGameHtml {
 		public enum AlignType { 
 			flexStart, flexEnd, start, end, center, spaceBetween, spaceAround, spaceEvenly
 		}
-		
+
+		public enum TextureFitMode { 
+			none, cover, contain, fill
+		}
+
 		public HtmlNode(string tag, Dictionary<string, object> props = null, object textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
 			this.tag = tag;
 			this.props = props;
@@ -293,7 +303,7 @@ namespace MonoGameHtml {
 					if (props.ContainsKey(propName)) widthVar = NodeUtil.widthFromProp(props[propName], parent);
 				}
 				void tryHeightProp(ref int heightVar, string propName) { 
-					if (props.ContainsKey(propName)) heightVar = NodeUtil.widthFromProp(props[propName], parent);
+					if (props.ContainsKey(propName)) heightVar = NodeUtil.heightFromProp(props[propName], parent);
 				}
 
 				tryWidthProp(ref width, "width");
@@ -359,7 +369,7 @@ namespace MonoGameHtml {
 							height = NodeUtil.heightFromProp("100%", parent);
 						}
 					}
-					flex = (int) props["flex"];
+					flex = (float) props["flex"];
 				}
 
 				if (props.ContainsKey("fontFamily")) fontFamily = (string) props["fontFamily"];
@@ -494,6 +504,7 @@ namespace MonoGameHtml {
 				if (props.ContainsKey("borderColor")) borderColor = NodeUtil.colorFromProp(props["borderColor"]);
 				if (props.ContainsKey("backgroundColor")) backgroundColor = NodeUtil.colorFromProp(props["backgroundColor"]);
 				if (props.ContainsKey("color")) color = NodeUtil.colorFromProp(props["color"]);
+				if (props.ContainsKey("tint")) tint = NodeUtil.colorFromProp(props["tint"]);
 
 				if (props.ContainsKey("-backgroundColor")) {
 					var func = toColorFunc(props["-backgroundColor"]);
@@ -506,6 +517,11 @@ namespace MonoGameHtml {
 				if (props.ContainsKey("-borderColor")) {
 					var func = toColorFunc(props["-borderColor"]);
 					bindAction(() => borderColor = func());
+				}
+				
+				if (props.ContainsKey("-tint")) {
+					var func = toColorFunc(props["-tint"]);
+					bindAction(() => tint = func());
 				}
 
 				align: { 
@@ -545,8 +561,43 @@ namespace MonoGameHtml {
 					}
 				}
 
+				
+				// TEXTURE SPECIFIC PROPS
+				if (tag == "texture" || tag == "img") {
+					if (props.ContainsKey("objectFit")) {
+						textureFitMode = Enum.Parse<TextureFitMode>(prop<string>("objectFit"));
+					} else if (props.ContainsKey("-objectFit")) { 
+						var strFunc = prop<Func<string>>("-objectFit");
+						bindAction(() => textureFitMode = Enum.Parse<TextureFitMode>(prop<string>(strFunc())));
+					}
+
+					if (props.ContainsKey("src")) {
+						imgTexture = prop<Texture2D>("src");
+						if (DynamicWidth && DynamicHeight) { 
+							width = imgTexture.Width;
+							height = imgTexture.Height;
+							onResize();
+						}
+					} else if (props.ContainsKey("-src")) {
+						var imgFunc = prop<Func<Texture2D>>("-src");
+						bindAction(() => { 
+							Texture2D initTexture = imgTexture;
+							imgTexture = imgFunc();
+							// check if changing width/height is necessary
+							if (initTexture != imgTexture && (DynamicWidth || DynamicHeight) 
+							                              && (initTexture.Width != imgTexture.Width || initTexture.Height != imgTexture.Height)) {
+								width = imgTexture.Width;
+								height = imgTexture.Height;
+								onResize();
+							}
+						});
+					}
+				}
+
+				
+				// REF function
 				if (props.ContainsKey("ref")) {
-					((Action<HtmlNode>) props["ref"])(this);
+					prop<Action<HtmlNode>>("ref")(this);
 				}
 			} finishProps: { }
 
@@ -886,6 +937,28 @@ namespace MonoGameHtml {
 			spriteBatch.DrawString(font, textContent, 
 				(textAlign == TextAlignType.topLeft) ? pos : pos + UnpaddedDimens/2F - textDimens/2F, color);
 		}
+		
+		public void tryRenderImage(SpriteBatch spriteBatch) {
+			
+			if (imgTexture == null) return;
+			
+			switch (textureFitMode) {
+				case TextureFitMode.none:
+				case TextureFitMode.fill: { 
+					Rectangle rect = new Rectangle(UnpaddedX, UnpaddedY, width, height);
+					spriteBatch.Draw(imgTexture, rect, tint);
+					break;
+				}
+				case TextureFitMode.cover: {
+					// TODO:
+					break;
+				}
+				case TextureFitMode.contain: {
+					// TODO:
+					break;
+				}
+			}
+		}
 
 		public void renderSelf(SpriteBatch spriteBatch) {
 
@@ -961,6 +1034,8 @@ namespace MonoGameHtml {
 			}
 			
 			tryRenderText(spriteBatch);
+
+			tryRenderImage(spriteBatch);
 		}
 
 		public void render(SpriteBatch spriteBatch) { 
