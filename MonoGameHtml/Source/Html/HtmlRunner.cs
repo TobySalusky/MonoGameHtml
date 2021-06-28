@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -9,6 +10,7 @@ namespace MonoGameHtml {
 		internal StatePack statePack; // TODO: make StatePack not fully static
 
 		internal MouseState lastMouseState;
+		internal Vector2 lastMousePos;
 
 		private float delta(GameTime gameTime) {
 			return (float) gameTime.ElapsedGameTime.TotalSeconds;
@@ -18,16 +20,26 @@ namespace MonoGameHtml {
 			MouseInfo mouse = new MouseInfo(mouseState, lastMouseState);
 			float deltaTime = delta(gameTime);
 
-			StatePack.timePassed += deltaTime;
-			StatePack.deltaTime = deltaTime;
+			statePack.timePassed += deltaTime;
+			statePack.deltaTime = deltaTime;
 			StatePack.mousePos = mouse.pos;
 			
 			node.update(deltaTime, mouse);
 			if (mouse.leftPressed) {
 				node.clickRecurse(mouse.pos);
 			}
+			if (mouse.leftUnpressed) node.recurse(htmlNode => {
+				htmlNode.mouseUp();
+			});
+			if (mouse.pos != lastMousePos) {
+				// moving
+				node.recurse(htmlNode => { htmlNode.onMouseMove?.Invoke(); });
+				// dragging
+				if (mouse.leftDown) node.recurse(htmlNode => { htmlNode.onMouseDrag?.Invoke(); });
+			}
 
 			lastMouseState = mouseState;
+			lastMousePos = mouse.pos;
 		}
 
 		public void Render(SpriteBatch spriteBatch) { 
@@ -43,6 +55,10 @@ namespace MonoGameHtml {
 
 		public HtmlNode GetNode() {
 			return node;
+		}
+
+		public StatePack GetStatePack() {
+			return statePack;
 		}
 	}
 }

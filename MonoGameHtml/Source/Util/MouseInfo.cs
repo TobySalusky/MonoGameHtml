@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
 namespace MonoGameHtml {
-    internal struct MouseInfo {
+    public struct MouseInfo {
         
         public bool leftDown, middleDown, rightDown;
         public bool leftPressed, middlePressed, rightPressed;

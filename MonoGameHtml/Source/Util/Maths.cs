@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 
 namespace MonoGameHtml {
-    internal static class Maths {
+    public static class Maths {
 
         public static readonly float PI = (float) Math.PI;
         public static readonly float halfPI = (float) Math.PI / 2;

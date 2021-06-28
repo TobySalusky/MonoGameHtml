@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace MonoGameHtml {
-    internal static class Util {
+    public static class Util {
 
         private static readonly Random rand = new Random();
 

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+  using System.Threading;
+  using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
@@ -18,7 +19,7 @@ namespace MonoGameHtml {
 
 		public class HtmlProcessorExtras {
 			// in each tuple, first string is variable name, second is declaration
-			public Dictionary<string, List<(string, string)>> componentProps = new Dictionary<string, List<(string, string)>>();
+			public Dictionary<string, List<(string, string, string, string)>> componentProps = new Dictionary<string, List<(string, string, string, string)>>();
 		}
 
 		public static string stringifyNode(string node) {
@@ -117,14 +118,26 @@ namespace MonoGameHtml {
 									typeless = true;
 								}
 
-								if (typeless) { 
+								if (typeless) {
 									jsx = $"(Func^^object^)(() =^ ({jsx.Trim()}))";
 								}
-
-							} else if (Util.noSpaces(jsx).StartsWith("()=^")) {
+							} else if (Util.noSpaces(jsx).StartsWith("()=^")) { // parameter-less Action
 								int sep = jsx.indexOf("=^");
 								jsx = jsx.Substring(sep + 2).Trim();
 								jsx = $"(Action)(()=^{jsx})";
+							} else if (Util.noSpaces(jsx).StartsWith("(")) { // handles possible Actions with parameters
+								DelimPair parenPair = jsx.searchPairs(DelimPair.Parens, jsx.indexOf("("));
+
+								if (Util.noSpaces(parenPair.removeFrom(jsx)).StartsWith("=^")) { // (if parens are followed by =>)
+									string[] actionArgs = parenPair.contents(jsx).Split(",");
+									var actionTypes = actionArgs.Select(arg => arg.Substring(0, arg.indexOf(" ")));
+									string actionTypeString = "";
+									foreach (string type in actionTypes) {
+										actionTypeString += (actionTypeString == "") ? type : $",{type}";
+									}
+
+									jsx = $"(Action^^{actionTypeString}^)({jsx})";
+								}
 							}
 
 							props[currLabel] = $"({jsx})";
@@ -240,14 +253,13 @@ namespace MonoGameHtml {
 			}
 			
 			if (customComponent && extras.componentProps.ContainsKey(tag)) {
-				var customProps = extras.componentProps[tag];
 				foreach (string key in props.Keys) {
-					foreach ((string test, string test2) in customProps) {
-					}
-					if (customProps.Any(pair => pair.Item1 == key)) output += $", {key}: {props[key]}";
+					(string, string paramName, string, string)? propInfo = extras.componentProps[tag].FirstOrDefault(
+						propInfo => propInfo.Item1 == key); // checks that prop-name matches var-name
+					if (propInfo != null) output += $", {propInfo.Value.paramName}: {props[key]}";
 				}
 			}
-
+			
 			return output + ")";
 		}
 
@@ -265,34 +277,58 @@ namespace MonoGameHtml {
 			var customPropDefinitions = code.searchPairs(DelimPair.Parens, code.indexOf("(")).contents(code).Split(",")
 				.Select(str => str.Trim());
 			foreach (string customPropDefinition in customPropDefinitions) {
+				if (customPropDefinition == "") return;
+				
 				int firstSpace = customPropDefinition.indexOf(" ");
 				string type = customPropDefinition.Substring(0, firstSpace);
 				
 				string afterType = customPropDefinition.Substring(firstSpace + 1).Trim();
-				bool hasDefault = customPropDefinition.Contains("=");
-				string variableName = hasDefault ? afterType.Substring(0, afterType.indexOf("=")).Trim() : afterType;
 				
-				if (!hasDefault && !type.EndsWith("?")) type += "?"; // makes non-defaulted types nullable
+				// determine whether the variable has a compile-time or runtime default (= for compile, : for runtime)
+				int defaultSeparatorIndex = afterType.minValidIndex("=", ":");
+				bool compileDefault = false, runtimeDefault = false;
+				string defaultValue = "";
+				if (defaultSeparatorIndex != -1) {
+					defaultValue = afterType.Substring(defaultSeparatorIndex + 1).Trim();
+					char defaultSepChar = afterType.ToCharArray()[defaultSeparatorIndex];
+					if (defaultSepChar == '=') compileDefault = true;
+					else runtimeDefault = true;
+				}
+				bool noDefault = !runtimeDefault && !compileDefault;
 				
-				string declaration = $", {type} {variableName} = ";
-				declaration += (hasDefault) ? afterType.Substring(afterType.indexOf("=") + 1).Trim() : "null";
+				// find name / possible temp-name (for runtime defaulted vars)
+				string variableName = noDefault ? afterType : afterType.Substring(0, defaultSeparatorIndex).Trim();
+				string paramName = (runtimeDefault) ? $"____{variableName}" : variableName;
+
+				// makes non-defaulted vars nullable
+				if (noDefault && !type.EndsWith("?")) type += "?";
+				// param-type may differ from inner type (runtime can be nullable in method parameters even if not nullable inside method)
+				string paramType = (runtimeDefault && !type.EndsWith("?")) ? $"{type}?" : type;
+				string paramDefaultValue = (compileDefault) ? defaultValue : "null";
 				
-				if (!extras.componentProps.ContainsKey(tag)) extras.componentProps[tag] = new List<(string, string)>();
-				extras.componentProps[tag].Add((variableName, declaration));
+				string declaration = $"{paramType} {paramName} = {paramDefaultValue}";
+
+				// handles runtime defaulting
+				string innerCode = (runtimeDefault) ? $"{type} {variableName} = {paramName} ?? {defaultValue};\n" : "";
+				
+				if (!extras.componentProps.ContainsKey(tag)) extras.componentProps[tag] = new List<(string, string, string, string)>();
+				extras.componentProps[tag].Add((variableName, paramName, declaration, innerCode));
 			}
 		}
 
 		public static string defineComponent(string code) {
-			
 			string before = "const ";
 			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
 			string tag = tagEtc.sub(0, tagEtc.minValidIndex(" ", "="));
 
 			// contents of first parenthesis (define the props you want to grab)
 			string extraPropsString = "";
+			string innerPropDefaults = "";
+			
 			if (extras.componentProps.ContainsKey(tag)) { 
-				foreach ((string _, string declaration) in extras.componentProps[tag]) {
-					extraPropsString += declaration;
+				foreach ((string _, string _, string declaration, string innerCode) in extras.componentProps[tag]) {
+					innerPropDefaults += innerCode;
+					extraPropsString += $", {declaration}";
 				}
 			}
 
@@ -388,6 +424,7 @@ Action<{type}> {varNames[1]} = (___val) => {{
 
 			string output = @$"
 HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null{extraPropsString}) {{
+	{innerPropDefaults}
 	HtmlNode ___node = null;
 	{stateStr}
 	___node = {stringifyNode(returnContents)};
@@ -465,9 +502,9 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			string inputString = code;
 			string[] inputArr = new List<string> {inputString}.Concat(components ?? new string[]{}).ToArray();
 
-			if (HtmlSettings.useCache && HtmlCache.IsCached(inputArr)) {
+			if (HtmlSettings.useCache && HtmlCache.IsCached(inputArr, pack)) {
 				Logger.log("Using Cached HTML");
-				return HtmlCache.UseCache();
+				return pack.cachedNode();
 			}
 			
 			// code generation
@@ -505,8 +542,8 @@ using Microsoft.Xna.Framework;
 			code += "\nreturn node;";
 			
 			
-			foreach (string key in StatePack.___vars.Keys) {
-				code = code.Replace($"${key}", $"(({StatePack.___types[key]})___vars[\"{key}\"])");
+			foreach (string key in pack.___vars.Keys) {
+				code = code.Replace($"${key}", $"(({pack.___types[key]})___vars[\"{key}\"])");
 			}
 
 			mapToSelect: {
@@ -554,7 +591,7 @@ using Microsoft.Xna.Framework;
 			// Caching
 			if (HtmlSettings.generateCache) { // Only caches when node generation is successful
 				string toCache = code.Substring(code.indexOf("/*IMPORTS_DONE*/"));
-				HtmlCache.CacheHtml(inputArr, toCache);
+				HtmlCache.CacheHtml(inputArr, toCache, pack);
 			}
 			
 			return returnNode;

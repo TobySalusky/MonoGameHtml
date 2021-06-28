@@ -68,8 +68,6 @@ namespace MonoGameHtml {
 		public Texture2D imgTexture;
 		public TextureFitMode textureFitMode = TextureFitMode.none;
 		
-		
-		
 		// Layout
 		public float flex;
 		public AlignType alignX = AlignType.flexStart, alignY = AlignType.flexStart;
@@ -78,7 +76,9 @@ namespace MonoGameHtml {
 
 		// FUNCTIONS
 		public bool hover;
-		public Action onPress, onMouseEnter, onMouseExit, onHover, onTick;
+		public Action onPress, onPressRemove, onMouseEnter, onMouseExit, onMouseMove, onMouseDrag, onHover, onTick; // TODO: add MouseInfo as parameter
+		// mouse input
+		public bool clicked;
 		
 		// ENUMS
 		public enum TextAlignType {
@@ -369,7 +369,7 @@ namespace MonoGameHtml {
 							height = NodeUtil.heightFromProp("100%", parent);
 						}
 					}
-					flex = (float) props["flex"];
+					flex = Convert.ToSingle(props["flex"]);
 				}
 
 				if (props.ContainsKey("fontFamily")) fontFamily = (string) props["fontFamily"];
@@ -493,6 +493,9 @@ namespace MonoGameHtml {
 				}
 
 				if (props.ContainsKey("onPress")) onPress = prop<Action>("onPress");
+				if (props.ContainsKey("onPressRemove")) onPressRemove = prop<Action>("onPressRemove");
+				if (props.ContainsKey("onMouseMove")) onMouseMove = prop<Action>("onMouseMove");
+				if (props.ContainsKey("onMouseDrag")) onMouseDrag = prop<Action>("onMouseDrag");
 				if (props.ContainsKey("onMouseEnter")) onMouseEnter = prop<Action>("onMouseEnter");
 				if (props.ContainsKey("onMouseExit")) onMouseExit = prop<Action>("onMouseExit");
 				if (props.ContainsKey("onHover")) onHover = prop<Action>("onHover");
@@ -903,8 +906,15 @@ namespace MonoGameHtml {
 			// TODO:
 		}
 		
-		public void clicked(Vector2 vec) { 
+		public void onClick(Vector2 vec) {
+			clicked = true;
 			onPress?.Invoke();
+		}
+
+		public void mouseUp() {
+			bool wasClicked = clicked;
+			clicked = false;
+			if (wasClicked) onPressRemove?.Invoke();
 		}
 
 		public bool clickRecurse(Vector2 vec) {
@@ -920,11 +930,20 @@ namespace MonoGameHtml {
 				}
 				if (final) topClicked(vec);
 
-				clicked(vec);
+				onClick(vec);
 				return true;
 			}
 
 			return false;
+		}
+
+		public void recurse(Action<HtmlNode> nodeAction) {
+			nodeAction.Invoke(this);
+			
+			if (children == null) return;
+			foreach (HtmlNode node in children) {
+				node.recurse(nodeAction);
+			}
 		}
 
 		public void tryRenderText(SpriteBatch spriteBatch) {
@@ -1013,6 +1032,9 @@ namespace MonoGameHtml {
 					}
 				}
 			}
+			
+			//spriteBatch.Draw(Textures.rect, new Rectangle(x + width, y + height, 10, 10), Color.Red);
+
 			
 			// Draw background color
 			if (backgroundColor != Color.Transparent) {

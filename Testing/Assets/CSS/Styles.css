@@ -2,8 +2,15 @@
     background-color: palevioletred;
 }
 
-div {
+.Cont {
+    margin: 10px;
+}
+
+.In {
+    font-size: 26px;
+    font-weight: bold;
+    border-radius: 5px;
+    color: white;
+    padding: 10px;
     text-align: center;
-    background-color: antiquewhite;
-    padding: 40px;
 }

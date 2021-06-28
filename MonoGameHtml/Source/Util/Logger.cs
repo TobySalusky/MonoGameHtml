@@ -1,7 +1,7 @@
 ﻿﻿using System;
 
 namespace MonoGameHtml {
-    internal static class Logger {
+    public static class Logger {
         
         public static void log(object str) {
             if (!HtmlMain.logOutput) return;

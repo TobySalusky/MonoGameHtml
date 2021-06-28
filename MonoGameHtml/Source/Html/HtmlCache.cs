@@ -4,23 +4,11 @@
 
  namespace MonoGameHtml {
 	internal static class HtmlCache {
-		
-		public static string[] fetchInput() {
-			Type type = Assembly.GetEntryAssembly()!.GetType("MonoGameHtmlGeneratedCode.Cache");
-			var res = type!.GetMethod("CachedInput", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null);
-			return (string[]) res;
-		}
-		
-		public static HtmlNode fetchNode() {
-			Type type = Assembly.GetEntryAssembly()!.GetType("MonoGameHtmlGeneratedCode.Cache");
-			var res = type!.GetMethod("CachedNode", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null);
-			return (HtmlNode) res;
-		}
 
-		public static bool IsCached(string[] input) { 
+		public static bool IsCached(string[] input, StatePack pack) { 
 			if (input == null || input.Length == 0) return false;
 			
-			string[] cachedInput = fetchInput();
+			string[] cachedInput = pack.cachedInput();
 			if (cachedInput == null || cachedInput.Length != input.Length) { 
 				return false;
 			}
@@ -34,12 +22,8 @@
 			return true;
 		}
 
-		public static HtmlNode UseCache() {
-			return fetchNode();
-		}
-
-		public static void CacheHtml(string[] input, string outputCode) {
-			string[] cachedInput = fetchInput();
+		public static void CacheHtml(string[] input, string outputCode, StatePack pack) {
+			string[] cachedInput = pack.cachedInput();
 
 			if (input == null || input.Length == 0) return;
 			
@@ -69,6 +53,7 @@ using MonoGameHtml;
 
 namespace MonoGameHtmlGeneratedCode {{
 	public class Cache : StatePack {{
+	public Cache(params object[] initialVariableNamesAndObjects) : base(initialVariableNamesAndObjects) {{}}
 	{startComment}
 	{endComment}
 	}}
@@ -87,15 +72,20 @@ namespace MonoGameHtmlGeneratedCode {{
 			inputArrString = $"return new string[]{{ {inputArrString} }};";
 			
 			text = text.Substring(0, text.indexOf(startComment) + startComment.Length) + @$"
-public static string[] CachedInput() {{
+protected override string[] cachedInput() {{
 	{inputArrString}
 }}
 
-public static HtmlNode CachedNode() {{
+protected override HtmlNode cachedNode() {{
 	{outputCode}
 }}" + text.Substring(text.indexOf(endComment));
-			
-			await File.WriteAllTextAsync(path, text.Trim());
+
+			try { 
+				await File.WriteAllTextAsync(path, text.Trim());
+			} catch (Exception e) {
+				Warnings.log("FAILED TO WRITE CACHE FILE --skipping...");
+				Console.WriteLine(e);
+			}
 		}
 	}
-}
+ }

@@ -21,15 +21,13 @@ namespace Testing
         public Texture2D bush;
         
 
-        public GameMain()
-        {
+        public GameMain() {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             // TODO: Add your initialization logic here
             base.Initialize();
             
@@ -50,7 +48,10 @@ namespace Testing
                 cachePath: Path.Join(assetPath, "Cache"),
                 logOutput: true);
             
+            CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
+            
             SetUpHtml();
+            //Thesaurus.Init(this);
         }
 
         public async void SetUpHtml() {
@@ -82,7 +83,7 @@ const Container = (List<string> init) => {
             {rows.map((str, i) =^
                 <Row rows={rows} setRows={setRows} i={i}/>
             )}
-            <div onPress={() =^ { 
+            <div onPress={() =^ {
                 rows.Add($'new {random()}');
                 setRows(rows);
             }} textAlign='center' width='50%' height={$h} backgroundColor='white' borderColor='#888888' borderWidth={2}>+</div>
@@ -95,37 +96,42 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
         <div flexDirection='row' alignItems='center' width='50%' height={$h}>
             <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
                 {rows[i]}
-            </div>
-            <div onPress={() =^ {  
+            </div> 
+            <div onPress={() =^ {
                 rows.RemoveAt(i);
-                setRows(rows);
+                setRows(rows); 
             }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
                 -
-            </div> 
+            </div>
         </div>
     );
 }
 ";
-
+            
             const string html = @"
 <body>
-    {nStream(5).map(i =>
-        <texture src={$bush} tint={new Color(@r, @r, @r, 1F)} flex={random()} width={500}/>
-    )}
+    <Move text='helo'/>
+    <Move text='henlo'/> 
+    <Move text={''+$h}/>
+    <Move text='henlo'/>
+    <Move text='helo'/>
+    <Slider back='red' front='green' width={700} height='10%' init={0.5F}/>
+    <Slider onChange={(float amount) =^Logger.log(amount)}/>
+    <Toggle/>
+    <Toggle back='white' front='green' onChange={(bool val)=^Logger.log($'flipped to {val}!')}/>
 </body>
 ";
             var list = new List<string> {"Task 1", "Task 2", "Task 3"};
-            
-            var statePack = new StatePack(
-                "strs", list,
-                "h", 50,
-                "bush", bush
-            );
 
-            CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
-            htmlInstance = await HtmlProcessor.GenerateRunner(html, statePack, 
+            var pack = StatePack.Create(
+                "strs", list,
+                "h", 59,
+                "bush", bush
+                );
+            
+            htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
                 components: HtmlComponents.Create(
-                components
+                components, HtmlComponents.Slider, HtmlComponents.Toggle
             ), macros: Macros.create(
                 
             ));
