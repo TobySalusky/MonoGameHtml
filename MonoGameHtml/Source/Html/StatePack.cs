@@ -18,10 +18,15 @@ namespace MonoGameHtml {
 		public static Func<float, float> sin = (rad) => (float) Math.Sin(rad);
 		public static Func<float, float> cos = (rad) => (float) Math.Cos(rad);
 
+		// input
 		public static Vector2 mousePos;
+		public static KeyInfo keys;
+		
 
 		public static int ScreenWidth => HtmlMain.screenWidth;
 		public static int ScreenHeight => HtmlMain.screenHeight;
+
+		public static Game game => HtmlMain.game;
 		
 		public static float random(float max = 1F) {
 			return Util.random(max);

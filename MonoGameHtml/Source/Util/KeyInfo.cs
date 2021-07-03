@@ -1,7 +1,7 @@
 ﻿﻿﻿using Microsoft.Xna.Framework.Input;
 
 namespace MonoGameHtml {
-    internal class KeyInfo {
+    public class KeyInfo {
 
         public KeyboardState newState, oldState;
 
@@ -24,6 +24,10 @@ namespace MonoGameHtml {
 
         public bool pressed(Keys key) {
             return newState.IsKeyDown(key) && !oldState.IsKeyDown(key);
+        }
+        
+        public bool unpressed(Keys key) {
+            return !newState.IsKeyDown(key) && oldState.IsKeyDown(key);
         }
     }
 }

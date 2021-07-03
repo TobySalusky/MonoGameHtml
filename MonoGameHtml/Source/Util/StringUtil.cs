@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace MonoGameHtml {
-    internal static class StringUtil {
+    public static class StringUtil {
 
         public static string sub(this string str, int startInclusive, int endExclusive) {
             return str.Substring(startInclusive, endExclusive - startInclusive);
@@ -61,10 +61,18 @@ namespace MonoGameHtml {
         public static Dictionary<(string, string), int> nestAmountsLen(this string str, int start, int len, params (string, string)[] delimTypes) {
             return nestAmountsRange(str, (start, start + len - 1), delimTypes);
         }
+        
+        public static Dictionary<(string, string), int> nestAmountsLen(this string str, int start, int len, Dictionary<(string, string), List<DelimPair>> dict) {
+            return nestAmountsRange(str, (start, start + len - 1), dict);
+        }
 
         public static Dictionary<(string, string), int> nestAmountsRange(this string str, (int, int) rangeInclusive, params (string, string)[] delimTypes) {
-            var dict = DelimPair.searchAll(str, delimTypes);
+            Dictionary<(string, string), List<DelimPair>> dict = DelimPair.searchAll(str, delimTypes);
+            return nestAmountsRange(str, rangeInclusive, dict);
+        }
 
+        
+        public static Dictionary<(string, string), int> nestAmountsRange(this string str, (int, int) rangeInclusive, Dictionary<(string, string), List<DelimPair>> dict) {
             (int start, int end) = rangeInclusive;
             
             var nestDict = new Dictionary<(string, string), int>();

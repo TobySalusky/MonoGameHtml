@@ -10,34 +10,41 @@ namespace MonoGameHtml {
 		internal StatePack statePack; // TODO: make StatePack not fully static
 
 		internal MouseState lastMouseState;
+		internal KeyboardState lastKeyState;
 		internal Vector2 lastMousePos;
 
 		private float delta(GameTime gameTime) {
 			return (float) gameTime.ElapsedGameTime.TotalSeconds;
 		}
 		
-		public void Update(GameTime gameTime, MouseState mouseState) { 
+		public void Update(GameTime gameTime, MouseState mouseState, KeyboardState keyState) { 
 			MouseInfo mouse = new MouseInfo(mouseState, lastMouseState);
+			KeyInfo keys = new KeyInfo(keyState, lastKeyState);
 			float deltaTime = delta(gameTime);
 
 			statePack.timePassed += deltaTime;
 			statePack.deltaTime = deltaTime;
 			StatePack.mousePos = mouse.pos;
+			StatePack.keys = keys;
 			
 			node.update(deltaTime, mouse);
 			if (mouse.leftPressed) {
 				node.clickRecurse(mouse.pos);
 			}
-			if (mouse.leftUnpressed) node.recurse(htmlNode => {
-				htmlNode.mouseUp();
-			});
+			if (mouse.leftUnpressed) node.recurse(htmlNode => { htmlNode.mouseUp(); });
+			
 			if (mouse.pos != lastMousePos) {
 				// moving
 				node.recurse(htmlNode => { htmlNode.onMouseMove?.Invoke(); });
 				// dragging
 				if (mouse.leftDown) node.recurse(htmlNode => { htmlNode.onMouseDrag?.Invoke(); });
 			}
+			
+			if (mouse.leftPressed) node.recurse(htmlNode => { htmlNode.onMouseDown?.Invoke(); });
+			if (mouse.leftUnpressed) node.recurse(htmlNode => { htmlNode.onMouseUp?.Invoke(); });
 
+
+			lastKeyState = keyState;
 			lastMouseState = mouseState;
 			lastMousePos = mouse.pos;
 		}

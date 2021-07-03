@@ -4,7 +4,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="21">
+          <list size="31">
             <item index="0" class="java.lang.String" itemvalue="backgroundcolor" />
             <item index="1" class="java.lang.String" itemvalue="borderradius" />
             <item index="2" class="java.lang.String" itemvalue="bordercolor" />
@@ -26,10 +26,21 @@
             <item index="18" class="java.lang.String" itemvalue="ontick" />
             <item index="19" class="java.lang.String" itemvalue="}}" />
             <item index="20" class="java.lang.String" itemvalue="ref" />
+            <item index="21" class="java.lang.String" itemvalue="props" />
+            <item index="22" class="java.lang.String" itemvalue="-borderwidth" />
+            <item index="23" class="java.lang.String" itemvalue="if" />
+            <item index="24" class="java.lang.String" itemvalue="}" />
+            <item index="25" class="java.lang.String" itemvalue="{" />
+            <item index="26" class="java.lang.String" itemvalue="bool" />
+            <item index="27" class="java.lang.String" itemvalue=":" />
+            <item index="28" class="java.lang.String" itemvalue="?" />
+            <item index="29" class="java.lang.String" itemvalue="!" />
+            <item index="30" class="java.lang.String" itemvalue="return;" />
           </list>
         </value>
       </option>
       <option name="myCustomValuesEnabled" value="true" />
     </inspection_tool>
+    <inspection_tool class="JSAnnotator" enabled="false" level="ERROR" enabled_by_default="false" />
   </profile>
 </component>

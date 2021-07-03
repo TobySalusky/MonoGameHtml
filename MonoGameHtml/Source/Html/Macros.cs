@@ -5,17 +5,17 @@ namespace MonoGameHtml {
 	public static class Macros {
 
 		public static string[] defaults = {
-			"time", "timePassed()",
-			"t", "timePassed()",
-			"deltaTime", "deltaTime()",
-			"dt", "deltaTime()",
+			"time", "timePassed",
+			"t", "timePassed",
+			"deltaTime", "deltaTime",
+			"dt", "deltaTime",
 			"mp", "mousePos",
-			"r", "random()"
+			"r", "random()",
+			"setRef(varName)", "(HtmlNode ___refNode)=^$$varName=___refNode"
 		};
 		
 		public static Dictionary<string, string> create(params string[] macroList) {
 			macroList = macroList.Concat(defaults).ToArray();
-			
 			Dictionary<string, string> macros = new Dictionary<string, string>();
 			
 			for (int i = 0; i < macroList.Length; i += 2) {

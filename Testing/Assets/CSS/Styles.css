@@ -14,3 +14,12 @@
     padding: 10px;
     text-align: center;
 }
+
+.Box {
+    border-radius: 20%;
+    width: 700px;
+    color: palevioletred;
+    background-color: #4b4646;
+    font-size: 30px;
+    padding: 20px;
+}

@@ -97,7 +97,10 @@ namespace MonoGameHtml {
 							int fin = bracketDict[i].closeIndex;
 							string jsx = data.Substring(i + 1, fin - (i + 1)).Trim();
 
-							if (currLabel.StartsWith("-")) { // dynamic value (auto generate Func)
+							const string funcTypeRegex = @"^[a-zA-Z0-9\[\]<>()\.@_]+~?:";
+							string withoutSpaces = Util.noSpaces(jsx);
+							
+							if (Regex.IsMatch(withoutSpaces, funcTypeRegex)) { // dynamic value (auto generate Func)
 								int sep = jsx.indexOf(":");
 								bool typeless = false;
 								if (sep != -1) { 
@@ -129,7 +132,7 @@ namespace MonoGameHtml {
 								DelimPair parenPair = jsx.searchPairs(DelimPair.Parens, jsx.indexOf("("));
 
 								if (Util.noSpaces(parenPair.removeFrom(jsx)).StartsWith("=^")) { // (if parens are followed by =>)
-									string[] actionArgs = parenPair.contents(jsx).Split(",");
+									var actionArgs = parenPair.contents(jsx).splitUnNestedCommas();
 									var actionTypes = actionArgs.Select(arg => arg.Substring(0, arg.indexOf(" ")));
 									string actionTypeString = "";
 									foreach (string type in actionTypes) {
@@ -254,8 +257,14 @@ namespace MonoGameHtml {
 			
 			if (customComponent && extras.componentProps.ContainsKey(tag)) {
 				foreach (string key in props.Keys) {
-					(string, string paramName, string, string)? propInfo = extras.componentProps[tag].FirstOrDefault(
-						propInfo => propInfo.Item1 == key); // checks that prop-name matches var-name
+					(string, string paramName, string, string)? propInfo = null;
+					foreach (var thisPropInfo in extras.componentProps[tag]) {
+						if (thisPropInfo.Item1 == key) {
+							propInfo = thisPropInfo;
+							break;
+						}
+					}
+					
 					if (propInfo != null) output += $", {propInfo.Value.paramName}: {props[key]}";
 				}
 			}
@@ -269,12 +278,12 @@ namespace MonoGameHtml {
 		}
 
 		public static void addComponentPropNames(string code) { 
-			
-			string before = "const ";
+
+			const string before = "const ";
 			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
 			string tag = tagEtc.sub(0, tagEtc.minValidIndex(" ", "="));
 
-			var customPropDefinitions = code.searchPairs(DelimPair.Parens, code.indexOf("(")).contents(code).Split(",")
+			var customPropDefinitions = code.searchPairs(DelimPair.Parens, code.indexOf("(")).contents(code).splitUnNestedCommas()
 				.Select(str => str.Trim());
 			foreach (string customPropDefinition in customPropDefinitions) {
 				if (customPropDefinition == "") return;
@@ -317,7 +326,7 @@ namespace MonoGameHtml {
 		}
 
 		public static string defineComponent(string code) {
-			string before = "const ";
+			string before = "const "; // TODO: EXTRACT TO FUNCTION (done twice!)
 			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
 			string tag = tagEtc.sub(0, tagEtc.minValidIndex(" ", "="));
 
@@ -338,6 +347,8 @@ namespace MonoGameHtml {
 			string returnContents = pair.contents(afterReturn).Trim();
 			returnContents = removeOpenClosed(returnContents);
 
+			Logger.log("RETURN", returnContents);
+			
 			string stateStr = "";
 			state: {
 				string stateDefinitions = code.sub(code.indexOf("{") + 1, code.indexOf(before));
@@ -365,13 +376,10 @@ Action<{type}> {varNames[1]} = (___val) => {{
 ";
 					} else if (line != "") {
 						if (line.StartsWith("var")) { // multi-inline var declarations
-							var commas = line.allIndices(",").Where((index) => DelimPair.allNestOf(0,
-								line.nestAmountsLen(index, 1,
-									DelimPair.Parens, DelimPair.CurlyBrackets, DelimPair.SquareBrackets,
-									DelimPair.Quotes, DelimPair.SingleQuotes, DelimPair.Carrots)));
-
-							if (commas.Any()) {
-								var declarations = line.splitWithout(commas);
+							var splitOnCommas = line.splitUnNestedCommas();
+							
+							if (splitOnCommas.Count > 1) {
+								var declarations = splitOnCommas;
 								line = "";
 								foreach (string declaration in declarations) {
 									string varDeclaration = declaration.Trim();
@@ -526,13 +534,15 @@ using Microsoft.Xna.Framework;
 /*IMPORTS_DONE*/
 ";
 			if (components != null) {
-				foreach (string component in components) {
+				foreach (string component in components) { // TODO: extract to method !!!!!
 					string componentString = (macros == null) ? component : applyMacros(component, macros);
+					componentString = componentString.Replace("=>", "=^");
 					addComponentPropNames(componentString);
 				}
 				
 				foreach (string component in components) {
 					string componentString = (macros == null) ? component : applyMacros(component, macros);
+					componentString = componentString.Replace("=>", "=^");
 					preHTML += defineComponent(componentString);
 				}
 			}
@@ -555,10 +565,11 @@ using Microsoft.Xna.Framework;
 				}
 			}
 			code = code.Replace("'", "\"");
+			code = code.Replace("=^", "=>");
 			code = code.Replace("^^", "<");
 			code = code.Replace("^", ">");
-			
-			
+
+
 			inlineArray: {
 
 				int minIndex() => code.minValidIndex("arr(", "arr[");

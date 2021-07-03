@@ -1,8 +1,9 @@
-﻿﻿﻿using System.Collections.Generic;
+﻿﻿﻿using System;
+  using System.Collections.Generic;
 using System.Linq;
 
 namespace MonoGameHtml {
-		public class DelimPair { // TODO: gen ordered list
+	public class DelimPair { // TODO: gen ordered list
 		
 		public int openIndex, openLen;
 		public int closeIndex, closeLen;
@@ -69,31 +70,48 @@ namespace MonoGameHtml {
 			(string open, string close) = openAndClose;
 			return genPairDict(str, open, close);
 		}
-		
+
 		public static Dictionary<int, DelimPair> genPairDict(string str, string open, string close) {
-			var list = genPairs(str, open, close);
+			return toDict(genPairs(str, open, close));
+		}
+
+		public static Dictionary<int, DelimPair> toDict(List<DelimPair> list) { 
 			Dictionary<int, DelimPair> dict = new Dictionary<int, DelimPair>();
 
 			foreach (var pair in list) {
 				dict[pair.openIndex] = pair;
 				dict[pair.closeIndex] = pair;
 			}
-
 			return dict;
 		}
 
-		public static List<DelimPair> genPairs(string str, (string, string) openAndClose) {
+		public static List<DelimPair> genPairs(string str, (string, string) openAndClose, Func<string, int, bool> req = null) {
 			(string open, string close) = openAndClose;
 			return genPairs(str, open, close);
 		}
 
-		public static List<DelimPair> genPairs(string str, string open, string close) {
-			
+		/*public static List<DelimPair> genUnNestedPairs(string str, string open, string close) {
+			return genPairs(str, open, close, (str, i) => {
+				
+				return false;
+			});
+		}*/
+
+		public static List<DelimPair> genPairs(string str, string open, string close, Func<string, string, int, bool> req = null) {
+
+			/*if ((open == "<" || close == "<") && req == null) { // parsing html is not messed up by props
+				var dict = searchAll(str, CurlyBrackets);
+				return genPairs(str, open, close, (str, delim, i) => 
+					allNestOf(0, str.nestAmountsLen(i, delim.Length, dict)));
+			}*/
+
 			Stack<int> stack = new Stack<int>();
 			List<DelimPair> pairs = new List<DelimPair>();
 
 			int openLen = open.Length, closeLen = close.Length;
 			for (int i = 0; i < str.Length; i++) {
+				if (req != null && (!req(str, open, i) && !req(str, close, i))) continue; // skips when the requirement is not met
+
 				if (i <= str.Length - openLen && (i > str.Length - closeLen || str.Substring(i, closeLen) != close || (open == close && stack.Count == 0)) &&
 				    str.Substring(i, openLen) == open) {
 					stack.Push(i);

@@ -18,3 +18,11 @@ h4 {font-size: 40px;}
 h5 {font-size: 30px;}
 h6 {font-size: 26px;}
 p {font-size: 18px;}
+
+.TextBox {
+    padding: 10px;
+    background-color: white;
+    border-color: black;
+    width: 150px;
+    height: 40px;
+}

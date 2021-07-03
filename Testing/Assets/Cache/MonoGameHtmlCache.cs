@@ -11,15 +11,14 @@ namespace MonoGameHtmlGeneratedCode {
 protected override string[] cachedInput() {
 	return new string[]{ @"
 <body>
-    <Move text='helo'/>
-    <Move text='henlo'/> 
-    <Move text={''+$h}/>
-    <Move text='henlo'/>
-    <Move text='helo'/>
-    <Slider back='red' front='green' width={700} height='10%' init={0.5F}/>
-    <Slider onChange={(float amount) =^Logger.log(amount)}/>
-    <Toggle/>
-    <Toggle back='white' front='green' onChange={(bool val)=^Logger.log($'flipped to {val}!')}/>
+    <FrameCounter/>
+    
+    <TextBox text={string: $text} setText={(string str)=^UpdateVar('text', str)}/> 
+    <TextBox/> 
+    <TextBox>Text</TextBox> 
+    <TextBox class='Box' multiline={true}>
+        Text Here:
+    </TextBox>
 </body>
 ", @"
 const Move = (string text) => {
@@ -71,8 +70,23 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
         </div>
     );
 }", @"
+
+const Test = (string str) => {
+
+	var nestDict = DelimPair.searchAll(str, DelimPair.CurlyBrackets);    
+
+    var dict = DelimPair.toDict(DelimPair.genPairs(str, '<', '>', (str, delim, i) => DelimPair.allNestOf(0, str.nestAmountsLen(i, delim.Length, nestDict))));
+
+	return (
+        <span backgroundColor='white'>
+            {str.ToCharArray().map((c, i) =^
+                <p color={(dict.ContainsKey(i)) ? 'red' : 'black'}>{c}</p>
+            )} 
+        </span>
+    );
+}", @"
 const Slider = (
-	Action^^float^ onChange,
+	Action<float> onChange,
 	object back: 'darkgray',
 	object front: 'lightgray',
 	object width: 100,
@@ -100,7 +114,7 @@ const Slider = (
 	);
 }", @"
 const Toggle = (
-    Action^^bool^ onChange,
+    Action<bool> onChange,
     object back: 'darkgray',
     object front: 'lightgray',
     object width: 100,
@@ -119,6 +133,78 @@ const Toggle = (
             {val ? null : <div flex={1}/>}
         </span>
 	);
+}", @"
+const FrameCounter = (float updateTime = 1F) => {
+
+	var fpsCounter = new FrameCounter();
+	int updateCount = 0;
+
+	return (
+		<div onTick={()=^{
+			fpsCounter.update(@dt);
+			int currUpdate = (int) (@t / updateTime);
+			if (currUpdate != updateCount) {
+				updateCount = currUpdate;
+				game.Window.Title = $'FPS: {(int) fpsCounter.AverageFramesPerSecond}';
+			}
+		}}/>
+	);
+}", @"
+
+const TextInput = (
+	Func<string> text, Action<string> setText, Func<bool> active, bool multiline = false, Func<string,string,string> diff
+) => {
+
+	TypingState typingState = new TypingState {
+		multiline = multiline,
+		diff = diff,
+		undoFrequency = 1F
+	};
+	
+	return (
+		<div onTick={()=^{
+			bool isActive = (active != null) ? active.Invoke() : true;
+			if (isActive) {
+				typingState.time = @t;
+				typingState.deltaTime = @dt;
+				string currStr = text();
+				string newStr = TextInputUtil.getUpdatedText(keys, currStr, typingState);
+				if (newStr != currStr) {
+					setText(newStr);
+				}
+			}
+		}}/>
+	);
+}", @"
+
+
+const TextBox = (
+	Func<string> text, Action<string> setText, bool multiline = false
+) => {
+
+	if (text == null && setText == null) {
+		string str = textContent ?? '';
+		text = () => str;
+		setText = newStr => str = newStr;
+	}
+	
+	bool active = false;
+	HtmlNode node = null;
+
+	return (
+		<div ref={@setRef(node)} class='TextBox' props={props}
+			onMouseDown={()=^active=node.clicked}
+			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', '   ')}
+		>
+			<TextInput text={text} setText={setText} active={bool: active} multiline={multiline}/>
+		</div>
+	);
+}", @"
+
+
+const KeyInput = () => {
+	
+    return (<div/>);
 }" };
 }
 
@@ -170,6 +256,18 @@ HtmlNode CreateRow(string tag, Dictionary<string, object> props = null, string t
 	return ___node;
 }
 
+HtmlNode CreateTest(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, string? str = null) {
+	
+	HtmlNode ___node = null;
+	
+var nestDict = DelimPair.searchAll(str, DelimPair.CurlyBrackets);
+var dict = DelimPair.toDict(DelimPair.genPairs(str, "<", ">", (str, delim, i) => DelimPair.allNestOf(0, str.nestAmountsLen(i, delim.Length, nestDict))));
+	___node = newNode("span", props: new Dictionary<string, object> {["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((str.ToCharArray().Select((c, i) =>
+                newNode("p", props: new Dictionary<string, object> {["color"]=((dict.ContainsKey(i)) ? "red" : "black")}, textContent: (Func<string>)(()=> ""+(c)+""))
+            ).ToArray()))));
+	return ___node;
+}
+
 HtmlNode CreateSlider(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Action<float>? onChange = null, object? ____back = null, object? ____front = null, object? ____width = null, object? ____height = null, float init = 0F) {
 	object back = ____back ?? "darkgray";
 object front = ____front ?? "lightgray";
@@ -213,7 +311,71 @@ Action<bool> setVal = (___val) => {
               })), ["backgroundColor"]=(back), ["width"]=(width), ["height"]=(height), ["borderRadius"]="50%", ["padding"]=(10)}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((val ? newNode("div", props: new Dictionary<string, object> {["flex"]=(1)}, textContent: "") : null), newNode("div", props: new Dictionary<string, object> {["dimens"]=(height), ["backgroundColor"]=(front), ["borderRadius"]="50%"}, textContent: ""), (val ? null : newNode("div", props: new Dictionary<string, object> {["flex"]=(1)}, textContent: "")))));
 	return ___node;
 }
-HtmlNode node = newNode("body", children: nodeArr(CreateMove("Move", props: new Dictionary<string, object> {["text"]="helo"}, textContent: "", text: "helo"), CreateMove("Move", props: new Dictionary<string, object> {["text"]="henlo"}, textContent: "", text: "henlo"), CreateMove("Move", props: new Dictionary<string, object> {["text"]=(""+((System.Int32)___vars["h"]))}, textContent: "", text: (""+((System.Int32)___vars["h"]))), CreateMove("Move", props: new Dictionary<string, object> {["text"]="henlo"}, textContent: "", text: "henlo"), CreateMove("Move", props: new Dictionary<string, object> {["text"]="helo"}, textContent: "", text: "helo"), CreateSlider("Slider", props: new Dictionary<string, object> {["back"]="red", ["front"]="green", ["width"]=(700), ["height"]="10%", ["init"]=(0.5F)}, textContent: "", ____back: "red", ____front: "green", ____width: (700), ____height: "10%", init: (0.5F)), CreateSlider("Slider", props: new Dictionary<string, object> {["onChange"]=((Action<float>)((float amount) =>Logger.log(amount)))}, textContent: "", onChange: ((Action<float>)((float amount) =>Logger.log(amount)))), CreateToggle("Toggle", textContent: ""), CreateToggle("Toggle", props: new Dictionary<string, object> {["back"]="white", ["front"]="green", ["onChange"]=((Action<bool>)((bool val)=>Logger.log($"flipped to {val}!")))}, textContent: "", ____back: "white", ____front: "green", onChange: ((Action<bool>)((bool val)=>Logger.log($"flipped to {val}!"))))));
+
+HtmlNode CreateFrameCounter(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, float updateTime = 1F) {
+	
+	HtmlNode ___node = null;
+	
+var fpsCounter = new FrameCounter();
+int updateCount = 0;
+	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=((Action)(()=>{
+			fpsCounter.update(deltaTime);
+			int currUpdate = (int) (timePassed / updateTime);
+			if (currUpdate != updateCount) {
+				updateCount = currUpdate;
+				game.Window.Title = $"FPS: {(int) fpsCounter.AverageFramesPerSecond}";
+			}
+		}))}, textContent: "");
+	return ___node;
+}
+
+HtmlNode CreateTextInput(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? text = null, Action<string>? setText = null, Func<bool>? active = null, bool multiline = false, Func<string,string,string>? diff = null) {
+	
+	HtmlNode ___node = null;
+	
+TypingState typingState = new TypingState {
+multiline = multiline,
+diff = diff,
+undoFrequency = 1F
+};
+	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=((Action)(()=>{
+			bool isActive = (active != null) ? active.Invoke() : true;
+			if (isActive) {
+				typingState.time = timePassed;
+				typingState.deltaTime = deltaTime;
+				string currStr = text();
+				string newStr = TextInputUtil.getUpdatedText(keys, currStr, typingState);
+				if (newStr != currStr) {
+					setText(newStr);
+				}
+			}
+		}))}, textContent: "");
+	return ___node;
+}
+
+HtmlNode CreateTextBox(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? text = null, Action<string>? setText = null, bool multiline = false) {
+	
+	HtmlNode ___node = null;
+	
+if (text == null && setText == null) {
+string str = textContent ?? "";
+text = () => str;
+setText = newStr => str = newStr;
+}
+bool active = false;
+HtmlNode node = null;
+	___node = newNode("div", props: new Dictionary<string, object> {["ref"]=((Action<HtmlNode>)((HtmlNode ___refNode)=>node=___refNode)), ["class"]="TextBox", ["props"]=(props), ["onMouseDown"]=((Action)(()=>active=node.clicked)), ["-borderWidth"]=((Func<int>)(() => ((active) ? 1 : 0))), ["-textContent"]=((Func<string>)(() => (text().Replace("\t", "   "))))}, children: nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=(text), ["setText"]=(setText), ["active"]=((Func<bool>)(() => (active))), ["multiline"]=(multiline)}, textContent: "", text: (text), setText: (setText), active: ((Func<bool>)(() => (active))), multiline: (multiline))));
+	return ___node;
+}
+
+HtmlNode CreateKeyInput(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null) {
+	
+	HtmlNode ___node = null;
+	
+	___node = newNode("div", textContent: "");
+	return ___node;
+}
+HtmlNode node = newNode("body", children: nodeArr(CreateFrameCounter("FrameCounter", textContent: ""), CreateTextBox("TextBox", props: new Dictionary<string, object> {["text"]=((Func<string>)(() => (((System.String)___vars["text"])))), ["setText"]=((Action<string>)((string str)=>UpdateVar("text", str)))}, textContent: "", text: ((Func<string>)(() => (((System.String)___vars["text"])))), setText: ((Action<string>)((string str)=>UpdateVar("text", str)))), CreateTextBox("TextBox", textContent: ""), CreateTextBox("TextBox", textContent: "Text"), CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="Box", ["multiline"]=(true)}, textContent: "Text Here:", multiline: (true))));
 setupNode(node);
 return node;
 }/*CACHE_END*/

@@ -76,7 +76,7 @@ namespace MonoGameHtml {
 
 		// FUNCTIONS
 		public bool hover;
-		public Action onPress, onPressRemove, onMouseEnter, onMouseExit, onMouseMove, onMouseDrag, onHover, onTick; // TODO: add MouseInfo as parameter
+		public Action onPress, onPressRemove, onMouseEnter, onMouseExit, onMouseMove, onMouseDrag, onHover, onTick, onMouseDown, onMouseUp; // TODO: add MouseInfo as parameter
 		// mouse input
 		public bool clicked;
 		
@@ -105,6 +105,18 @@ namespace MonoGameHtml {
 			this.props = props;
 			this.props ??= new Dictionary<string, object>();
 
+			initTextContent(textContent);
+			this.children = children;
+			this.childrenFunc = childrenFunc;
+
+			makeParentOfChildren();
+
+			if (childrenFunc != null) { 
+				generateChildren();
+			}
+		}
+
+		public void initTextContent(object textContent) { 
 			if (textContent != null) {
 				switch (textContent) {
 					case string str:
@@ -122,14 +134,6 @@ namespace MonoGameHtml {
 						bindAction(generateText);
 						break;
 				}
-			}
-			this.children = children;
-			this.childrenFunc = childrenFunc;
-
-			makeParentOfChildren();
-
-			if (childrenFunc != null) { 
-				generateChildren();
 			}
 		}
 
@@ -199,8 +203,11 @@ namespace MonoGameHtml {
 
 		public void onResize() { // TODO: sus? do i need to do a topDownInit()  ??????
 			// TODO:
-			findBase().layoutDown();
-
+			HtmlNode baseNode = findBase();
+			
+			//baseNode.bottomUpInit(); stack overflow D:
+			baseNode.layoutDown();
+			
 			if (props.ContainsKey("borderRadius")) { // TODO: abstract to method
 				if (props["borderRadius"] is string str) {
 					float mult = NodeUtil.percentAsFloat(str);
@@ -214,10 +221,9 @@ namespace MonoGameHtml {
 		public void onFontChange() {
 			font = Fonts.getFontSafe(fontFamily, fontSize);
 			textDimens = font.MeasureString(textContent);
-			
 			if (DynamicWidth) width = (int) textDimens.X;
 			if (DynamicHeight) height = (int) textDimens.Y;
-			
+
 			onResize();
 		}
 
@@ -247,7 +253,7 @@ namespace MonoGameHtml {
 				}
 			}
 
-			if (children != null) { 
+			if (children != null && textContent == null) { 
 				if (DynamicWidth) {
 					width = flexDirection == DirectionType.row ? children.Select(child => child.FullWidth).Sum() : 
 						children.Select(child => child.FullWidth).Max();
@@ -269,8 +275,25 @@ namespace MonoGameHtml {
 			}
 		}
 
+		public void addPropsOver(Dictionary<string, object> propDict) {
+			if (propDict == null) return;
+			foreach (string key in propDict.Keys) {
+				props[key] = propDict[key];
+			}
+		}
+		
+		public void addPropsUnder(Dictionary<string, object> propDict) {
+			if (propDict == null) return;
+			foreach (string key in propDict.Keys.Where(key => !props.ContainsKey(key))) {
+				props[key] = propDict[key];
+			}
+		}
+
 		public void topDownInit() { // INITIALIZE USING PROPS (and such) ================= // TODO: convert to switch statement
 
+			if (props.ContainsKey("props")) addPropsOver(prop<Dictionary<string, object>>("props"));
+			if (props.ContainsKey("propsUnder")) addPropsUnder(prop<Dictionary<string, object>>("propsUnder"));
+			
 			// Load tag/class CSS (class has precedence over tags)
 			if (props.ContainsKey("class") && CSSHandler.classes.ContainsKey(prop<string>("class"))) { // currently no support for dynamic class // TODO: ADD THIS
 				CSSDefinition classDefinition = CSSHandler.classes[prop<string>("class")];
@@ -284,8 +307,20 @@ namespace MonoGameHtml {
 
 			processProps: {
 				if (textContent == "") textContent = null;
+
+				if (textContent == null && propHasAny("textContent")) {
+					object textContentProp = null;
+					if (props.ContainsKey("-textContent")) textContentProp = props["-textContent"];
+					else if (props.ContainsKey("textContent")) textContentProp = props["textContent"];
+					if (textContentProp != null) textContent = null;
+					Logger.log("REEEEE", textContentProp, textContent);
+					initTextContent(textContentProp);
+					if (textContent == "") textContent = null;
+					Logger.log("REEEEE", textContentProp, textContent);
+				}
+
 				if (textContent != null) font = Fonts.getFontSafe(fontFamily, fontSize); // default
-				
+
 				if (props.Keys.Count == 0) goto finishProps;
 				
 				if (props.ContainsKey("position")) position = Enum.Parse<PositionType>(prop<string>("position"));
@@ -500,10 +535,22 @@ namespace MonoGameHtml {
 				if (props.ContainsKey("onMouseExit")) onMouseExit = prop<Action>("onMouseExit");
 				if (props.ContainsKey("onHover")) onHover = prop<Action>("onHover");
 				if (props.ContainsKey("onTick")) onTick = prop<Action>("onTick");
+				if (props.ContainsKey("onMouseDown")) onMouseDown = prop<Action>("onMouseDown");
+				if (props.ContainsKey("onMouseUp")) onMouseUp = prop<Action>("onMouseUp");
 
 
 				if (props.ContainsKey("borderWidth")) borderWidth = prop<int>("borderWidth");
-				
+				if (props.ContainsKey("-borderWidth")) { 
+					object funcProp = props["-borderWidth"];
+					if (funcProp is Func<int> func) { 
+						bindAction(() => {
+							int initBorderWidth = borderWidth;
+							borderWidth = func();
+							if (initBorderWidth != borderWidth) onResize();
+						});
+					}
+				}
+
 				if (props.ContainsKey("borderColor")) borderColor = NodeUtil.colorFromProp(props["borderColor"]);
 				if (props.ContainsKey("backgroundColor")) backgroundColor = NodeUtil.colorFromProp(props["backgroundColor"]);
 				if (props.ContainsKey("color")) color = NodeUtil.colorFromProp(props["color"]);

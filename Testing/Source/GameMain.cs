@@ -25,6 +25,10 @@ namespace Testing
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+            
+            // REMOVES LIMIT FROM FPS
+            _graphics.SynchronizeWithVerticalRetrace = false;
+            IsFixedTimeStep = false;
         }
 
         protected override void Initialize() {
@@ -106,32 +110,50 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
         </div>
     );
 }
+
+const Test = (string str) => {
+
+	var nestDict = DelimPair.searchAll(str, DelimPair.CurlyBrackets);    
+
+    var dict = DelimPair.toDict(DelimPair.genPairs(str, '<', '>', (str, delim, i) => DelimPair.allNestOf(0, str.nestAmountsLen(i, delim.Length, nestDict))));
+
+	return (
+        <span backgroundColor='white'>
+            {str.ToCharArray().map((c, i) =^
+                <p color={(dict.ContainsKey(i)) ? 'red' : 'black'}>{c}</p>
+            )} 
+        </span>
+    );
+}
 ";
-            
+
             const string html = @"
 <body>
-    <Move text='helo'/>
-    <Move text='henlo'/> 
-    <Move text={''+$h}/>
-    <Move text='henlo'/>
-    <Move text='helo'/>
-    <Slider back='red' front='green' width={700} height='10%' init={0.5F}/>
-    <Slider onChange={(float amount) =^Logger.log(amount)}/>
-    <Toggle/>
-    <Toggle back='white' front='green' onChange={(bool val)=^Logger.log($'flipped to {val}!')}/>
+    <FrameCounter/>
+    
+    <TextBox text={string: $text} setText={(string str)=^UpdateVar('text', str)}/> 
+    <TextBox/> 
+    <TextBox>Text</TextBox> 
+    <TextBox class='Box' multiline={true}>
+        Text Here:
+    </TextBox>
 </body>
 ";
+            // TODO: ADD OBJECT POOLING!
+            
             var list = new List<string> {"Task 1", "Task 2", "Task 3"};
 
             var pack = StatePack.Create(
                 "strs", list,
                 "h", 59,
-                "bush", bush
+                "bush", bush,
+                "text", "this is text",
+                "test", "<div code={List<string>: () => new List<string>()}></div>"
                 );
             
             htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
                 components: HtmlComponents.Create(
-                components, HtmlComponents.Slider, HtmlComponents.Toggle
+                components, HtmlComponents.Slider, HtmlComponents.Toggle, HtmlComponents.FrameCounter, HtmlComponents.AllInput
             ), macros: Macros.create(
                 
             ));
@@ -153,7 +175,7 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
 
             // TODO: Add your update logic here
 
-            htmlInstance?.Update(gameTime, Mouse.GetState());
+            htmlInstance?.Update(gameTime, Mouse.GetState(), Keyboard.GetState());
 
             base.Update(gameTime);
         }

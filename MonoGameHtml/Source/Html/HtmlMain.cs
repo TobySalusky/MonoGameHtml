@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace MonoGameHtml {
 	public static class HtmlMain {
+		internal static Game game;
 		internal static GraphicsDevice graphicsDevice;
 		internal static Vector2 screenDimen, screenCenter;
 		internal static int screenWidth, screenHeight;
@@ -13,6 +14,8 @@ namespace MonoGameHtml {
 		internal static bool logOutput;
 
 		public static void Initialize(Game game, string fontPath = null, bool logOutput = false, bool cache = true, string cachePath = null) {
+
+			HtmlMain.game = game;
 
 			HtmlMain.logOutput = logOutput;
 			graphicsDevice = game.GraphicsDevice;

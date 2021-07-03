@@ -19,9 +19,9 @@
 			return componentStrings.ToArray();
 		}
 
-		public static string Slider = @"
+		public const string Slider = @"
 const Slider = (
-	Action^^float^ onChange,
+	Action<float> onChange,
 	object back: 'darkgray',
 	object front: 'lightgray',
 	object width: 100,
@@ -50,7 +50,7 @@ const Slider = (
 }
 ", Toggle = @"
 const Toggle = (
-    Action^^bool^ onChange,
+    Action<bool> onChange,
     object back: 'darkgray',
     object front: 'lightgray',
     object width: 100,
@@ -70,6 +70,83 @@ const Toggle = (
         </span>
 	);
 }
+", TextInput = @"
+const TextInput = (
+	Func<string> text, Action<string> setText, Func<bool> active, bool multiline = false, Func<string,string,string> diff
+) => {
+
+	TypingState typingState = new TypingState {
+		multiline = multiline,
+		diff = diff,
+		undoFrequency = 1F
+	};
+	
+	return (
+		<div onTick={()=^{
+			bool isActive = (active != null) ? active.Invoke() : true;
+			if (isActive) {
+				typingState.time = @t;
+				typingState.deltaTime = @dt;
+				string currStr = text();
+				string newStr = TextInputUtil.getUpdatedText(keys, currStr, typingState);
+				if (newStr != currStr) {
+					setText(newStr);
+				}
+			}
+		}}/>
+	);
+}
+", TextBox = @"
+const TextBox = (
+	Func<string> text, Action<string> setText, bool multiline = false
+) => {
+
+	if (text == null && setText == null) {
+		string str = textContent ?? '';
+		text = () => str;
+		setText = newStr => str = newStr;
+	}
+	
+	bool active = false;
+	HtmlNode node = null;
+
+	return (
+		<div ref={@setRef(node)} class='TextBox' props={props}
+			onMouseDown={()=^active=node.clicked}
+			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', '   ')}
+		>
+			<TextInput text={text} setText={setText} active={bool: active} multiline={multiline}/>
+		</div>
+	);
+}
+", KeyInput = @"
+const KeyInput = () => {
+	
+    return (<div/>);
+}
+", FrameCounter = @"
+const FrameCounter = (float updateTime = 1F) => {
+
+	var fpsCounter = new FrameCounter();
+	int updateCount = 0;
+
+	return (
+		<div onTick={()=^{
+			fpsCounter.update(@dt);
+			int currUpdate = (int) (@t / updateTime);
+			if (currUpdate != updateCount) {
+				updateCount = currUpdate;
+				game.Window.Title = $'FPS: {(int) fpsCounter.AverageFramesPerSecond}';
+			}
+		}}/>
+	);
+}
+";
+
+		public static string AllInput = @$"
+{TextInput}
+{TextBox}
+{KeyInput}
 ";
 	}
  }
