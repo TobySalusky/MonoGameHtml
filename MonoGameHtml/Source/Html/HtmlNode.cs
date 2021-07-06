@@ -235,7 +235,7 @@ namespace MonoGameHtml {
 			return (T) props[propIdentifier];
 		}
 
-		public Func<Color> toColorFunc(object func) { 
+		public Func<Color> toColorFunc(object func) {
 			return func switch {
 				Func<Color> colorFunc => colorFunc,
 				Func<string> strFunc => () => NodeUtil.colorFromProp(strFunc()),
@@ -313,10 +313,8 @@ namespace MonoGameHtml {
 					if (props.ContainsKey("-textContent")) textContentProp = props["-textContent"];
 					else if (props.ContainsKey("textContent")) textContentProp = props["textContent"];
 					if (textContentProp != null) textContent = null;
-					Logger.log("REEEEE", textContentProp, textContent);
 					initTextContent(textContentProp);
 					if (textContent == "") textContent = null;
-					Logger.log("REEEEE", textContentProp, textContent);
 				}
 
 				if (textContent != null) font = Fonts.getFontSafe(fontFamily, fontSize); // default
@@ -1000,6 +998,10 @@ namespace MonoGameHtml {
 
 			Vector2 pos = UnpaddedCorner;
 			
+			if (font == null) {
+				Warnings.log("NULL FONT:", ToString());
+				return;
+			}
 			spriteBatch.DrawString(font, textContent, 
 				(textAlign == TextAlignType.topLeft) ? pos : pos + UnpaddedDimens/2F - textDimens/2F, color);
 		}

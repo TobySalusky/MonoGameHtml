@@ -4,7 +4,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="31">
+          <list size="35">
             <item index="0" class="java.lang.String" itemvalue="backgroundcolor" />
             <item index="1" class="java.lang.String" itemvalue="borderradius" />
             <item index="2" class="java.lang.String" itemvalue="bordercolor" />
@@ -36,6 +36,10 @@
             <item index="28" class="java.lang.String" itemvalue="?" />
             <item index="29" class="java.lang.String" itemvalue="!" />
             <item index="30" class="java.lang.String" itemvalue="return;" />
+            <item index="31" class="java.lang.String" itemvalue="path" />
+            <item index="32" class="java.lang.String" itemvalue="string" />
+            <item index="33" class="java.lang.String" itemvalue="case" />
+            <item index="34" class="java.lang.String" itemvalue="color" />
           </list>
         </value>
       </option>

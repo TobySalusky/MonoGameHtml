@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -19,7 +21,6 @@ namespace Testing
         
         // test objects
         public Texture2D bush;
-        
 
         public GameMain() {
             _graphics = new GraphicsDeviceManager(this);
@@ -50,15 +51,21 @@ namespace Testing
             HtmlMain.Initialize(this, 
                 fontPath: Path.Join(assetPath, "Fonts"),
                 cachePath: Path.Join(assetPath, "Cache"),
-                logOutput: true);
+                loggerSettings: new LoggerSettings {
+                    logOutput = true, 
+                    allowColor = true,
+                    colorOutputCS = false,
+                    formatColoredCS = true,
+                });
             
             CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
             
-            SetUpHtml();
+            //SetUpHtml();
             //Thesaurus.Init(this);
+            HtmlWriter.Init(this);
         }
 
-        public async void SetUpHtml() {
+        private async void SetUpHtml() {
             
             const string components = @"
 const Move = (string text) => {
@@ -129,14 +136,11 @@ const Test = (string str) => {
 
             const string html = @"
 <body>
-    <FrameCounter/>
-    
-    <TextBox text={string: $text} setText={(string str)=^UpdateVar('text', str)}/> 
-    <TextBox/> 
-    <TextBox>Text</TextBox> 
-    <TextBox class='Box' multiline={true}>
-        Text Here:
-    </TextBox>
+    <Switch caseFunc={string: $path}>
+        <div backgroundColor='red' dimens={100} case='a' onPress={()=^UpdateVar('path', $path + 'b')}/>
+        <div backgroundColor='blue' dimens={100} case='ab' onPress={()=^UpdateVar('path', $path + 'c')}/>
+        <div backgroundColor='green' dimens={100} case='abc' onPress={()=^UpdateVar('path', 'a')}/>
+    </Switch>
 </body>
 ";
             // TODO: ADD OBJECT POOLING!
@@ -148,15 +152,17 @@ const Test = (string str) => {
                 "h", 59,
                 "bush", bush,
                 "text", "this is text",
-                "test", "<div code={List<string>: () => new List<string>()}></div>"
+                "test", "<div code={List<string>: () => new List<string>()}></div>",
+                "path", "a"
                 );
             
             htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
                 components: HtmlComponents.Create(
-                components, HtmlComponents.Slider, HtmlComponents.Toggle, HtmlComponents.FrameCounter, HtmlComponents.AllInput
+                components, HtmlComponents.Slider, HtmlComponents.Toggle, 
+                HtmlComponents.FrameCounter, HtmlComponents.AllInput, HtmlComponents.Switch
             ), macros: Macros.create(
-                
-            ));
+
+                    ));
         }
 
         protected override void LoadContent()

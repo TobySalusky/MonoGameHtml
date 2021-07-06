@@ -4,7 +4,7 @@
  namespace MonoGameHtml {
 	public static class HtmlComponents {
 		public static string[] Create(params string[] componentFileContents) {
-			List<string> componentStrings = new List<string>();
+			var componentStrings = new List<string>();
 			
 			// extract multiple components from single strings
 			foreach (string componentFile in componentFileContents) {
@@ -98,7 +98,7 @@ const TextInput = (
 }
 ", TextBox = @"
 const TextBox = (
-	Func<string> text, Action<string> setText, bool multiline = false
+	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false
 ) => {
 
 	if (text == null && setText == null) {
@@ -115,7 +115,7 @@ const TextBox = (
 			onMouseDown={()=^active=node.clicked}
 			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', '   ')}
 		>
-			<TextInput text={text} setText={setText} active={bool: active} multiline={multiline}/>
+			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}/>
 		</div>
 	);
 }
@@ -139,6 +139,31 @@ const FrameCounter = (float updateTime = 1F) => {
 				game.Window.Title = $'FPS: {(int) fpsCounter.AverageFramesPerSecond}';
 			}
 		}}/>
+	);
+}
+", Switch = @"
+const Switch = (Func<string> caseFunc) => {
+
+	Dictionary<string, HtmlNode> nodeDict = new Dictionary<string, HtmlNode>();
+	
+	foreach (HtmlNode node in children) {
+		if (!node.props.ContainsKey('case')) continue;
+		string thisCase = node.prop<string>('case');
+		nodeDict[thisCase] = node;
+	}
+	
+	string [currCase, setCurrCase] = useState(caseFunc());
+	
+	return (
+		<div onTick={()=^{
+			string newCase = caseFunc();
+			if (newCase != currCase) {
+				setCurrCase(newCase);
+			}
+		}}>
+			<html/>
+			{nodeDict.ContainsKey(currCase) ? nodeDict[currCase] : null}
+		</div>
 	);
 }
 ";

@@ -26,10 +26,6 @@ namespace MonoGameHtml {
 				}
 			}
 			next(str.Length);
-			
-			foreach (var s in list) {
-				Logger.log("TEST:", s);
-			}
 
 			return list;
 		}

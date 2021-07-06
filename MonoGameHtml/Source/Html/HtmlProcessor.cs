@@ -1,28 +1,24 @@
-﻿﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
-  using System.Threading;
-  using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
-using Microsoft.Xna.Framework;
+using MonoGameHtml.ColorConsole;
 
 namespace MonoGameHtml {
-
 	
 	public static class HtmlProcessor {
 
-		public static HtmlProcessorExtras extras;
+		private static HtmlProcessorExtras extras;
 
-		public class HtmlProcessorExtras {
+		private class HtmlProcessorExtras {
 			// in each tuple, first string is variable name, second is declaration
-			public Dictionary<string, List<(string, string, string, string)>> componentProps = new Dictionary<string, List<(string, string, string, string)>>();
+			public readonly Dictionary<string, List<PropInfo>> componentProps = new Dictionary<string, List<PropInfo>>();
 		}
 
-		public static string stringifyNode(string node) {
+		private static string StringifyNode(string node) {
 			node = node.Trim();
 			
 			var htmlPairs = DelimPair.genPairs(node, "<", "</");
@@ -35,9 +31,9 @@ namespace MonoGameHtml {
 			List<int> childNodesIndices = new List<int>();
 			string mainInnerContents = "";
 			int mainStartIndex = 0;
-			foreach (var pair in htmlPairs) {
+			foreach (DelimPair pair in htmlPairs) {
 				if (pair.nestCount == 1) {
-					string subNode = pairToNodeStr(node, pair, carrotDict);
+					string subNode = PairToNodeStr(node, pair, carrotDict);
 					childNodes.Add(subNode);
 					childNodesIndices.Add(pair.openIndex);
 				} else if (pair.nestCount == 0) {
@@ -53,7 +49,7 @@ namespace MonoGameHtml {
 
 			string headerContent = carrotDict[mainPair.openIndex].contents(node);
 
-			string output = "";
+			string output;
 			
 			int firstSpace = headerContent.indexOf(" ");
 			string tag = (firstSpace == -1) ? headerContent : headerContent.Substring(0, firstSpace);
@@ -79,7 +75,7 @@ namespace MonoGameHtml {
 					int lastFin = 0;
 					string currLabel = "InvalidProp";
 
-					var chars = data.ToCharArray();
+					char[] chars = data.ToCharArray();
 					for (int i = 0; i < data.Length; i++) {
 						if (chars[i] == '=') {
 							currLabel = data.Substring(lastFin, i - lastFin).Trim();
@@ -181,7 +177,7 @@ namespace MonoGameHtml {
 				if (staticChildren) { 
 					output += "children: nodeArr(";
 					for (int i = 0; i < childNodes.Count; i++) {
-						output += stringifyNode(childNodes[i]) + ((i + 1 < childNodes.Count) ? ", " : "");
+						output += StringifyNode(childNodes[i]) + ((i + 1 < childNodes.Count) ? ", " : "");
 					}
 
 					output += ")";
@@ -200,7 +196,7 @@ namespace MonoGameHtml {
 
 							if (c == '<') {
 								string thisChildNode = childNodesIndicesDict[i];
-								output += stringifyNode(thisChildNode);
+								output += StringifyNode(thisChildNode);
 								i += thisChildNode.Length;
 							} else {
 								DelimPair bracketPair = mainInnerContents.searchPairs("{", "}", i);
@@ -213,7 +209,7 @@ namespace MonoGameHtml {
 									if (childIndex > bracketPair.openIndex && childIndex < bracketPair.closeIndex) {
 
 										int childNewIndex = childIndex - (i + 1);
-										jsxChild = jsxChild.Substring(0, childNewIndex) + stringifyNode(childNodeStr) 
+										jsxChild = jsxChild.Substring(0, childNewIndex) + StringifyNode(childNodeStr) 
 										                                                + jsxChild.Substring(childNewIndex + childNodeStr.Length);
 									}
 								}
@@ -257,12 +253,11 @@ namespace MonoGameHtml {
 			
 			if (customComponent && extras.componentProps.ContainsKey(tag)) {
 				foreach (string key in props.Keys) {
-					(string, string paramName, string, string)? propInfo = null;
+					PropInfo? propInfo = null;
 					foreach (var thisPropInfo in extras.componentProps[tag]) {
-						if (thisPropInfo.Item1 == key) {
-							propInfo = thisPropInfo;
-							break;
-						}
+						if (thisPropInfo.varName != key) continue;
+						propInfo = thisPropInfo;
+						break;
 					}
 					
 					if (propInfo != null) output += $", {propInfo.Value.paramName}: {props[key]}";
@@ -272,12 +267,12 @@ namespace MonoGameHtml {
 			return output + ")";
 		}
 
-		public static string pairToNodeStr(string str, DelimPair htmlPair, Dictionary<int, DelimPair> carrotDict) {
+		private static string PairToNodeStr(string str, DelimPair htmlPair, Dictionary<int, DelimPair> carrotDict) {
 			return str.Substring(htmlPair.openIndex,
 				(carrotDict[htmlPair.closeIndex].closeIndex + 1) - htmlPair.openIndex);
 		}
 
-		public static void addComponentPropNames(string code) { 
+		private static void AddComponentPropNames(string code) { 
 
 			const string before = "const ";
 			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
@@ -306,8 +301,8 @@ namespace MonoGameHtml {
 				bool noDefault = !runtimeDefault && !compileDefault;
 				
 				// find name / possible temp-name (for runtime defaulted vars)
-				string variableName = noDefault ? afterType : afterType.Substring(0, defaultSeparatorIndex).Trim();
-				string paramName = (runtimeDefault) ? $"____{variableName}" : variableName;
+				string varName = noDefault ? afterType : afterType.Substring(0, defaultSeparatorIndex).Trim();
+				string paramName = (runtimeDefault) ? $"____{varName}" : varName;
 
 				// makes non-defaulted vars nullable
 				if (noDefault && !type.EndsWith("?")) type += "?";
@@ -318,14 +313,20 @@ namespace MonoGameHtml {
 				string declaration = $"{paramType} {paramName} = {paramDefaultValue}";
 
 				// handles runtime defaulting
-				string innerCode = (runtimeDefault) ? $"{type} {variableName} = {paramName} ?? {defaultValue};\n" : "";
+				string innerCode = (runtimeDefault) ? $"{type} {varName} = {paramName} ?? {defaultValue};\n" : "";
 				
-				if (!extras.componentProps.ContainsKey(tag)) extras.componentProps[tag] = new List<(string, string, string, string)>();
-				extras.componentProps[tag].Add((variableName, paramName, declaration, innerCode));
+				if (!extras.componentProps.ContainsKey(tag)) extras.componentProps[tag] = new List<PropInfo>();
+				extras.componentProps[tag].Add(new PropInfo
+				{
+					varName = varName,
+					paramName = paramName,
+					declaration = declaration,
+					innerCode = innerCode
+				});
 			}
 		}
 
-		public static string defineComponent(string code) {
+		private static string DefineComponent(string code) {
 			string before = "const "; // TODO: EXTRACT TO FUNCTION (done twice!)
 			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
 			string tag = tagEtc.sub(0, tagEtc.minValidIndex(" ", "="));
@@ -335,9 +336,9 @@ namespace MonoGameHtml {
 			string innerPropDefaults = "";
 			
 			if (extras.componentProps.ContainsKey(tag)) { 
-				foreach ((string _, string _, string declaration, string innerCode) in extras.componentProps[tag]) {
-					innerPropDefaults += innerCode;
-					extraPropsString += $", {declaration}";
+				foreach (var propInfo in extras.componentProps[tag]) {
+					innerPropDefaults += propInfo.innerCode;
+					extraPropsString += $", {propInfo.declaration}";
 				}
 			}
 
@@ -345,9 +346,7 @@ namespace MonoGameHtml {
 			string afterReturn = code.Substring(code.indexOf(before) + before.Length).Trim();
 			DelimPair pair = DelimPair.genPairDict(afterReturn, "(", ")")[0];
 			string returnContents = pair.contents(afterReturn).Trim();
-			returnContents = removeOpenClosed(returnContents);
-
-			Logger.log("RETURN", returnContents);
+			returnContents = RemoveOpenClosed(returnContents);
 			
 			string stateStr = "";
 			state: {
@@ -435,7 +434,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 	{innerPropDefaults}
 	HtmlNode ___node = null;
 	{stateStr}
-	___node = {stringifyNode(returnContents)};
+	___node = {StringifyNode(returnContents)};
 	return ___node;
 }}
 ";
@@ -451,7 +450,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			return output;
 		}
 
-		public static string applyMacros(string str, Dictionary<string, string> macros) { // TODO: allow recursive macros!
+		private static string ApplyMacros(string str, Dictionary<string, string> macros) { // TODO: allow recursive macros!
 			
 			foreach (string macroID in macros.Keys) {
 				if (macroID.Contains("(")) {
@@ -487,7 +486,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			return str;
 		}
 
-		public static string removeOpenClosed(string code) {
+		private static string RemoveOpenClosed(string code) {
 			while (code.Contains("/>")) {
 				int endIndex = code.indexOf("/>");
 				DelimPair pair = DelimPair.genPairDict(code, DelimPair.Carrots)[endIndex + 1];
@@ -504,64 +503,76 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			return code;
 		}
 
-		public static async Task<HtmlNode> genHTML(string code, StatePack pack, Dictionary<string, string> macros = null, string[] components = null) {
+		public static async Task<HtmlNode> GenHtml(string code, StatePack pack,
+			Dictionary<string, string> macros = null, string[] components = null) {
+			
+			macros ??= Macros.create();
 
 			// cache ====
 			string inputString = code;
-			string[] inputArr = new List<string> {inputString}.Concat(components ?? new string[]{}).ToArray();
+			string[] inputArr = new List<string> {inputString}.Concat(components ?? new string[] { })
+				.Concat((macros != null)
+					? (macros.Keys.ToArray().Concat(macros.Keys.Select(key => macros[key])))
+					: new string[] { }).ToArray();
 
 			if (HtmlSettings.useCache && HtmlCache.IsCached(inputArr, pack)) {
 				Logger.log("Using Cached HTML");
 				return pack.cachedNode();
 			}
-			
+
 			// code generation
 			extras = new HtmlProcessorExtras();
 
+			// code replacements
+			if (macros != null) code = ApplyMacros(code, macros);
 			code = code.Replace("=>", "=^");
+			code = RemoveOpenClosed(code);
 
-			if (macros != null) code = applyMacros(code, macros);
+			// HTML CONSOLE LOG
+			Logger.logColor(ConsoleColor.Yellow, HtmlOutput.OUTPUT_HTML);
+			Logger.log(code);
+			Logger.logColor(ConsoleColor.Yellow, HtmlOutput.OUTPUT_END);
 
-			code = removeOpenClosed(code);
-
-			Logger.log("OUTPUT HTML===============\n\n" + code);
-			
 
 			string preHTML = @"
 using System.Linq;
+using System.Threading.Tasks;
 using MonoGameHtml;
 using Microsoft.Xna.Framework;
 /*IMPORTS_DONE*/
 ";
 			if (components != null) {
-				foreach (string component in components) { // TODO: extract to method !!!!!
-					string componentString = (macros == null) ? component : applyMacros(component, macros);
-					componentString = componentString.Replace("=>", "=^");
-					addComponentPropNames(componentString);
-				}
-				
 				foreach (string component in components) {
-					string componentString = (macros == null) ? component : applyMacros(component, macros);
+					// TODO: extract to method !!!!!
+					string componentString = (macros == null) ? component : ApplyMacros(component, macros);
 					componentString = componentString.Replace("=>", "=^");
-					preHTML += defineComponent(componentString);
+					AddComponentPropNames(componentString);
+				}
+
+				foreach (string component in components) {
+					string componentString = (macros == null) ? component : ApplyMacros(component, macros);
+					componentString = componentString.Replace("=>", "=^");
+					preHTML += DefineComponent(componentString);
 				}
 			}
-			
-			code = preHTML + "HtmlNode node = " + stringifyNode(code) + ";";
+
+			code = preHTML + "HtmlNode node = " + StringifyNode(code) + ";";
 			code += "\nsetupNode(node);";
 			code += "\nreturn node;";
-			
-			
+
+
 			foreach (string key in pack.___vars.Keys) {
 				code = code.Replace($"${key}", $"(({pack.___types[key]})___vars[\"{key}\"])");
 			}
 
-			mapToSelect: {
+			mapToSelect:
+			{
 				while (code.Contains(".map(")) {
 					int index = code.indexOf(".map(");
 					DelimPair pair = code.searchPairs("(", ")", index + 4);
 
-					code = code.Substring(0, index) + $".Select({pair.contents(code)}).ToArray()" + code.Substring(pair.closeIndex + 1);
+					code = code.Substring(0, index) + $".Select({pair.contents(code)}).ToArray()" +
+					       code.Substring(pair.closeIndex + 1);
 				}
 			}
 			code = code.Replace("'", "\"");
@@ -570,7 +581,8 @@ using Microsoft.Xna.Framework;
 			code = code.Replace("^", ">");
 
 
-			inlineArray: {
+			inlineArray:
+			{
 
 				int minIndex() => code.minValidIndex("arr(", "arr[");
 
@@ -587,11 +599,18 @@ using Microsoft.Xna.Framework;
 
 					DelimPair contentPair = code.searchPairs("[", "]", bracketIndex);
 					string arrContents = contentPair.contents(code);
-					code = code.Substring(0, index) + $"(new {type}[]{{{arrContents}}})" + code.Substring(contentPair.closeIndex + 1);
+					code = code.Substring(0, index) + $"(new {type}[]{{{arrContents}}})" +
+					       code.Substring(contentPair.closeIndex + 1);
 				}
 			}
-			
-			Logger.log("OUTPUT C#===============\n\n" + code + "\nEND OUTPUT===============");
+
+			if (HtmlMain.loggerSettings.colorOutputCS) {
+				Task.Run(() => ConsoleMain.AsyncPrintCS(code)); // (runs in background)
+			} else {
+				Logger.logColor(ConsoleColor.Red, HtmlOutput.OUTPUT_CS);
+				Logger.log(code);
+				Logger.logColor(ConsoleColor.Red, HtmlOutput.NEW_OUTPUT_END);
+			}
 			
 			object htmlObj = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports("System", "System.Collections.Generic").AddReferences(
 				typeof(HtmlNode).Assembly
@@ -614,7 +633,7 @@ using Microsoft.Xna.Framework;
 			var watch = new System.Diagnostics.Stopwatch();
 			watch.Start();
 			
-			HtmlNode node = await genHTML(code, pack, macros, components);
+			HtmlNode node = await GenHtml(code, pack, macros, components);
 
 			watch.Stop();
 			Logger.log($"generating HTML took: {watch.Elapsed.TotalSeconds} seconds");

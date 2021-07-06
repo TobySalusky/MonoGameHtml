@@ -50,7 +50,7 @@ namespace MonoGameHtml {
 			
 			if (initialVariableNamesAndObjects.Length < 2) return;
 			
-			Logger.log("Global Variables=========");
+			Logger.logColor(ConsoleColor.Green, HtmlOutput.OUTPUT_GLOBALS);
 			for (int i = 0; i < initialVariableNamesAndObjects.Length; i += 2) {
 				object obj = initialVariableNamesAndObjects[i + 1];
 				
@@ -61,7 +61,7 @@ namespace MonoGameHtml {
 				
 				Logger.log($"\t\"{name}\" ({type}): {obj}");
 			}
-			Logger.log("===================");
+			Logger.logColor(ConsoleColor.Green, HtmlOutput.OUTPUT_END);
 		}
 
 		protected internal virtual HtmlNode cachedNode() {

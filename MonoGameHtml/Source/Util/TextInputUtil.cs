@@ -112,7 +112,7 @@ namespace MonoGameHtml {
 	            }
             }
 
-            if (typingState.diff != null) text = typingState.diff(initText, text);
+            if (typingState.diff != null && text != initText) text = typingState.diff(initText, text);
 
             if (text != initText && !undo && (forceUndo || (typingState.time - typingState.lastUndoTime) > typingState.undoFrequency)) {
 	            typingState.undos.Push(initText);

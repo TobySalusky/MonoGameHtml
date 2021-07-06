@@ -11,13 +11,14 @@ namespace MonoGameHtml {
 
 		internal static string fontPath, cachePath;
 
-		internal static bool logOutput;
+		internal static LoggerSettings loggerSettings;
 
-		public static void Initialize(Game game, string fontPath = null, bool logOutput = false, bool cache = true, string cachePath = null) {
+		public static void Initialize(Game game, string fontPath = null, 
+			bool cache = true, string cachePath = null, LoggerSettings loggerSettings = null) {
 
 			HtmlMain.game = game;
 
-			HtmlMain.logOutput = logOutput;
+			HtmlMain.loggerSettings = loggerSettings ?? new LoggerSettings();
 			graphicsDevice = game.GraphicsDevice;
 
 			HtmlMain.fontPath = FileUtil.correctDirPath(fontPath);
