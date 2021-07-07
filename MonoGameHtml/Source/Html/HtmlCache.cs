@@ -50,6 +50,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGameHtml;
 
 namespace MonoGameHtmlGeneratedCode {{

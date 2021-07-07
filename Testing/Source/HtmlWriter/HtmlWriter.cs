@@ -20,8 +20,9 @@ const App = () => {
     return (
         <body flexDirection='row'>
         	<FrameCounter/>
-        	<div flex={1} backgroundColor='gray'>
-				<TextBox multiline={true} width='49%' height='90%'
+        	<div flex={1} backgroundColor='#34353D'>
+				<TextBox multiline={true} width='49%' height='90%' 
+				color='white' backgroundColor='#454752' borderColor='#FFFFC1' fontSize={30}
 				text={string: text} setText={(string str)=^text=str}
 				diff={(Func^^string,string,string^)((string oldStr, string newStr)=^{
 					updateCount++;
@@ -32,21 +33,23 @@ const App = () => {
 					
 						updating = true;
 						Task.Run(()=^{
-						    $updateHtml(text).ContinueWith(task =^ {
-						    	updating = false;
-								currUpdateCount = updateCount;
-						    	
-								setNode(null); //TODO: make it so this is not required!!!
-								setException(task.Result.Item2);
-								setNode(task.Result.Item1);
+						    $updateHtml(updateCount, text).ContinueWith(task =^ {
+						    	int thisUpdateCount = task.Result.Item3;
+						    	if (thisUpdateCount ^ currUpdateCount) {
+						    		updating = false;
+									currUpdateCount = thisUpdateCount;
+						    		
+									setNode(null); //TODO: make it so this is not required!!!
+									setException(task.Result.Item2);
+									setNode(task.Result.Item1);
+						    	}
 							});
 						});
 						
 					}
 				}}
-				color='red' fontSize={30}
 				/>
-				<p>{updating ? $loadingText(@t) : ''}</p>
+				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
 			</div>
 			<div flex={1} backgroundColor='white'>
 				<html/>
@@ -66,17 +69,11 @@ const App = () => {
             const string html = "<App/>";
             StatePack pack = null;
 
-            Func<string, Task<(HtmlNode, Exception)>> updateHtml = async (string text) => {
+            Func<int, string, Task<(HtmlNode, Exception, int)>> updateHtml = async (int updateCount, string text) => {
 	            HtmlNode node = null;
 	            Exception e = null;
-
+				
 	            try {
-		            Task.Run(() => {
-			            Task.Delay(1000).ContinueWith(task => {
-				            //Logger.log("Ran out of time");
-				            throw new Exception();
-			            });
-		            });
 		            node = await HtmlProcessor.GenHtml(text, pack, macros: Macros.create(
 			            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
 			            "none", "<span/>"
@@ -86,7 +83,7 @@ const App = () => {
 		            Logger.log(e.GetType().Name, e.Message);
 	            }
 
-	            return (node, e);
+	            return (node, e, updateCount);
             };
 
             static string loadingText(float time) {
@@ -99,7 +96,7 @@ const App = () => {
             }
 
             pack = StatePack.Create(
-                "updateHtml", (Func<string, Task<(HtmlNode, Exception)>>) updateHtml,
+                "updateHtml", updateHtml,
                 "loadingText", (Func<float, string>) loadingText
             );
 

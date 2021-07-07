@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteBatch = Microsoft.Xna.Framework.Graphics.SpriteBatch;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace MonoGameHtml {
 	public class HtmlNode {
@@ -77,6 +78,7 @@ namespace MonoGameHtml {
 		// FUNCTIONS
 		public bool hover;
 		public Action onPress, onPressRemove, onMouseEnter, onMouseExit, onMouseMove, onMouseDrag, onHover, onTick, onMouseDown, onMouseUp; // TODO: add MouseInfo as parameter
+		public Action<SpriteBatch> renderAdd;
 		// mouse input
 		public bool clicked;
 		
@@ -525,6 +527,7 @@ namespace MonoGameHtml {
 					}
 				}
 
+				if (props.ContainsKey("renderAdd")) renderAdd = prop<Action<SpriteBatch>>("renderAdd");
 				if (props.ContainsKey("onPress")) onPress = prop<Action>("onPress");
 				if (props.ContainsKey("onPressRemove")) onPressRemove = prop<Action>("onPressRemove");
 				if (props.ContainsKey("onMouseMove")) onMouseMove = prop<Action>("onMouseMove");
@@ -1107,6 +1110,8 @@ namespace MonoGameHtml {
 			tryRenderText(spriteBatch);
 
 			tryRenderImage(spriteBatch);
+
+			renderAdd?.Invoke(spriteBatch);
 		}
 
 		public void render(SpriteBatch spriteBatch) { 

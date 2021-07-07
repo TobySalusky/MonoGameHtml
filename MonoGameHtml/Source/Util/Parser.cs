@@ -9,7 +9,7 @@ namespace MonoGameHtml {
 			int nextStart = 0;
 			
 			void next(int i) { 
-				list.Add(str.sub(nextStart, i));
+				list.Add(str.Sub(nextStart, i));
 				nextStart = i+1;
 			}
 

@@ -63,7 +63,7 @@ namespace MonoGameHtml {
 			var bracketPairs = DelimPair.genPairs(fileContents, DelimPair.CurlyBrackets);
 
 			for (int i = 0; i < bracketPairs.Count; i++) {
-				string identifiersStr = fileContents.sub((i == 0) ? 0 : bracketPairs[i - 1].AfterClose, bracketPairs[i].openIndex);
+				string identifiersStr = fileContents.Sub((i == 0) ? 0 : bracketPairs[i - 1].AfterClose, bracketPairs[i].openIndex);
 				string css = bracketPairs[i].contents(fileContents).Trim();
 
 				var identifiers = identifiersStr.Split(",").Select(str => str.Trim());

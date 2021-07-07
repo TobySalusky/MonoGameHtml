@@ -12,7 +12,7 @@
 				var bracketPairs = DelimPair.genPairs(componentFile, DelimPair.CurlyBrackets).Where(pair => pair.nestCount == 0).ToArray();
 
 				for (int i = 0; i < bracketPairs.Length; i++) {
-					string component = componentFile.sub((i == 0) ? 0 : bracketPairs[i - 1].AfterClose, bracketPairs[i].AfterClose);
+					string component = componentFile.Sub((i == 0) ? 0 : bracketPairs[i - 1].AfterClose, bracketPairs[i].AfterClose);
 					componentStrings.Add(component);
 				}
 			}
@@ -72,14 +72,17 @@ const Toggle = (
 }
 ", TextInput = @"
 const TextInput = (
-	Func<string> text, Action<string> setText, Func<bool> active, bool multiline = false, Func<string,string,string> diff
+	Func<string> text, Action<string> setText, Func<bool> active, bool multiline = false, Func<string,string,string> diff,
+	Action<TypingState> useTypingState
 ) => {
 
 	TypingState typingState = new TypingState {
 		multiline = multiline,
 		diff = diff,
-		undoFrequency = 1F
+		undoFrequency = 1F,
 	};
+
+	useTypingState?.Invoke(typingState);
 	
 	return (
 		<div onTick={()=^{
@@ -98,7 +101,7 @@ const TextInput = (
 }
 ", TextBox = @"
 const TextBox = (
-	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false
+	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false, bool cursorVisible = true
 ) => {
 
 	if (text == null && setText == null) {
@@ -109,13 +112,29 @@ const TextBox = (
 	
 	bool active = false;
 	HtmlNode node = null;
+	TypingState typingState = null;
 
 	return (
-		<div ref={@setRef(node)} class='TextBox' props={props}
+		<div ref={(HtmlNode el)=^{
+			node = el;
+			typingState.node = el;
+		}} class='TextBox' props={props}
 			onMouseDown={()=^active=node.clicked}
 			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', '   ')}
+			renderAdd={(SpriteBatch spriteBatch)=^{
+				if (!cursorVisible || !active || ((@t - typingState.lastEditOrMove ^ 1) && ((@t % 1F) ^^ 0.5F))) return;
+				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
+			}}
+			onPress={()=^{
+				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
+			}}
+			onMouseDrag={()=^{
+				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
+			}}
 		>
-			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}/>
+			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}
+				useTypingState={@set(TypingState, typingState)}
+			/>
 		</div>
 	);
 }

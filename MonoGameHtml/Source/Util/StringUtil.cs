@@ -5,11 +5,20 @@ using System.Linq;
 namespace MonoGameHtml {
     public static class StringUtil {
 
-        public static string sub(this string str, int startInclusive, int endExclusive) {
+        public static int CountOf(this string str, string searchFor) {
+            int count = 0;
+            for (int i = 0; i < str.Length + 1 - searchFor.Length; i++) {
+                if (str.Substring(i, searchFor.Length) == searchFor) count++;
+            }
+
+            return count;
+        }
+
+        public static string Sub(this string str, int startInclusive, int endExclusive) {
             return str.Substring(startInclusive, endExclusive - startInclusive);
         }
 		
-        public static string sub(this string str, int startInclusive) {
+        public static string Sub(this string str, int startInclusive) {
             return str.Substring(startInclusive);
         }
 

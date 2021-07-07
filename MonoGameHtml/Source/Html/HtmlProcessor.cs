@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using MonoGameHtml.ColorConsole;
+using MonoGameHtml.Exceptions;
 
 namespace MonoGameHtml {
 	
@@ -38,7 +39,7 @@ namespace MonoGameHtml {
 					childNodesIndices.Add(pair.openIndex);
 				} else if (pair.nestCount == 0) {
 					mainStartIndex = carrotDict[pair.openIndex].closeIndex + 1;
-					mainInnerContents = node.sub(mainStartIndex, pair.closeIndex);
+					mainInnerContents = node.Sub(mainStartIndex, pair.closeIndex);
 				}
 			}
 			childNodesIndices = childNodesIndices.Select(i => i - mainStartIndex).ToList();
@@ -276,7 +277,7 @@ namespace MonoGameHtml {
 
 			const string before = "const ";
 			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
-			string tag = tagEtc.sub(0, tagEtc.minValidIndex(" ", "="));
+			string tag = tagEtc.Sub(0, tagEtc.minValidIndex(" ", "="));
 
 			var customPropDefinitions = code.searchPairs(DelimPair.Parens, code.indexOf("(")).contents(code).splitUnNestedCommas()
 				.Select(str => str.Trim());
@@ -329,7 +330,7 @@ namespace MonoGameHtml {
 		private static string DefineComponent(string code) {
 			string before = "const "; // TODO: EXTRACT TO FUNCTION (done twice!)
 			string tagEtc = code.Substring(code.indexOf(before) + before.Length);
-			string tag = tagEtc.sub(0, tagEtc.minValidIndex(" ", "="));
+			string tag = tagEtc.Sub(0, tagEtc.minValidIndex(" ", "="));
 
 			// contents of first parenthesis (define the props you want to grab)
 			string extraPropsString = "";
@@ -350,7 +351,7 @@ namespace MonoGameHtml {
 			
 			string stateStr = "";
 			state: {
-				string stateDefinitions = code.sub(code.indexOf("{") + 1, code.indexOf(before));
+				string stateDefinitions = code.Sub(code.indexOf("{") + 1, code.indexOf(before));
 				string[] lines = stateDefinitions.Split(new [] { '\r', '\n' });
 				foreach (string str in lines) {
 					string line = str.Trim();
@@ -415,7 +416,7 @@ Action<{type}> {varNames[1]} = (___val) => {{
 							if (chars[i] != ' ') nameEnd = i;
 						}
 						else if (chars[i] == ' ') {
-							arrName = stateStr.sub(i + 1, nameEnd + 1);
+							arrName = stateStr.Sub(i + 1, nameEnd + 1);
 							break;
 						}
 					}
@@ -451,55 +452,61 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 		}
 
 		private static string ApplyMacros(string str, Dictionary<string, string> macros) { // TODO: allow recursive macros!
-			
-			foreach (string macroID in macros.Keys) {
-				if (macroID.Contains("(")) {
 
-					int openInd = macroID.indexOf("(");
-					string paramString = macroID.Substring(openInd + 1, macroID.lastIndexOf(")") - openInd - 1);
+			try {
+				foreach (string macroID in macros.Keys) {
+					if (macroID.Contains("(")) {
 
-					var paramNames = paramString.Split(",").Select(str => str.Trim()).ToArray();
+						int openInd = macroID.indexOf("(");
+						string paramString = macroID.Substring(openInd + 1, macroID.lastIndexOf(")") - openInd - 1);
 
-					string find = "@" + macroID.Substring(0, openInd) + "(";
-					int currIndex = str.indexOf(find);
-					while (currIndex != -1) {
-						var pair = DelimPair.genPairDict(str, DelimPair.Parens)[currIndex+macroID.Substring(0, openInd).Length+1];
+						var paramNames = paramString.Split(",").Select(str => str.Trim()).ToArray();
 
-						string content = pair.contents(str);
-						var valStrs = content.Split(",").Select(str => str.Trim()).ToArray();
+						string find = "@" + macroID.Substring(0, openInd) + "(";
+						int currIndex = str.indexOf(find);
+						while (currIndex != -1) {
+							var pair = DelimPair.genPairDict(str, DelimPair.Parens)[currIndex+macroID.Substring(0, openInd).Length+1];
+
+							string content = pair.contents(str);
+							var valStrs = content.Split(",").Select(str => str.Trim()).ToArray();
 						
-						string macroStr = macros[macroID];
-						for (int i = 0; i < paramNames.Length; i++) {
-							macroStr = macroStr.Replace($"$${paramNames[i]}", valStrs[i]);
+							string macroStr = macros[macroID];
+							for (int i = 0; i < paramNames.Length; i++) {
+								macroStr = macroStr.Replace($"$${paramNames[i]}", valStrs[i]);
+							}
+
+							str = str.Substring(0, currIndex) + macroStr + str.Substring(pair.closeIndex + 1);
+
+							currIndex = str.indexOf(find);
 						}
-
-						str = str.Substring(0, currIndex) + macroStr + str.Substring(pair.closeIndex + 1);
-
-						currIndex = str.indexOf(find);
-					}
 							
-				} else {
-					str = str.Replace($"@{macroID}", macros[macroID]);
+					} else {
+						str = str.Replace($"@{macroID}", macros[macroID]);
+					}
 				}
+			} catch (Exception) {
+				throw new MacroException("Invalid macro usage.");
 			}
-
+			
 			return str;
 		}
 
 		private static string RemoveOpenClosed(string code) {
-			while (code.Contains("/>")) {
+			int endCount = code.CountOf("/>");
+			for (int i = 0; i < endCount; i++) {
 				int endIndex = code.indexOf("/>");
 				DelimPair pair = DelimPair.genPairDict(code, DelimPair.Carrots)[endIndex + 1];
 				int startIndex = pair.openIndex;
 
 				string str = pair.whole(code);
-				string tag = (str.Contains(" ")) ? str.sub(1, str.indexOf(" ")) :  str.sub(1, str.indexOf("/"));
+				string tag = (str.Contains(" ")) ? str.Sub(1, str.indexOf(" ")) :  str.Sub(1, str.indexOf("/"));
 
 				str = str.Substring(0, str.Length - 2) + $"></{tag}>";
 
 				code = code.Substring(0, startIndex) + str + code.Substring(endIndex + 2);
 			}
 
+			if (code.Contains("/>")) throw new InvalidHtmlStructureException("\"/>\" lacked a tag.");
 			return code;
 		}
 
@@ -539,6 +546,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MonoGameHtml;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 /*IMPORTS_DONE*/
 ";
 			if (components != null) {

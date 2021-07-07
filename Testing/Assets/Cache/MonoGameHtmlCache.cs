@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGameHtml;
 
 namespace MonoGameHtmlGeneratedCode {
@@ -23,8 +24,9 @@ const App = () => {
     return (
         <body flexDirection='row'>
         	<FrameCounter/>
-        	<div flex={1} backgroundColor='gray'>
-				<TextBox multiline={true} width='49%' height='90%'
+        	<div flex={1} backgroundColor='#34353D'>
+				<TextBox multiline={true} width='49%' height='90%' 
+				color='white' backgroundColor='#454752' borderColor='#FFFFC1' fontSize={30}
 				text={string: text} setText={(string str)=^text=str}
 				diff={(Func^^string,string,string^)((string oldStr, string newStr)=^{
 					updateCount++;
@@ -35,21 +37,23 @@ const App = () => {
 					
 						updating = true;
 						Task.Run(()=^{
-						    $updateHtml(text).ContinueWith(task =^ {
-						    	updating = false;
-								currUpdateCount = updateCount;
-						    	
-								setNode(null); //TODO: make it so this is not required!!!
-								setException(task.Result.Item2);
-								setNode(task.Result.Item1);
+						    $updateHtml(updateCount, text).ContinueWith(task =^ {
+						    	int thisUpdateCount = task.Result.Item3;
+						    	if (thisUpdateCount ^ currUpdateCount) {
+						    		updating = false;
+									currUpdateCount = thisUpdateCount;
+						    		
+									setNode(null); //TODO: make it so this is not required!!!
+									setException(task.Result.Item2);
+									setNode(task.Result.Item1);
+						    	}
 							});
 						});
 						
 					}
 				}}
-				color='red' fontSize={30}
 				/>
-				<p>{updating ? $loadingText(@t) : ''}</p>
+				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
 			</div>
 			<div flex={1} backgroundColor='white'>
 				<html/>
@@ -66,14 +70,17 @@ const App = () => {
 }", @"
 
 const TextInput = (
-	Func<string> text, Action<string> setText, Func<bool> active, bool multiline = false, Func<string,string,string> diff
+	Func<string> text, Action<string> setText, Func<bool> active, bool multiline = false, Func<string,string,string> diff,
+	Action<TypingState> useTypingState
 ) => {
 
 	TypingState typingState = new TypingState {
 		multiline = multiline,
 		diff = diff,
-		undoFrequency = 1F
+		undoFrequency = 1F,
 	};
+
+	useTypingState?.Invoke(typingState);
 	
 	return (
 		<div onTick={()=^{
@@ -93,7 +100,7 @@ const TextInput = (
 
 
 const TextBox = (
-	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false
+	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false, bool cursorVisible = true
 ) => {
 
 	if (text == null && setText == null) {
@@ -104,13 +111,29 @@ const TextBox = (
 	
 	bool active = false;
 	HtmlNode node = null;
+	TypingState typingState = null;
 
 	return (
-		<div ref={@setRef(node)} class='TextBox' props={props}
+		<div ref={(HtmlNode el)=^{
+			node = el;
+			typingState.node = el;
+		}} class='TextBox' props={props}
 			onMouseDown={()=^active=node.clicked}
 			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', '   ')}
+			renderAdd={(SpriteBatch spriteBatch)=^{
+				if (!cursorVisible || !active || ((@t - typingState.lastEditOrMove ^ 1) && ((@t % 1F) ^^ 0.5F))) return;
+				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
+			}}
+			onPress={()=^{
+				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
+			}}
+			onMouseDrag={()=^{
+				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
+			}}
 		>
-			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}/>
+			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}
+				useTypingState={@set(TypingState, typingState)}
+			/>
 		</div>
 	);
 }", @"
@@ -135,7 +158,7 @@ const FrameCounter = (float updateTime = 1F) => {
 			}
 		}}/>
 	);
-}", @"time", @"t", @"deltaTime", @"dt", @"mp", @"r", @"setRef(varName)", @"timePassed", @"timePassed", @"deltaTime", @"deltaTime", @"mousePos", @"random()", @"(HtmlNode ___refNode)=^$$varName=___refNode" };
+}", @"time", @"t", @"deltaTime", @"dt", @"mp", @"r", @"setRef(varName)", @"set(type, varName)", @"timePassed", @"timePassed", @"deltaTime", @"deltaTime", @"mousePos", @"random()", @"(HtmlNode ___refNode)=^$$varName=___refNode", @"($$type ___setTemp)=^$$varName=___setTemp" };
 }
 
 protected override HtmlNode cachedNode() {
@@ -160,7 +183,7 @@ Action<Exception> setException = (___val) => {
 	___node.stateChangeDown();
 };
 
-	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, children: nodeArr(CreateFrameCounter("FrameCounter", textContent: ""), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="gray"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["multiline"]=(true), ["width"]="49%", ["height"]="90%", ["text"]=((Func<string>)(() => (text))), ["setText"]=((Action<string>)((string str)=>text=str)), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
+	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, children: nodeArr(CreateFrameCounter("FrameCounter", textContent: ""), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["multiline"]=(true), ["width"]="49%", ["height"]="90%", ["color"]="white", ["backgroundColor"]="#454752", ["borderColor"]="#FFFFC1", ["fontSize"]=(30), ["text"]=((Func<string>)(() => (text))), ["setText"]=((Action<string>)((string str)=>text=str)), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return newStr;
 				})), ["onTick"]=((Action)(()=>{
@@ -168,21 +191,24 @@ Action<Exception> setException = (___val) => {
 					
 						updating = true;
 						Task.Run(()=>{
-						    ((System.Func<System.String,System.Threading.Tasks.Task<System.ValueTuple<MonoGameHtml.HtmlNode,System.Exception>>>)___vars["updateHtml"])(text).ContinueWith(task => {
-						    	updating = false;
-								currUpdateCount = updateCount;
-						    	
-								setNode(null); //TODO: make it so this is not required!!!
-								setException(task.Result.Item2);
-								setNode(task.Result.Item1);
+						    ((System.Func<System.Int32,System.String,System.Threading.Tasks.Task<System.ValueTuple<MonoGameHtml.HtmlNode,System.Exception,System.Int32>>>)___vars["updateHtml"])(updateCount, text).ContinueWith(task => {
+						    	int thisUpdateCount = task.Result.Item3;
+						    	if (thisUpdateCount > currUpdateCount) {
+						    		updating = false;
+									currUpdateCount = thisUpdateCount;
+						    		
+									setNode(null); //TODO: make it so this is not required!!!
+									setException(task.Result.Item2);
+									setNode(task.Result.Item1);
+						    	}
 							});
 						});
 						
 					}
-				})), ["color"]="red", ["fontSize"]=(30)}, textContent: "", multiline: (true), text: ((Func<string>)(() => (text))), setText: ((Action<string>)((string str)=>text=str)), diff: ((Func<string,string,string>)((string oldStr, string newStr)=>{
+				}))}, textContent: "", multiline: (true), text: ((Func<string>)(() => (text))), setText: ((Action<string>)((string str)=>text=str)), diff: ((Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return newStr;
-				}))), newNode("p", textContent: (Func<string>)(()=> ""+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", textContent: ""), (node ?? 
+				}))), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", textContent: ""), (node ?? 
 					(
 						(exception == null || text == "") ? 
 							newNode("p", textContent: "Nothing to display...") : 
@@ -192,15 +218,16 @@ Action<Exception> setException = (___val) => {
 	return ___node;
 }
 
-HtmlNode CreateTextInput(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? text = null, Action<string>? setText = null, Func<bool>? active = null, bool multiline = false, Func<string,string,string>? diff = null) {
+HtmlNode CreateTextInput(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? text = null, Action<string>? setText = null, Func<bool>? active = null, bool multiline = false, Func<string,string,string>? diff = null, Action<TypingState>? useTypingState = null) {
 	
 	HtmlNode ___node = null;
 	
 TypingState typingState = new TypingState {
 multiline = multiline,
 diff = diff,
-undoFrequency = 1F
+undoFrequency = 1F,
 };
+useTypingState?.Invoke(typingState);
 	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=((Action)(()=>{
 			bool isActive = (active != null) ? active.Invoke() : true;
 			if (isActive) {
@@ -216,7 +243,7 @@ undoFrequency = 1F
 	return ___node;
 }
 
-HtmlNode CreateTextBox(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? text = null, Action<string>? setText = null, Func<string,string,string>? diff = null, bool multiline = false) {
+HtmlNode CreateTextBox(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? text = null, Action<string>? setText = null, Func<string,string,string>? diff = null, bool multiline = false, bool cursorVisible = true) {
 	
 	HtmlNode ___node = null;
 	
@@ -227,7 +254,18 @@ setText = newStr => str = newStr;
 }
 bool active = false;
 HtmlNode node = null;
-	___node = newNode("div", props: new Dictionary<string, object> {["ref"]=((Action<HtmlNode>)((HtmlNode ___refNode)=>node=___refNode)), ["class"]="TextBox", ["props"]=(props), ["onMouseDown"]=((Action)(()=>active=node.clicked)), ["-borderWidth"]=((Func<int>)(() => ((active) ? 1 : 0))), ["-textContent"]=((Func<string>)(() => (text().Replace("\t", "   "))))}, children: nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=(text), ["setText"]=(setText), ["diff"]=(diff), ["active"]=((Func<bool>)(() => (active))), ["multiline"]=(multiline)}, textContent: "", text: (text), setText: (setText), diff: (diff), active: ((Func<bool>)(() => (active))), multiline: (multiline))));
+TypingState typingState = null;
+	___node = newNode("div", props: new Dictionary<string, object> {["ref"]=((Action<HtmlNode>)((HtmlNode el)=>{
+			node = el;
+			typingState.node = el;
+		})), ["class"]="TextBox", ["props"]=(props), ["onMouseDown"]=((Action)(()=>active=node.clicked)), ["-borderWidth"]=((Func<int>)(() => ((active) ? 1 : 0))), ["-textContent"]=((Func<string>)(() => (text().Replace("\t", "   ")))), ["renderAdd"]=((Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{
+				if (!cursorVisible || !active || ((timePassed - typingState.lastEditOrMove > 1) && ((timePassed % 1F) < 0.5F))) return;
+				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
+			})), ["onPress"]=((Action)(()=>{
+				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
+			})), ["onMouseDrag"]=((Action)(()=>{
+				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
+			}))}, children: nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=(text), ["setText"]=(setText), ["diff"]=(diff), ["active"]=((Func<bool>)(() => (active))), ["multiline"]=(multiline), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp))}, textContent: "", text: (text), setText: (setText), diff: (diff), active: ((Func<bool>)(() => (active))), multiline: (multiline), useTypingState: ((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)))));
 	return ___node;
 }
 

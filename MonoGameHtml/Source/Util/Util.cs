@@ -11,6 +11,10 @@ namespace MonoGameHtml {
 
         private static readonly Random rand = new Random();
 
+        public static float FindHeight(this SpriteFont font) {
+            return font.MeasureString("TEST").Y;
+        }
+
         public static int minValidIndex(this string str, string a, string b) {
             int indexA = str.IndexOf(a);
             int indexB = str.IndexOf(b);

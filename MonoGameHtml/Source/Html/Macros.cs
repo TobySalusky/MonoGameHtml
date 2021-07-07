@@ -11,7 +11,8 @@ namespace MonoGameHtml {
 			"dt", "deltaTime",
 			"mp", "mousePos",
 			"r", "random()",
-			"setRef(varName)", "(HtmlNode ___refNode)=^$$varName=___refNode"
+			"setRef(varName)", "(HtmlNode ___refNode)=^$$varName=___refNode",
+			"set(type, varName)", "($$type ___setTemp)=^$$varName=___setTemp",
 		};
 		
 		public static Dictionary<string, string> create(params string[] macroList) {
