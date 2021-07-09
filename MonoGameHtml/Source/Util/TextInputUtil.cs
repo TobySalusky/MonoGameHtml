@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework.Input;
 namespace MonoGameHtml {
 	public static class TextInputUtil {
 
+		public static string spacesPerTab = "  ";
+		
 		public static readonly Dictionary<Keys, (string, string)> symbolTable = new Dictionary<Keys, (string, string)> {
 			[Keys.OemPeriod] = (">", "."),
 			[Keys.OemComma] = ("<", ","),
@@ -27,10 +29,6 @@ namespace MonoGameHtml {
 		public static readonly char[] shiftNum = { 
 			')', '!', '@', '#', '$', '%', '^', '&', '*', '('
 		};
-
-		public static void enterAction() { 
-			Logger.log("Entered!");
-		}
 
 		public static string getUpdatedText(KeyInfo keys, string text, TypingState typingState) {
 
@@ -125,7 +123,6 @@ namespace MonoGameHtml {
 			            }
 		            }
 	            } else if (key == Keys.Enter) { // enter
-		            enterAction();
 		            if (typingState.multiline) insertChar('\n');
 	            } else if (key == Keys.Tab) {
 		            insertChar('\t');
@@ -167,7 +164,7 @@ namespace MonoGameHtml {
 		public static Vector2 cursorPositionAtIndex(HtmlNode node, TypingState typingState, string realText, int cursorIndex) {
 			SpriteFont font = node.font;
 			float height = font.MeasureString("TEST").Y;
-			string text = node.textContent[..Math.Min(node.textContent.Length, typingState.findDisplayCursorIndex(realText))];
+			string text = node.textContent[..Math.Min(node.textContent.Length, typingState.findDisplayCursorIndex(realText, cursorIndex))];
 			float x = node.UnpaddedX + font.MeasureString(text[Math.Max(0, text.lastIndexOf("\n"))..]).X;
 			float y = node.UnpaddedY + Math.Max(0, font.MeasureString(text).Y - height);
 			return new Vector2(x, y);
@@ -227,7 +224,7 @@ namespace MonoGameHtml {
 		public readonly Dictionary<Keys, float> keyDownTime = new Dictionary<Keys, float>();
 		
 		public int findDisplayCursorIndex(string text, int index) {
-			return index + 2 * text[..index].CountOf("\t");
+			return index + (TextInputUtil.spacesPerTab.Length - 1) * text[..index].CountOf("\t");
 		}
 
 		public int findDisplayCursorIndex(string text) {

@@ -58,7 +58,8 @@ namespace Testing
                     formatColoredCS = true,
                 });
             
-            CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
+            CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"),
+                Path.Join(cssPath, "IDE.css"));
             
             //SetUpHtml();
             //Thesaurus.Init(this);

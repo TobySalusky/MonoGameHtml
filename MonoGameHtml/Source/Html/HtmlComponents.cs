@@ -101,7 +101,8 @@ const TextInput = (
 }
 ", TextBox = @"
 const TextBox = (
-	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false, bool cursorVisible = true
+	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false, bool cursorVisible = true,
+	Action<TypingState> useTypingState
 ) => {
 
 	if (text == null && setText == null) {
@@ -120,7 +121,7 @@ const TextBox = (
 			typingState.node = el;
 		}} class='TextBox' props={props}
 			onMouseDown={()=^active=node.clicked}
-			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', '   ')}
+			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', TextInputUtil.spacesPerTab)}
 			renderAdd={(SpriteBatch spriteBatch)=^{
 				if (!cursorVisible || !active || ((@t - typingState.lastEditOrMove ^ 1) && ((@t % 1F) ^^ 0.5F))) return;
 				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
@@ -133,7 +134,11 @@ const TextBox = (
 			}}
 		>
 			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}
-				useTypingState={@set(TypingState, typingState)}
+				useTypingState={(TypingState state)=^{
+					typingState = state;
+					useTypingState?.Invoke(typingState);
+				}}
+				
 			/>
 		</div>
 	);

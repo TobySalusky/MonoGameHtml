@@ -5,7 +5,7 @@
  using Color = Microsoft.Xna.Framework.Color;
 
  namespace MonoGameHtml {
-     internal class Textures {
+     public class Textures {
 
          public static Texture2D rect, invis, circle;
 

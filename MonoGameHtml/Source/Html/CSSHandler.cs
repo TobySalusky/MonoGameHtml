@@ -93,7 +93,7 @@ namespace MonoGameHtml {
 			}
 		}
 
-		internal string camelCase(string identifier) {
+		private string camelCase(string identifier) {
 			static string upperFirstChar(string str) {
 				return str.Substring(0, 1).ToUpper() + str.Substring(1).ToLower();
 			}
@@ -104,11 +104,16 @@ namespace MonoGameHtml {
 			return string.Join("", segments);
 		}
 
-		internal object parseValue(string value) {
+		private object parseValue(string value) {
 			
 			if (int.TryParse(value, out int intVal)) {
 				return intVal;
 			}
+
+			if (bool.TryParse(value, out bool boolVal)) {
+				return boolVal;
+			}
+
 			if (value.EndsWith("px")) { // processes pixel values ending with px as integers
 				bool isInt = int.TryParse(value.Substring(0, value.indexOf("px")), out int pixelValue);
 				if (isInt) return pixelValue;

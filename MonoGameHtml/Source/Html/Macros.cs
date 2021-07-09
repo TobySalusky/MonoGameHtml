@@ -13,6 +13,9 @@ namespace MonoGameHtml {
 			"r", "random()",
 			"setRef(varName)", "(HtmlNode ___refNode)=^$$varName=___refNode",
 			"set(type, varName)", "($$type ___setTemp)=^$$varName=___setTemp",
+			"fill", "dimens='100%'",
+			"bg(str)", "backgroundColor='$$str'",
+			"col(str)", "color='$$str'",
 		};
 		
 		public static Dictionary<string, string> create(params string[] macroList) {

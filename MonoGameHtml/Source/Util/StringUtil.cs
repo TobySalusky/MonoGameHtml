@@ -58,7 +58,7 @@ namespace MonoGameHtml {
         public static List<int> allIndices(this string str, string search) {
             return Util.allIndices(str, search);
         }
-
+        
         public static DelimPair searchPairs(this string str, string open, string close, int searchIndex) {
             return DelimPair.genPairDict(str, open, close)[searchIndex];
         }

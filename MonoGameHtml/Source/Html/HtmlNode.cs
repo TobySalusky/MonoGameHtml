@@ -13,6 +13,7 @@ namespace MonoGameHtml {
 		// Primary info
 		public string tag;
 		public string textContent;
+		public bool initialized;
 
 		public HtmlNode parent;
 		public HtmlNode[] children;
@@ -157,7 +158,7 @@ namespace MonoGameHtml {
 
 				if (children.Length == 0) {
 					children = null;
-					if (DynamicWidth) {
+					if (DynamicWidth) { // TODO: this seems like an error
 						width = 0;
 						onWidthChange();
 					}
@@ -173,7 +174,7 @@ namespace MonoGameHtml {
 				makeParentOfChildren();
 				
 				foreach (HtmlNode child in children) {
-					child.topDownInit();
+					if (!child.initialized) child.topDownInit();
 				}
 				findBase().bottomUpInit();
 				
@@ -226,6 +227,7 @@ namespace MonoGameHtml {
 			if (DynamicWidth) width = (int) textDimens.X;
 			if (DynamicHeight) height = (int) textDimens.Y;
 
+			//if (DynamicWidth || DynamicHeight) onResize();// TODO: FIGURE OUT WHAT THE HECK IS GOING ON
 			onResize();
 		}
 
@@ -652,6 +654,8 @@ namespace MonoGameHtml {
 				}
 			} finishProps: { }
 
+			initialized = true;
+			
 			if (children != null) {
 				foreach (HtmlNode child in children) {
 					child.topDownInit();

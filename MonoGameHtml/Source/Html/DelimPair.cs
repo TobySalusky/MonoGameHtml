@@ -23,14 +23,6 @@ namespace MonoGameHtml {
 			this.nestCount = nestCount;
 		}
 
-		public static bool nestsAll(Dictionary<(string, string), int> dict, int target) {
-			foreach (var key in dict.Keys) {
-				if (dict[key] != target) return false;
-			}
-
-			return true;
-		}
-
 		public static bool allNestOf(int targetNest, Dictionary<(string, string), int> dict) {
 			return dict.Values.All(val => val == targetNest);
 		}
