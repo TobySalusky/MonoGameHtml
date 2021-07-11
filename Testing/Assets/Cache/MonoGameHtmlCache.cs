@@ -39,18 +39,21 @@ const App = () => {
 	
 	TypingState typingState = null;
 	
-	string path = '/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/GameMain.cs';
+	string path = '/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWriter/HtmlWriter.cs';
+
+	string correctText() {
+		return text.Replace('\t', TextInputUtil.spacesPerTab);
+	}
 
     return (
         <body flexDirection='row'>
         	<FrameCounter/>
 			
-			<SearchBar path={path}/>
+			<SearchBar path={path} setText={setText}/>
 			
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'
-				color={Color.Transparent}
 				multiline={true}
 				useTypingState={@set(TypingState, typingState)}
 				text={string: text} setText={setText}
@@ -78,9 +81,6 @@ const App = () => {
 					}
 				}}
 				/>
-				
-				
-				
 				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
 				<pseudo 
 				renderAdd={(SpriteBatch spriteBatch)=^{ 
@@ -234,8 +234,11 @@ Action<Exception> setException = (___val) => {
 };
 
 TypingState typingState = null;
-string path = "/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/GameMain.cs";
-	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, children: nodeArr(CreateFrameCounter("FrameCounter", textContent: ""), CreateSearchBar("SearchBar", props: new Dictionary<string, object> {["path"]=(path)}, textContent: "", path: (path)), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["color"]=(Color.Transparent), ["multiline"]=(true), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), ["text"]=((Func<string>)(() => (text))), ["setText"]=(setText), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
+string path = "/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWriter/HtmlWriter.cs";
+string correctText() {
+return text.Replace("\t", TextInputUtil.spacesPerTab);
+}
+	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, children: nodeArr(CreateFrameCounter("FrameCounter", textContent: ""), CreateSearchBar("SearchBar", props: new Dictionary<string, object> {["path"]=(path), ["setText"]=(setText)}, textContent: "", path: (path), setText: (setText)), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["multiline"]=(true), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), ["text"]=((Func<string>)(() => (text))), ["setText"]=(setText), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState);
 				})), ["onTick"]=((Action)(()=>{

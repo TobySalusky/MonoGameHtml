@@ -5,6 +5,23 @@ using System.Linq;
 namespace MonoGameHtml {
     public static class StringUtil {
 
+        public static bool IsWhiteSpace(this char c) {
+            return (c == ' ' || c == '\n' || c == '\t'); // TODO: this isn't exhaustive! i think.
+        }
+
+        public static bool IsLetter(this char c) {
+            return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
+        }
+        
+        public static bool IsAlphanumeric(this char c) {
+            return (c >= '0' && c <= '9') || c.IsLetter();
+        }
+
+        public static bool IsValidReferenceNameCharacter(this char c) {
+            return c == '_' || c.IsAlphanumeric();
+        }
+
+
         public static int CountOf(this string str, string searchFor) {
             int count = 0;
             for (int i = 0; i < str.Length + 1 - searchFor.Length; i++) {

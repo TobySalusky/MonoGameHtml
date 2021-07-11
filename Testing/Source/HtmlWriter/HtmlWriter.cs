@@ -11,8 +11,7 @@ namespace Testing {
     public static class HtmlWriter {
 	    
         public static async void Init(GameMain gameMain) {
-	        
-            const string componentDefs = @"
+	        const string componentDefs = @"
 const SearchBar = (Action<string> setText, string path = '') => {
 
 	List<(string stringName, string contents)> htmlSearchList = $searchHtml(path);
@@ -40,18 +39,21 @@ const App = () => {
 	
 	TypingState typingState = null;
 	
-	string path = '/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/GameMain.cs';
+	string path = '/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWriter/HtmlWriter.cs';
+
+	string correctText() {
+		return text.Replace('\t', TextInputUtil.spacesPerTab);
+	}
 
     return (
         <body flexDirection='row'>
         	<FrameCounter/>
 			
-			<SearchBar path={path}/>
+			<SearchBar path={path} setText={setText}/>
 			
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'
-				color={Color.Transparent}
 				multiline={true}
 				useTypingState={@set(TypingState, typingState)}
 				text={string: text} setText={setText}
@@ -107,7 +109,7 @@ const App = () => {
             Func<int, string, Task<(HtmlNode, Exception, int)>> updateHtml = async (int updateCount, string text) => {
 	            HtmlNode node = null;
 	            Exception e = null;
-				
+	            
 	            try {
 		            node = await HtmlProcessor.GenHtml(text, pack, 
 			            macros: Macros.create(

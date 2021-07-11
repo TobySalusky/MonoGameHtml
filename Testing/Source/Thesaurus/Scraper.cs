@@ -26,7 +26,7 @@ namespace Testing // TODO: multiple definitions of word (verb vs noun)
 				synonyms.AddRange(eh.Select(node => node.InnerText));
 
 				return synonyms.ToArray();
-			} catch (Exception e) {
+			} catch (Exception) {
 				Console.WriteLine($"Failed to get data from: {url}");
 				return new string[0];
 			}
