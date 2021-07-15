@@ -26,7 +26,7 @@ namespace MonoGameHtml {
 
 			if (cachePath == null) cache = false;
 			HtmlSettings.generateCache = cache;
-			HtmlSettings.useCache = cache;
+			HtmlSettings.useCache = false;
 
 			// TODO: handle fullscreen
 			screenDimen = new Vector2(game.GraphicsDevice.PresentationParameters.Bounds.Width, game.GraphicsDevice.PresentationParameters.Bounds.Height);

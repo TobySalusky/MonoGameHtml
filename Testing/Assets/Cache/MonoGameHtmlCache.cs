@@ -11,15 +11,15 @@ namespace MonoGameHtmlGeneratedCode {
 	public Cache(params object[] initialVariableNamesAndObjects) : base(initialVariableNamesAndObjects) {}
 	/*CACHE_START*/
 protected override string[] cachedInput() {
-	return new string[]{ @"<App/>", @"
+	return new string[]{ @"<App></App>", @"
 const SearchBar = (Action<string> setText, string path = '') => {
 
 	List<(string stringName, string contents)> htmlSearchList = $searchHtml(path);
 
 	return (
 		<div>
-			{true ? null : htmlSearchList.map(instance =^
-				<p onPress={()=^setText(instance.contents)}>
+			{true ? null : htmlSearchList.map(instance =>
+				<p onPress={()=>setText(instance.contents)}>
 					{instance.stringName}
 				</p>
 			)}
@@ -32,7 +32,7 @@ const App = () => {
 	HtmlNode [node, setNode] = useState(null);
 
 	string text = '';
-	Action<string> setText = (string str)=^ text=str;
+	Action<string> setText = (string str)=> text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
 	Exception [exception, setException] = useState(null);
@@ -47,28 +47,28 @@ const App = () => {
 
     return (
         <body flexDirection='row'>
-        	<FrameCounter/>
+        	<FrameCounter></FrameCounter>
 			
-			<SearchBar path={path} setText={setText}/>
+			<SearchBar path={path} setText={setText}></SearchBar>
 			
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'
 				multiline={true}
-				useTypingState={@set(TypingState, typingState)}
+				useTypingState={(TypingState ___setTemp)=>typingState=___setTemp}
 				text={string: text} setText={setText}
-				diff={(Func^^string,string,string^)((string oldStr, string newStr)=^{
+				diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return $htmlDiff(oldStr, newStr, typingState);
 				})}
-				onTick={()=^{
+				onTick={()=>{
 					if (!updating && currUpdateCount != updateCount) {
 					
 						updating = true;
-						Task.Run(()=^{
-						    $updateHtml(updateCount, text).ContinueWith(task =^ {
+						Task.Run(()=>{
+						    $updateHtml(updateCount, text).ContinueWith(task => {
 						    	int thisUpdateCount = task.Result.Item3;
-						    	if (thisUpdateCount ^ currUpdateCount) {
+						    	if (thisUpdateCount > currUpdateCount) {
 						    		updating = false;
 									currUpdateCount = thisUpdateCount;
 						    		
@@ -80,16 +80,16 @@ const App = () => {
 						
 					}
 				}}
-				/>
-				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
+				></TextBox>
+				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(timePassed) : ''}</h6>
 				<pseudo 
-				renderAdd={(SpriteBatch spriteBatch)=^{ 
+				renderAdd={(SpriteBatch spriteBatch)=>{ 
 					$renderTabs(spriteBatch, text, typingState);
 				}}
-				/>
+				></pseudo>
 			</div>
 			<div flex={1} backgroundColor='white'>
-				<html/>
+				<html></html>
 				{node ?? 
 					(
 						(exception == null || text == '') ? 
@@ -116,18 +116,18 @@ const TextInput = (
 	useTypingState?.Invoke(typingState);
 	
 	return (
-		<div onTick={()=^{
+		<div onTick={()=>{
 			bool isActive = (active != null) ? active.Invoke() : true;
 			if (isActive) {
-				typingState.time = @t;
-				typingState.deltaTime = @dt;
+				typingState.time = timePassed;
+				typingState.deltaTime = deltaTime;
 				string currStr = text();
 				string newStr = TextInputUtil.getUpdatedText(keys, currStr, typingState);
 				if (newStr != currStr) {
 					setText(newStr);
 				}
 			}
-		}}/>
+		}}></div>
 	);
 }", @"
 
@@ -148,30 +148,30 @@ const TextBox = (
 	TypingState typingState = null;
 
 	return (
-		<div ref={(HtmlNode el)=^{
+		<div ref={(HtmlNode el)=>{
 			node = el;
 			typingState.node = el;
 		}} class='TextBox' props={props}
-			onMouseDown={()=^active=node.clicked}
+			onMouseDown={()=>active=node.clicked}
 			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', TextInputUtil.spacesPerTab)}
-			renderAdd={(SpriteBatch spriteBatch)=^{
-				if (!cursorVisible || !active || ((@t - typingState.lastEditOrMove ^ 1) && ((@t % 1F) ^^ 0.5F))) return;
+			renderAdd={(SpriteBatch spriteBatch)=>{
+				if (!cursorVisible || !active || ((timePassed - typingState.lastEditOrMove > 1) && ((timePassed % 1F) < 0.5F))) return;
 				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
 			}}
-			onPress={()=^{
-				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
+			onPress={()=>{
+				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
 			}}
-			onMouseDrag={()=^{
-				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
+			onMouseDrag={()=>{
+				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
 			}}
 		>
 			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}
-				useTypingState={(TypingState state)=^{
+				useTypingState={(TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
 				}}
 				
-			/>
+			></TextInput>
 		</div>
 	);
 }", @"
@@ -179,7 +179,7 @@ const TextBox = (
 
 const KeyInput = () => {
 	
-    return (<div/>);
+    return (<div></div>);
 }", @"
 const FrameCounter = (float updateTime = 1F) => {
 
@@ -187,16 +187,16 @@ const FrameCounter = (float updateTime = 1F) => {
 	int updateCount = 0;
 
 	return (
-		<div onTick={()=^{
-			fpsCounter.update(@dt);
-			int currUpdate = (int) (@t / updateTime);
+		<div onTick={()=>{
+			fpsCounter.update(deltaTime);
+			int currUpdate = (int) (timePassed / updateTime);
 			if (currUpdate != updateCount) {
 				updateCount = currUpdate;
 				game.Window.Title = $'FPS: {(int) fpsCounter.AverageFramesPerSecond}';
 			}
-		}}/>
+		}}></div>
 	);
-}", @"time", @"t", @"deltaTime", @"dt", @"mp", @"r", @"setRef(varName)", @"set(type, varName)", @"fill", @"bg(str)", @"col(str)", @"timePassed", @"timePassed", @"deltaTime", @"deltaTime", @"mousePos", @"random()", @"(HtmlNode ___refNode)=^$$varName=___refNode", @"($$type ___setTemp)=^$$varName=___setTemp", @"dimens='100%'", @"backgroundColor='$$str'", @"color='$$str'" };
+}" };
 }
 
 protected override HtmlNode cachedNode() {
@@ -207,7 +207,7 @@ HtmlNode CreateSearchBar(string tag, Dictionary<string, object> props = null, st
 	HtmlNode ___node = null;
 	
 List<(string stringName, string contents)> htmlSearchList = ((System.Func<System.String,System.Collections.Generic.List<System.ValueTuple<System.String,System.String>>>)___vars["searchHtml"])(path);
-	___node = newNode("div", childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((true ? null : htmlSearchList.Select(instance =>
+	___node = newNode("div", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((true ? null : htmlSearchList.Select(instance =>
 				newNode("p", props: new Dictionary<string, object> {["onPress"]=((Action)(()=>setText(instance.contents)))}, textContent: (Func<string>)(()=> ""+(instance.stringName)+""))
 			).ToArray()))));
 	return ___node;
@@ -238,7 +238,7 @@ string path = "/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWrit
 string correctText() {
 return text.Replace("\t", TextInputUtil.spacesPerTab);
 }
-	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, children: nodeArr(CreateFrameCounter("FrameCounter", textContent: ""), CreateSearchBar("SearchBar", props: new Dictionary<string, object> {["path"]=(path), ["setText"]=(setText)}, textContent: "", path: (path), setText: (setText)), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["multiline"]=(true), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), ["text"]=((Func<string>)(() => (text))), ["setText"]=(setText), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
+	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(CreateFrameCounter("FrameCounter", props: new Dictionary<string, object> {}, textContent: ""), CreateSearchBar("SearchBar", props: new Dictionary<string, object> {["path"]=(path), ["setText"]=(setText)}, textContent: "", path: (path), setText: (setText)), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["multiline"]=(true), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), ["text"]=((Func<string>)(() => (text))), ["setText"]=(setText), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState);
 				})), ["onTick"]=((Action)(()=>{
@@ -264,13 +264,13 @@ return text.Replace("\t", TextInputUtil.spacesPerTab);
 					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState);
 				}))), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["renderAdd"]=((Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
 					((System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch,System.String,MonoGameHtml.TypingState>)___vars["renderTabs"])(spriteBatch, text, typingState);
-				}))}, textContent: ""))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", textContent: ""), (node ?? 
+				}))}, textContent: "")))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (node ?? 
 					(
 						(exception == null || text == "") ? 
-							newNode("p", textContent: "Nothing to display...") : 
+							newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing to display...") : 
 							newNode("p", props: new Dictionary<string, object> {["color"]="red"}, textContent: (Func<string>)(()=> ""+(exception == null ? "NULL?" : (exception.GetType().Name + "\n" + exception.Message))+""))
 					)
-				))))));
+				)))))));
 	return ___node;
 }
 
@@ -321,13 +321,13 @@ TypingState typingState = null;
 				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
 			})), ["onMouseDrag"]=((Action)(()=>{
 				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
-			}))}, children: nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=(text), ["setText"]=(setText), ["diff"]=(diff), ["active"]=((Func<bool>)(() => (active))), ["multiline"]=(multiline), ["useTypingState"]=((Action<TypingState>)((TypingState state)=>{
+			}))}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=(text), ["setText"]=(setText), ["diff"]=(diff), ["active"]=((Func<bool>)(() => (active))), ["multiline"]=(multiline), ["useTypingState"]=((Action<TypingState>)((TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
 				}))}, textContent: "", text: (text), setText: (setText), diff: (diff), active: ((Func<bool>)(() => (active))), multiline: (multiline), useTypingState: ((Action<TypingState>)((TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
-				})))));
+				}))))));
 	return ___node;
 }
 
@@ -335,7 +335,7 @@ HtmlNode CreateKeyInput(string tag, Dictionary<string, object> props = null, str
 	
 	HtmlNode ___node = null;
 	
-	___node = newNode("div", textContent: "");
+	___node = newNode("div", props: new Dictionary<string, object> {}, textContent: "");
 	return ___node;
 }
 
@@ -355,7 +355,7 @@ int updateCount = 0;
 		}))}, textContent: "");
 	return ___node;
 }
-HtmlNode node = CreateApp("App", textContent: "");
+HtmlNode node = CreateApp("App", props: new Dictionary<string, object> {}, textContent: "");
 setupNode(node);
 return node;
 }/*CACHE_END*/

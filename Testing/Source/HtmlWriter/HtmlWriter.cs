@@ -18,8 +18,8 @@ const SearchBar = (Action<string> setText, string path = '') => {
 
 	return (
 		<div>
-			{true ? null : htmlSearchList.map(instance =^
-				<p onPress={()=^setText(instance.contents)}>
+			{true ? null : htmlSearchList.map(instance =>
+				<p onPress={()=>setText(instance.contents)}>
 					{instance.stringName}
 				</p>
 			)}
@@ -32,7 +32,7 @@ const App = () => {
 	HtmlNode [node, setNode] = useState(null);
 
 	string text = '';
-	Action<string> setText = (string str)=^ text=str;
+	Action<string> setText = (string str)=> text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
 	Exception [exception, setException] = useState(null);
@@ -57,18 +57,18 @@ const App = () => {
 				multiline={true}
 				useTypingState={@set(TypingState, typingState)}
 				text={string: text} setText={setText}
-				diff={(Func^^string,string,string^)((string oldStr, string newStr)=^{
+				diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return $htmlDiff(oldStr, newStr, typingState);
 				})}
-				onTick={()=^{
+				onTick={()=>{
 					if (!updating && currUpdateCount != updateCount) {
 					
 						updating = true;
-						Task.Run(()=^{
-						    $updateHtml(updateCount, text).ContinueWith(task =^ {
+						Task.Run(()=>{
+						    $updateHtml(updateCount, text).ContinueWith(task => {
 						    	int thisUpdateCount = task.Result.Item3;
-						    	if (thisUpdateCount ^ currUpdateCount) {
+						    	if (thisUpdateCount > currUpdateCount) {
 						    		updating = false;
 									currUpdateCount = thisUpdateCount;
 						    		
@@ -83,7 +83,7 @@ const App = () => {
 				/>
 				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
 				<pseudo 
-				renderAdd={(SpriteBatch spriteBatch)=^{ 
+				renderAdd={(SpriteBatch spriteBatch)=>{ 
 					$renderTabs(spriteBatch, text, typingState);
 				}}
 				/>
@@ -118,7 +118,7 @@ const App = () => {
 			            components: HtmlComponents.Create(HtmlComponents.Slider, HtmlComponents.AllInput));
 	            } catch (Exception err) {
 		            e = err;
-		            Logger.log(e.GetType().Name, e.Message);
+		            Logger.log(e.StackTrace);
 	            }
 
 	            return (node, e, updateCount);

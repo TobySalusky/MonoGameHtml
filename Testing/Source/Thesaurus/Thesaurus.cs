@@ -44,13 +44,13 @@ const App = () => {
     int [update, setUpdate] = useState(0);
 
     return (
-        <span onTick={()=^{
+        <span onTick={()=>{
             if (update != $update) {
                 setUpdate($update);
             }
         }}>
             <div>
-                {$list.map(tuple =^
+                {$list.map(tuple =>
                 <span>
                     <div class='Cont'>
                         <div class='In' backgroundColor={tuple.Item1}>{tuple.Item2[0]}</div>
@@ -60,9 +60,9 @@ const App = () => {
             </div>
             
             <div>
-                {$list.map(tuple =^
+                {$list.map(tuple =>
                 <span>
-                    {tuple.Item2.map((str, i) =^
+                    {tuple.Item2.map((str, i) =>
                         (i == 0) ? null :
                         <div class='Cont'>
                             <div class='In' backgroundColor={tuple.Item1}>{str}</div>

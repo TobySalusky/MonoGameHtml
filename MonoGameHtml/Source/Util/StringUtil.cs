@@ -6,7 +6,7 @@ namespace MonoGameHtml {
     public static class StringUtil {
 
         public static bool IsWhiteSpace(this char c) {
-            return (c == ' ' || c == '\n' || c == '\t'); // TODO: this isn't exhaustive! i think.
+            return (c == ' ' || c == '\n' || c == '\r' || c == '\t'); // TODO: this isn't exhaustive! i think.
         }
 
         public static bool IsLetter(this char c) {

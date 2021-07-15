@@ -11,7 +11,7 @@ namespace MonoGameHtml {
 
 		public int AfterClose => closeIndex + closeLen;
 
-		public static readonly (string, string) Parens = ("(", ")"), Carrots = ("<", ">"),
+		public static readonly (string, string) Parens = ("(", ")"), Carrots = ("<", ">"), // TODO: do something special with carrots!!
 			SquareBrackets = ("[", "]"), CurlyBrackets = ("{", "}"), 
 			Quotes = ("\"", "\""), SingleQuotes = ("'", "'");
 		
@@ -21,6 +21,18 @@ namespace MonoGameHtml {
 			this.openLen = openLen;
 			this.closeLen = closeLen;
 			this.nestCount = nestCount;
+		}
+
+		public bool isWithin(DelimPair other) {
+			return (openIndex >= (other.openIndex + other.openLen) && closeIndex < other.closeIndex);
+		}
+
+		public bool isPartOf(DelimPair other) {
+			return (openIndex >= other.openIndex && closeIndex <= other.closeIndex);
+		}
+
+		public int contentStartIndex() {
+			return openIndex + openLen;
 		}
 
 		public static bool allNestOf(int targetNest, Dictionary<(string, string), int> dict) {
@@ -46,11 +58,11 @@ namespace MonoGameHtml {
 		}
 
 		public string whole(string str) {
-			return str.Substring(openIndex, closeIndex - openIndex + 1);
+			return str[openIndex..(closeIndex + closeLen)];
 		}
 
 		public string contents(string str) {
-			return str.Substring(openIndex + 1, closeIndex - openIndex - 1);
+			return str.Sub(openIndex + openLen, closeIndex);
 		}
 
 		public string htmlContents(string str) {
@@ -119,7 +131,7 @@ namespace MonoGameHtml {
 				foreach (var other in pairs) {
 					if (pair == other) continue;
 
-					if (pair.openIndex > other.openIndex && pair.closeIndex < other.closeIndex) pair.nestCount++;
+					if (pair.isWithin(other)) pair.nestCount++;
 				}
 			}
 

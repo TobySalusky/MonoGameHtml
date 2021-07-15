@@ -76,7 +76,7 @@ const Move = (string text) => {
     float width = 400;
 
     return (
-        <div -width={int~: width} -backgroundColor={Color: Color.Lerp(Color.Cyan, Color.Orange, (width - c) / (ScreenWidth-2*c))} onMouseExit={()=^lastX = -1} onHover={()=^ {
+        <div -width={int~: width} -backgroundColor={Color: Color.Lerp(Color.Cyan, Color.Orange, (width - c) / (ScreenWidth-2*c))} onMouseExit={()=>lastX = -1} onHover={()=> {
              float x = @mp.X;
              if (lastX != -1) width = Math.Clamp(width + (x - lastX), c, ScreenWidth-c);
              lastX = x;
@@ -88,14 +88,14 @@ const Move = (string text) => {
 
 const Container = (List<string> init) => {
 
-    List^^string^ [rows, setRows] = useState(init);
+    List<string> [rows, setRows] = useState(init);
 
     return (
         <div alignX='center' alignY='flexStart' width='100%'>
-            {rows.map((str, i) =^
+            {rows.map((str, i) =>
                 <Row rows={rows} setRows={setRows} i={i}/>
             )}
-            <div onPress={() =^ {
+            <div onPress={() => {
                 rows.Add($'new {random()}');
                 setRows(rows);
             }} textAlign='center' width='50%' height={$h} backgroundColor='white' borderColor='#888888' borderWidth={2}>+</div>
@@ -109,7 +109,7 @@ const Row = (List<string> rows, Action<List<string>> setRows, int i = -1) => {
             <div flex={5} alignY='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
                 {rows[i]}
             </div> 
-            <div onPress={() =^ {
+            <div onPress={() => {
                 rows.RemoveAt(i);
                 setRows(rows); 
             }} flex={1} align='center' borderColor='#888888' borderWidth={2} backgroundColor='white' textAlign='center'>
@@ -127,7 +127,7 @@ const Test = (string str) => {
 
 	return (
         <span backgroundColor='white'>
-            {str.ToCharArray().map((c, i) =^
+            {str.ToCharArray().map((c, i) =>
                 <p color={(dict.ContainsKey(i)) ? 'red' : 'black'}>{c}</p>
             )} 
         </span>
@@ -138,10 +138,25 @@ const Test = (string str) => {
             const string html = @"
 <body>
     <Switch caseFunc={string: $path}>
-        <div backgroundColor='red' dimens={100} case='a' onPress={()=^UpdateVar('path', $path + 'b')}/>
-        <div backgroundColor='blue' dimens={100} case='ab' onPress={()=^UpdateVar('path', $path + 'c')}/>
-        <div backgroundColor='green' dimens={100} case='abc' onPress={()=^UpdateVar('path', 'a')}/>
+        <div backgroundColor='red' dimens={100} case='a' onPress={()=>UpdateVar('path', $path + 'b')}/>
+        <div backgroundColor='blue' dimens={100} case='ab' onPress={()=>UpdateVar('path', $path + 'c')}/>
+        <div backgroundColor='green' dimens={100} case='abc' onPress={()=>UpdateVar('path', 'a')}/>
     </Switch>
+
+    <h1 backgroundColor={'light'+'blue'}>
+        y
+    </h1>
+
+    <p color='red' onPress={()=>{
+        Logger.log(new List<string>{'hi'}[0]);
+        }}>Sup</p>
+
+    <div @bg(green) @size(200)/>
+    <Slider/>
+    
+    <div
+    >
+    </div>
 </body>
 ";
             // TODO: ADD OBJECT POOLING!
@@ -159,11 +174,11 @@ const Test = (string str) => {
             
             htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
                 components: HtmlComponents.Create(
-                components, HtmlComponents.Slider, HtmlComponents.Toggle, 
-                HtmlComponents.FrameCounter, HtmlComponents.AllInput, HtmlComponents.Switch
-            ), macros: Macros.create(
-
-                    ));
+                    components, HtmlComponents.Slider, HtmlComponents.Toggle, 
+                    HtmlComponents.FrameCounter, HtmlComponents.AllInput, HtmlComponents.Switch
+                ), macros: Macros.create(
+                    
+                ));
         }
 
         protected override void LoadContent()

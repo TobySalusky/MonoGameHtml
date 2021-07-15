@@ -39,9 +39,9 @@ const Slider = (
     }
 
 	return (
-		<div ref={(HtmlNode el)=^node=el} onPress={()=^{
+		<div ref={(HtmlNode el)=>node=el} onPress={()=>{
 			toMouse();
-		}} onMouseDrag={()=^{
+		}} onMouseDrag={()=>{
 			if (node.clicked) toMouse();
 		}} width={width} height={height} backgroundColor={back}>
             <div backgroundColor={front} -width={int~: node.PaddedWidth * amount} height='100%'/>
@@ -60,7 +60,7 @@ const Toggle = (
     bool [val, setVal] = useState(false);
 
 	return (
-		<span onPress={()=^{
+		<span onPress={()=>{
                 setVal(!val);
                 onChange?.Invoke(val);
               }} backgroundColor={back} width={width} height={height} borderRadius='50%' padding={10}>
@@ -85,7 +85,7 @@ const TextInput = (
 	useTypingState?.Invoke(typingState);
 	
 	return (
-		<div onTick={()=^{
+		<div onTick={()=>{
 			bool isActive = (active != null) ? active.Invoke() : true;
 			if (isActive) {
 				typingState.time = @t;
@@ -116,25 +116,25 @@ const TextBox = (
 	TypingState typingState = null;
 
 	return (
-		<div ref={(HtmlNode el)=^{
+		<div ref={(HtmlNode el)=>{
 			node = el;
 			typingState.node = el;
 		}} class='TextBox' props={props}
-			onMouseDown={()=^active=node.clicked}
+			onMouseDown={()=>active=node.clicked}
 			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', TextInputUtil.spacesPerTab)}
-			renderAdd={(SpriteBatch spriteBatch)=^{
-				if (!cursorVisible || !active || ((@t - typingState.lastEditOrMove ^ 1) && ((@t % 1F) ^^ 0.5F))) return;
+			renderAdd={(SpriteBatch spriteBatch)=>{
+				if (!cursorVisible || !active || ((@t - typingState.lastEditOrMove > 1) && ((@t % 1F) < 0.5F))) return;
 				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
 			}}
-			onPress={()=^{
+			onPress={()=>{
 				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
 			}}
-			onMouseDrag={()=^{
+			onMouseDrag={()=>{
 				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
 			}}
 		>
 			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}
-				useTypingState={(TypingState state)=^{
+				useTypingState={(TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
 				}}
@@ -155,7 +155,7 @@ const FrameCounter = (float updateTime = 1F) => {
 	int updateCount = 0;
 
 	return (
-		<div onTick={()=^{
+		<div onTick={()=>{
 			fpsCounter.update(@dt);
 			int currUpdate = (int) (@t / updateTime);
 			if (currUpdate != updateCount) {
@@ -179,7 +179,7 @@ const Switch = (Func<string> caseFunc) => {
 	string [currCase, setCurrCase] = useState(caseFunc());
 	
 	return (
-		<div onTick={()=^{
+		<div onTick={()=>{
 			string newCase = caseFunc();
 			if (newCase != currCase) {
 				setCurrCase(newCase);
