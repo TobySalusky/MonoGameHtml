@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
+using Range = MonoGameHtml.ColorConsole.Range;
 
 namespace MonoGameHtml {
-	internal static class Parser {
+	public static class Parser {
 
 		public static string ExpandSelfClosedHtmlTags(string code) {
 			var braceDict = DelimPair.genPairDict(code, DelimPair.CurlyBrackets);
@@ -34,7 +38,6 @@ namespace MonoGameHtml {
 					if (StartingHtml(code, braceDict, singleQuoteDict, doubleQuoteDict, i, out int closeStart, true)) {
 						
 						selfClosingRanges.Push((i, closeStart));
-						Logger.log(i, closeStart);
 						
 						i = closeStart;
 					}
@@ -52,6 +55,33 @@ namespace MonoGameHtml {
 			return code;
 		}
 
+		public static async Task<IEnumerable<(Color, int)>> ColorSyntaxHighlightedCSharpHtml(string code) {
+			var ranges = await ColorConsole.ConsoleMain.SyntaxHighlightCSharpHtml(code);
+
+			static Color ClassificationToColor(Range range) {
+				switch (range.ClassificationType)
+				{
+					case "keyword":
+					case "keyword - control":
+						return Color.DarkCyan;
+					case "class name":
+						return Color.Magenta;
+					case "number":
+						return Color.Cyan;
+					case "string":
+						return Color.LightGreen;
+					case "operator":
+						return Color.Yellow;
+					case "punctuation":
+						return Color.Yellow;
+					default:
+						return Color.White;
+				}
+			}
+
+			return ranges.Select(range => (ClassificationToColor(range), range.TextSpan.Length));
+		}
+		
 		private static bool StartingHtml(string code, IReadOnlyDictionary<int, DelimPair> braceDict, IReadOnlyDictionary<int, DelimPair> singleQuoteDict, 
 			IReadOnlyDictionary<int, DelimPair> doubleQuoteDict, int startIndex, out int closeStartIndex, bool selfClosing = false) {
         	closeStartIndex = -1;

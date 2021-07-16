@@ -7,3 +7,13 @@
     border-color: #FFFFC1;
     font-size: 26px;
 }
+
+.ReplaceText {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+}
+
+.Text {
+    font-size: 26px;
+}

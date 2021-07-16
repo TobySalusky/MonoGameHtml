@@ -27,6 +27,61 @@ const SearchBar = (Action<string> setText, string path = '') => {
 	);
 }
 
+const TextRender = (Func<string> textFunc) => {
+	
+	string [text, setText] = useState('');
+
+	IEnumerable<(Color, int)> colorData = null;
+	var store = new Dictionary<string, IEnumerable<(Color, int)>>();
+
+	int i = 0;
+
+	IEnumerable<(Color, int)> FindColorData() {
+		i = 0;
+		if (colorData != null) {
+			int len = colorData.Select(data => data.Item2).Sum();
+			if (len == text.Length) return colorData;
+			
+			if (len < text.Length) {
+				return colorData.Concat(arr[(Color.White, text.Length - len)]);
+			}
+		} 
+
+		
+		return arr[(Color.White, text.Length)];
+	}
+
+	return (
+		<pseudo class='ReplaceText' 
+			onTick={()=>{
+				string newText = textFunc();
+				if (text != newText) {
+					if (store.ContainsKey(newText)) {
+						colorData = store[newText];
+					} else {
+						Task.Run(()=>{ // TODO: make sure you dont run out of memory!! clear it, maybe
+							$colorHtml(text).ContinueWith(task => {
+								store[newText] = task.Result;
+								if (newText == text) colorData = task.Result;
+							});
+						});	
+					}
+					setText(newText);
+				}
+			}}
+		>
+			<span>
+				{FindColorData().map(data => {
+					int currI = i;
+					var node = <p class='Text' color={data.Item1}>{text.Substring(currI, data.Item2)}</p>;
+					i += data.Item2;
+					return node;
+				})}
+			</span>
+		</pseudo>
+	);
+}
+
 const App = () => {
 
 	HtmlNode [node, setNode] = useState(null);
@@ -54,6 +109,7 @@ const App = () => {
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'
+				-borderWidth={int: 0}
 				multiline={true}
 				useTypingState={@set(TypingState, typingState)}
 				text={string: text} setText={setText}
@@ -82,11 +138,13 @@ const App = () => {
 				}}
 				/>
 				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
-				<pseudo 
+				<pseudo class='ReplaceText' 
 				renderAdd={(SpriteBatch spriteBatch)=>{ 
 					$renderTabs(spriteBatch, text, typingState);
 				}}
 				/>
+				<TextRender textFunc={string: correctText()}/>
+		
 			</div>
 			<div flex={1} backgroundColor='white'>
 				<html/>
@@ -106,6 +164,8 @@ const App = () => {
             const string html = "<App/>";
             StatePack pack = null;
 
+            Func<string, Task<IEnumerable<(Color, int)>>> colorHtml = async (code) => await Parser.ColorSyntaxHighlightedCSharpHtml(code);
+            
             Func<int, string, Task<(HtmlNode, Exception, int)>> updateHtml = async (int updateCount, string text) => {
 	            HtmlNode node = null;
 	            Exception e = null;
@@ -253,7 +313,8 @@ const App = () => {
                 "loadingText", (Func<float, string>) loadingText,
                 "htmlDiff", htmlDiff,
                 "renderTabs", renderTabs,
-                "searchHtml", searchHtml
+                "searchHtml", searchHtml,
+                "colorHtml", colorHtml
             );
 
             gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 

@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.Xna.Framework;
 
 namespace MonoGameHtml.ColorConsole {
     internal static class ConsoleMain {
@@ -16,7 +17,30 @@ namespace MonoGameHtml.ColorConsole {
             Task task = AsyncPrintCS(code);
             task.Wait();
         }
+
+        public static async Task<IEnumerable<Range>> SyntaxHighlightCSharpHtml(string code) {
+
+            AdhocWorkspace workspace = new AdhocWorkspace();
+            Solution solution = workspace.CurrentSolution;
+            Project project = solution.AddProject("projectName", "assemblyName", LanguageNames.CSharp);
+            Document document = project.AddDocument("name.cs", code);
+            SourceText text = await document.GetTextAsync();
+
+            var classifiedSpans = await Classifier.GetClassifiedSpansAsync(document, TextSpan.FromBounds(0, text.Length));
+            //Console.BackgroundColor = ConsoleColor.Black;
+
+            var ranges = classifiedSpans.Select(classifiedSpan =>
+                new Range(classifiedSpan, text.GetSubText(classifiedSpan.TextSpan).ToString()));
+
+            ranges = FillGaps(text, ranges);
+            
+            // patch
+            
+            return ranges;
+        }
+
         
+
         public static async Task AsyncPrintCS(string code) { // TODO: recolor with SetCursorPosition
             AdhocWorkspace workspace = new AdhocWorkspace();
             Solution solution = workspace.CurrentSolution;

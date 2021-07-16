@@ -12,8 +12,7 @@ namespace MonoGameHtml.ColorConsole
 
         public Range(string classification, TextSpan span, SourceText text) :
             this(classification, span, text.GetSubText(span).ToString())
-        {
-        }
+        { }
 
         public Range(string classification, TextSpan span, string text) :
             this(new ClassifiedSpan(classification, span), text)

@@ -29,6 +29,8 @@ namespace MonoGameHtml {
 		public int x, y;
 		public int width, height;
 
+		public int? left, right, top, bottom;
+
 		public int paddingLeft, paddingRight, paddingTop, paddingBottom;
 		public int marginLeft, marginRight, marginTop, marginBottom;
 
@@ -75,6 +77,7 @@ namespace MonoGameHtml {
 		public AlignType alignX = AlignType.flexStart, alignY = AlignType.flexStart;
 		public DirectionType flexDirection = DirectionType.column;
 		public TextAlignType textAlign = TextAlignType.topLeft;
+		public PositionType positionType = PositionType.STATIC;
 
 		// FUNCTIONS
 		public bool hover;
@@ -88,7 +91,7 @@ namespace MonoGameHtml {
 			topLeft, center
 		}
 		public enum PositionType { // TODO: implement absolute, relative, and others
-			normal, absolute, relative
+			STATIC, RELATIVE, FIXED, ABSOLUTE
 		}
 
 		public enum DirectionType {
@@ -325,7 +328,10 @@ namespace MonoGameHtml {
 
 				if (props.Keys.Count == 0) goto finishProps;
 				
-				if (props.ContainsKey("position")) position = Enum.Parse<PositionType>(prop<string>("position"));
+				if (props.ContainsKey("left")) left = prop<int>("left");
+				if (props.ContainsKey("right")) right = prop<int>("right");
+				if (props.ContainsKey("top")) top = prop<int>("top");
+				if (props.ContainsKey("bottom")) bottom = prop<int>("bottom");
 				
 				if (props.ContainsKey("x")) x = prop<int>("x");
 				if (props.ContainsKey("y")) y = prop<int>("y");
@@ -577,6 +583,11 @@ namespace MonoGameHtml {
 					bindAction(() => tint = func());
 				}
 
+				if (props.ContainsKey("position")) { 
+					positionType = Enum.Parse<PositionType>(prop<string>("position").ToUpper());
+				}
+				// TODO: dynamic position
+				
 				align: { 
 					if (props.ContainsKey("flexDirection")) flexDirection = Enum.Parse<DirectionType>((string) props["flexDirection"]);
 
@@ -664,241 +675,280 @@ namespace MonoGameHtml {
 		}
 
 		public void layoutDown() {
-			if (children == null) return;
 
-			int sumWidth = 0, sumHeight = 0;
-			float sumFlex = 0;
-			foreach (HtmlNode child in children) {
-				sumWidth += child.FullWidth;
-				sumHeight += child.FullHeight;
-				sumFlex += child.flex;
+			if (positionType != PositionType.STATIC) {
+				applyPosition();
 			}
 
-			int x = UnpaddedX;
-			int y = UnpaddedY;
+			if (this.children == null) return;
 
-			if (flexDirection == DirectionType.column || sumFlex < 0.0001F) {
-				switch (alignX) {
-					case AlignType.spaceBetween: {
+			// TODO: rename variable
+			var children = this.children.Where(node => (node.positionType == PositionType.STATIC || node.positionType == PositionType.RELATIVE)).ToArray();
 
-						if (children.Length == 1) {
-							children[0].x = x;
-							break;
-						}
+			if (children.Length != 0) {
+				int sumWidth = 0, sumHeight = 0;
+				float sumFlex = 0;
+				foreach (HtmlNode child in children) {
+					sumWidth += child.FullWidth;
+					sumHeight += child.FullHeight;
+					sumFlex += child.flex;
+				}
 
-						int gap = (width - sumWidth) / (children.Length - 1);
-						int thisX = x;
-						foreach (HtmlNode child in children) {
-							child.x = thisX;
-							thisX += child.FullWidth + gap;
-						}
-						break;
-					}
-					case AlignType.spaceAround: {
+				int x = UnpaddedX;
+				int y = UnpaddedY;
 
-						int gap = (width - sumWidth) / (children.Length);
-						int thisX = x + gap / 2;
-						foreach (HtmlNode child in children) {
-							child.x = thisX;
-							thisX += child.FullWidth + gap;
-						}
-						break;
-					}
-					case AlignType.spaceEvenly: {
+				if (flexDirection == DirectionType.column || sumFlex < 0.0001F) {
+					switch (alignX) {
+						case AlignType.spaceBetween: {
 
-						int gap = (width - sumWidth) / (children.Length + 1);
-						int thisX = x + gap;
-						foreach (HtmlNode child in children) {
-							child.x = thisX;
-							thisX += child.FullWidth + gap;
-						}
-						break;
-					}
-					case AlignType.center: {
-						if (flexDirection == DirectionType.column) {
+							if (children.Length == 1) {
+								children[0].x = x;
+								break;
+							}
+
+							int gap = (width - sumWidth) / (children.Length - 1);
+							int thisX = x;
 							foreach (HtmlNode child in children) {
-								child.x = (x + width / 2) - child.FullWidth / 2;
+								child.x = thisX;
+								thisX += child.FullWidth + gap;
 							}
 							break;
 						}
+						case AlignType.spaceAround: {
 
-						int thisX = (x + width / 2) - sumWidth / 2;
-						foreach (HtmlNode child in children) {
-							child.x = thisX;
-							thisX += child.FullWidth;
+							int gap = (width - sumWidth) / (children.Length);
+							int thisX = x + gap / 2;
+							foreach (HtmlNode child in children) {
+								child.x = thisX;
+								thisX += child.FullWidth + gap;
+							}
+							break;
 						}
-						break;
-					}
-					case AlignType.start: { 
-						foreach (HtmlNode child in children) {
-							child.x = x;
+						case AlignType.spaceEvenly: {
+
+							int gap = (width - sumWidth) / (children.Length + 1);
+							int thisX = x + gap;
+							foreach (HtmlNode child in children) {
+								child.x = thisX;
+								thisX += child.FullWidth + gap;
+							}
+							break;
 						}
-						break;
-					}
-					case AlignType.end: { 
-						foreach (HtmlNode child in children) {
-							child.x = x + width - child.FullWidth;
-						}
-						break;
-					}
-					case AlignType.flexStart: {
-						if (flexDirection == DirectionType.row) { 
-							int thisX = x;
+						case AlignType.center: {
+							if (flexDirection == DirectionType.column) {
+								foreach (HtmlNode child in children) {
+									child.x = (x + width / 2) - child.FullWidth / 2;
+								}
+								break;
+							}
+
+							int thisX = (x + width / 2) - sumWidth / 2;
 							foreach (HtmlNode child in children) {
 								child.x = thisX;
 								thisX += child.FullWidth;
 							}
-						} else { 
+							break;
+						}
+						case AlignType.start: { 
 							foreach (HtmlNode child in children) {
 								child.x = x;
 							}
+							break;
 						}
-						break;
-					}
-					case AlignType.flexEnd: { 
-						if (flexDirection == DirectionType.row) { 
-							int thisX = x + width;
-							for (int i = children.Length - 1; i >= 0; i--) {
-								thisX -= children[i].FullWidth;
-								children[i].x = thisX;
-							}
-						} else { 
+						case AlignType.end: { 
 							foreach (HtmlNode child in children) {
 								child.x = x + width - child.FullWidth;
 							}
-						}
-						
-						break;
-					}
-				}
-			} else { // TODO: FIX THIS WHAT IS THIS WHY Are the ifs laid out like this its horrible
-
-				int nonFlexWidth = 0;
-				foreach (HtmlNode child in children) {
-					nonFlexWidth += (child.flex <= 0) ? child.FullWidth : (child.FullWidth - child.width);
-				}
-				
-				float perFlex = (width - nonFlexWidth) / sumFlex;
-
-				int thisX = x;
-				foreach (HtmlNode child in children) {
-					child.x = thisX;
-					if (child.flex > 0) child.width = (int) (perFlex * child.flex);
-					thisX += child.FullWidth;
-				}
-			}
-
-			if (flexDirection == DirectionType.row || sumFlex < 0.0001F) { 
-				switch (alignY) {
-					case AlignType.spaceBetween: {
-
-						if (children.Length == 1) {
-							children[0].y = y;
 							break;
 						}
-
-						int gap = (height - sumHeight) / (children.Length - 1);
-						int thisY = y;
-						foreach (HtmlNode child in children) {
-							child.y = thisY;
-							thisY += child.FullHeight + gap;
-						}
-						break;
-					}
-					case AlignType.spaceAround: {
-
-						int gap = (height - sumHeight) / (children.Length);
-						int thisY = y + gap / 2;
-						foreach (HtmlNode child in children) {
-							child.y = thisY;
-							thisY += child.FullHeight + gap;
-						}
-						break;
-					}
-					case AlignType.spaceEvenly: {
-
-						int gap = (height - sumHeight) / (children.Length + 1);
-						int thisY = y + gap;
-						foreach (HtmlNode child in children) {
-							child.y = thisY;
-							thisY += child.FullHeight + gap;
-						}
-						break;
-					}
-					case AlignType.center: {
-						if (flexDirection == DirectionType.row) {
-							foreach (HtmlNode child in children) {
-								child.y = (y + height / 2) - child.FullHeight / 2;
+						case AlignType.flexStart: {
+							if (flexDirection == DirectionType.row) { 
+								int thisX = x;
+								foreach (HtmlNode child in children) {
+									child.x = thisX;
+									thisX += child.FullWidth;
+								}
+							} else { 
+								foreach (HtmlNode child in children) {
+									child.x = x;
+								}
 							}
 							break;
 						}
+						case AlignType.flexEnd: { 
+							if (flexDirection == DirectionType.row) { 
+								int thisX = x + width;
+								for (int i = children.Length - 1; i >= 0; i--) {
+									thisX -= children[i].FullWidth;
+									children[i].x = thisX;
+								}
+							} else { 
+								foreach (HtmlNode child in children) {
+									child.x = x + width - child.FullWidth;
+								}
+							}
+							
+							break;
+						}
+					}
+				} else { // TODO: FIX THIS WHAT IS THIS WHY Are the ifs laid out like this its horrible
 
-						int thisY = (y + height / 2) - sumHeight / 2;
-						foreach (HtmlNode child in children) {
-							child.y = thisY;
-							thisY += child.FullHeight;
-						}
-						break;
+					int nonFlexWidth = 0;
+					foreach (HtmlNode child in children) {
+						nonFlexWidth += (child.flex <= 0) ? child.FullWidth : (child.FullWidth - child.width);
 					}
-					case AlignType.start: { 
-						foreach (HtmlNode child in children) {
-							child.y = y;
-						}
-						break;
+					
+					float perFlex = (width - nonFlexWidth) / sumFlex;
+
+					int thisX = x;
+					foreach (HtmlNode child in children) {
+						child.x = thisX;
+						if (child.flex > 0) child.width = (int) (perFlex * child.flex);
+						thisX += child.FullWidth;
 					}
-					case AlignType.end: { 
-						foreach (HtmlNode child in children) {
-							child.y = y + height - child.FullHeight;
-						}
-						break;
-					}
-					case AlignType.flexStart: {
-						if (flexDirection == DirectionType.column) { 
+				}
+
+				if (flexDirection == DirectionType.row || sumFlex < 0.0001F) { 
+					switch (alignY) {
+						case AlignType.spaceBetween: {
+
+							if (children.Length == 1) {
+								children[0].y = y;
+								break;
+							}
+
+							int gap = (height - sumHeight) / (children.Length - 1);
 							int thisY = y;
+							foreach (HtmlNode child in children) {
+								child.y = thisY;
+								thisY += child.FullHeight + gap;
+							}
+							break;
+						}
+						case AlignType.spaceAround: {
+
+							int gap = (height - sumHeight) / (children.Length);
+							int thisY = y + gap / 2;
+							foreach (HtmlNode child in children) {
+								child.y = thisY;
+								thisY += child.FullHeight + gap;
+							}
+							break;
+						}
+						case AlignType.spaceEvenly: {
+
+							int gap = (height - sumHeight) / (children.Length + 1);
+							int thisY = y + gap;
+							foreach (HtmlNode child in children) {
+								child.y = thisY;
+								thisY += child.FullHeight + gap;
+							}
+							break;
+						}
+						case AlignType.center: {
+							if (flexDirection == DirectionType.row) {
+								foreach (HtmlNode child in children) {
+									child.y = (y + height / 2) - child.FullHeight / 2;
+								}
+								break;
+							}
+
+							int thisY = (y + height / 2) - sumHeight / 2;
 							foreach (HtmlNode child in children) {
 								child.y = thisY;
 								thisY += child.FullHeight;
 							}
-						} else { 
+							break;
+						}
+						case AlignType.start: { 
 							foreach (HtmlNode child in children) {
 								child.y = y;
 							}
+							break;
 						}
-						break;
-					}
-					case AlignType.flexEnd: { 
-						if (flexDirection == DirectionType.column) { 
-							int thisY = y + height;
-							for (int i = children.Length - 1; i >= 0; i--) {
-								thisY -= children[i].FullHeight;
-								children[i].y = thisY;
-							}
-						} else { 
+						case AlignType.end: { 
 							foreach (HtmlNode child in children) {
 								child.y = y + height - child.FullHeight;
 							}
+							break;
 						}
-						break;
+						case AlignType.flexStart: {
+							if (flexDirection == DirectionType.column) { 
+								int thisY = y;
+								foreach (HtmlNode child in children) {
+									child.y = thisY;
+									thisY += child.FullHeight;
+								}
+							} else { 
+								foreach (HtmlNode child in children) {
+									child.y = y;
+								}
+							}
+							break;
+						}
+						case AlignType.flexEnd: { 
+							if (flexDirection == DirectionType.column) { 
+								int thisY = y + height;
+								for (int i = children.Length - 1; i >= 0; i--) {
+									thisY -= children[i].FullHeight;
+									children[i].y = thisY;
+								}
+							} else { 
+								foreach (HtmlNode child in children) {
+									child.y = y + height - child.FullHeight;
+								}
+							}
+							break;
+						}
 					}
-				}
-			} else {
-				int noneFlexHeight = 0;
-				foreach (HtmlNode child in children) {
-					noneFlexHeight += (child.flex <= 0) ? child.FullHeight : (child.FullHeight - child.height);
-				}
-				
-				float perFlex = (height - noneFlexHeight) / sumFlex;
+				} else {
+					int noneFlexHeight = 0;
+					foreach (HtmlNode child in children) {
+						noneFlexHeight += (child.flex <= 0) ? child.FullHeight : (child.FullHeight - child.height);
+					}
+					
+					float perFlex = (height - noneFlexHeight) / sumFlex;
 
-				int thisY = x;
-				foreach (HtmlNode child in children) {
-					child.y = thisY;
-					if (child.flex > 0) child.height = (int) (perFlex * child.flex);
-					thisY += child.FullHeight;
+					int thisY = x;
+					foreach (HtmlNode child in children) {
+						child.y = thisY;
+						if (child.flex > 0) child.height = (int) (perFlex * child.flex);
+						thisY += child.FullHeight;
+					}
 				}
 			}
 
-			foreach (HtmlNode child in children) {
+			foreach (HtmlNode child in this.children) {
 				child.layoutDown();
+			}
+		}
+
+		public void applyPosition() {
+			int storeX = x;
+			int storeY = y;
+
+			// x-axis
+			// TODO: find anchor element!
+			if (left.HasValue && right.HasValue) {
+				// TODO:
+			} if (left.HasValue) {
+				x = left.Value;
+			} else if (right.HasValue) {
+				// TODO:
+			}
+			
+			// y-axis
+			if (top.HasValue && bottom.HasValue) {
+				// TODO:
+			} if (top.HasValue) {
+				y = top.Value;
+			} else if (bottom.HasValue) {
+				// TODO:
+			}
+
+			if (positionType == PositionType.RELATIVE) {
+				x += storeX;
+				y += storeY;
 			}
 		}
 

@@ -27,6 +27,61 @@ const SearchBar = (Action<string> setText, string path = '') => {
 	);
 }", @"
 
+const TextRender = (Func<string> textFunc) => {
+	
+	string [text, setText] = useState('');
+
+	IEnumerable<(Color, int)> colorData = null;
+	var store = new Dictionary<string, IEnumerable<(Color, int)>>();
+
+	int i = 0;
+
+	IEnumerable<(Color, int)> FindColorData() {
+		i = 0;
+		if (colorData != null) {
+			int len = colorData.Select(data => data.Item2).Sum();
+			if (len == text.Length) return colorData;
+			
+			if (len < text.Length) {
+				return colorData.Concat(arr[(Color.White, text.Length - len)]);
+			}
+		} 
+
+		
+		return arr[(Color.White, text.Length)];
+	}
+
+	return (
+		<pseudo class='ReplaceText' 
+			onTick={()=>{
+				string newText = textFunc();
+				if (text != newText) {
+					if (store.ContainsKey(newText)) {
+						colorData = store[newText];
+					} else {
+						Task.Run(()=>{ // TODO: make sure you dont run out of memory!! clear it, maybe
+							$colorHtml(text).ContinueWith(task => {
+								store[newText] = task.Result;
+								if (newText == text) colorData = task.Result;
+							});
+						});	
+					}
+					setText(newText);
+				}
+			}}
+		>
+			<span>
+				{FindColorData().map(data => {
+					int currI = i;
+					var node = <p class='Text' color={data.Item1}>{text.Substring(currI, data.Item2)}</p>;
+					i += data.Item2;
+					return node;
+				})}
+			</span>
+		</pseudo>
+	);
+}", @"
+
 const App = () => {
 
 	HtmlNode [node, setNode] = useState(null);
@@ -54,6 +109,7 @@ const App = () => {
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'
+				-borderWidth={int: 0}
 				multiline={true}
 				useTypingState={(TypingState ___setTemp)=>typingState=___setTemp}
 				text={string: text} setText={setText}
@@ -82,11 +138,13 @@ const App = () => {
 				}}
 				></TextBox>
 				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(timePassed) : ''}</h6>
-				<pseudo 
+				<pseudo class='ReplaceText' 
 				renderAdd={(SpriteBatch spriteBatch)=>{ 
 					$renderTabs(spriteBatch, text, typingState);
 				}}
 				></pseudo>
+				<TextRender textFunc={string: correctText()}></TextRender>
+		
 			</div>
 			<div flex={1} backgroundColor='white'>
 				<html></html>
@@ -213,6 +271,54 @@ List<(string stringName, string contents)> htmlSearchList = ((System.Func<System
 	return ___node;
 }
 
+HtmlNode CreateTextRender(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? textFunc = null) {
+	
+	HtmlNode ___node = null;
+	
+string text = "";
+Action<string> setText = (___val) => {
+	text = ___val;
+	___node.stateChangeDown();
+};
+
+IEnumerable<(Color, int)> colorData = null;
+var store = new Dictionary<string, IEnumerable<(Color, int)>>();
+int i = 0;
+IEnumerable<(Color, int)> FindColorData() {
+i = 0;
+if (colorData != null) {
+int len = colorData.Select(data => data.Item2).Sum();
+if (len == text.Length) return colorData;
+if (len < text.Length) {
+return colorData.Concat((new []{(Color.White, text.Length - len)}));
+}
+}
+return (new []{(Color.White, text.Length)});
+}
+	___node = newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["onTick"]=((Action)(()=>{
+				string newText = textFunc();
+				if (text != newText) {
+					if (store.ContainsKey(newText)) {
+						colorData = store[newText];
+					} else {
+						Task.Run(()=>{ // TODO: make sure you dont run out of memory!! clear it, maybe
+							((System.Func<System.String,System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<System.ValueTuple<Microsoft.Xna.Framework.Color,System.Int32>>>>)___vars["colorHtml"])(text).ContinueWith(task => {
+								store[newText] = task.Result;
+								if (newText == text) colorData = task.Result;
+							});
+						});	
+					}
+					setText(newText);
+				}
+			}))}, children: nodeArr(newNode("span", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((FindColorData().Select(data => {
+					int currI = i;
+					var node = newNode("p", props: new Dictionary<string, object> {["class"]="Text", ["color"]=(data.Item1)}, textContent: (Func<string>)(()=> ""+(text.Substring(currI, data.Item2))+""));
+					i += data.Item2;
+					return node;
+				}).ToArray()))))));
+	return ___node;
+}
+
 HtmlNode CreateApp(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null) {
 	
 	HtmlNode ___node = null;
@@ -238,7 +344,7 @@ string path = "/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWrit
 string correctText() {
 return text.Replace("\t", TextInputUtil.spacesPerTab);
 }
-	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(CreateFrameCounter("FrameCounter", props: new Dictionary<string, object> {}, textContent: ""), CreateSearchBar("SearchBar", props: new Dictionary<string, object> {["path"]=(path), ["setText"]=(setText)}, textContent: "", path: (path), setText: (setText)), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["multiline"]=(true), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), ["text"]=((Func<string>)(() => (text))), ["setText"]=(setText), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
+	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, children: nodeArr(CreateFrameCounter("FrameCounter", props: new Dictionary<string, object> {}, textContent: ""), CreateSearchBar("SearchBar", props: new Dictionary<string, object> {["path"]=(path), ["setText"]=(setText)}, textContent: "", path: (path), setText: (setText)), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["-borderWidth"]=((Func<int>)(() => (0))), ["multiline"]=(true), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), ["text"]=((Func<string>)(() => (text))), ["setText"]=(setText), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState);
 				})), ["onTick"]=((Action)(()=>{
@@ -262,15 +368,15 @@ return text.Replace("\t", TextInputUtil.spacesPerTab);
 				}))}, textContent: "", multiline: (true), useTypingState: ((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), text: ((Func<string>)(() => (text))), setText: (setText), diff: ((Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState);
-				}))), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["renderAdd"]=((Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
+				}))), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["renderAdd"]=((Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
 					((System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch,System.String,MonoGameHtml.TypingState>)___vars["renderTabs"])(spriteBatch, text, typingState);
-				}))}, textContent: "")))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (node ?? 
+				}))}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=((Func<string>)(() => (correctText())))}, textContent: "", textFunc: ((Func<string>)(() => (correctText())))))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (node ?? 
 					(
 						(exception == null || text == "") ? 
 							newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing to display...") : 
 							newNode("p", props: new Dictionary<string, object> {["color"]="red"}, textContent: (Func<string>)(()=> ""+(exception == null ? "NULL?" : (exception.GetType().Name + "\n" + exception.Message))+""))
 					)
-				)))))));
+				))))));
 	return ___node;
 }
 
@@ -321,13 +427,13 @@ TypingState typingState = null;
 				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
 			})), ["onMouseDrag"]=((Action)(()=>{
 				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
-			}))}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=(text), ["setText"]=(setText), ["diff"]=(diff), ["active"]=((Func<bool>)(() => (active))), ["multiline"]=(multiline), ["useTypingState"]=((Action<TypingState>)((TypingState state)=>{
+			}))}, children: nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=(text), ["setText"]=(setText), ["diff"]=(diff), ["active"]=((Func<bool>)(() => (active))), ["multiline"]=(multiline), ["useTypingState"]=((Action<TypingState>)((TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
 				}))}, textContent: "", text: (text), setText: (setText), diff: (diff), active: ((Func<bool>)(() => (active))), multiline: (multiline), useTypingState: ((Action<TypingState>)((TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
-				}))))));
+				})))));
 	return ___node;
 }
 
