@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
@@ -31,13 +32,19 @@ const TextRender = (Func<string> textFunc) => {
 	
 	string [text, setText] = useState('');
 
-	IEnumerable<(Color, int)> colorData = null;
-	var store = new Dictionary<string, IEnumerable<(Color, int)>>();
+	List<List<(Color, int)>> colorData = null;
 
 	int i = 0;
 
-	IEnumerable<(Color, int)> FindColorData() {
+	List<List<(Color, int)>> FindColorData() {
 		i = 0;
+
+		if (colorData != null) {
+			int len = colorData.Select(line => line.Select(data => data.Item2).Sum()).Sum();
+			if (len <= text.Length) return colorData;
+		}
+
+		/*
 		if (colorData != null) {
 			int len = colorData.Select(data => data.Item2).Sum();
 			if (len == text.Length) return colorData;
@@ -45,10 +52,10 @@ const TextRender = (Func<string> textFunc) => {
 			if (len < text.Length) {
 				return colorData.Concat(arr[(Color.White, text.Length - len)]);
 			}
-		} 
+		}*/
 
 		
-		return arr[(Color.White, text.Length)];
+		return null;
 	}
 
 	return (
@@ -56,28 +63,29 @@ const TextRender = (Func<string> textFunc) => {
 			onTick={()=>{
 				string newText = textFunc();
 				if (text != newText) {
-					if (store.ContainsKey(newText)) {
-						colorData = store[newText];
-					} else {
-						Task.Run(()=>{ // TODO: make sure you dont run out of memory!! clear it, maybe
-							$colorHtml(text).ContinueWith(task => {
-								store[newText] = task.Result;
-								if (newText == text) colorData = task.Result;
-							});
-						});	
-					}
+					colorData = null;
 					setText(newText);
+					Task.Run(()=>{
+						$colorHtml(text).ContinueWith(task => {
+							if (newText == text) {
+								colorData = task.Result;
+								setText(newText);
+							}
+						});
+					});
 				}
 			}}
 		>
-			<span>
-				{FindColorData().map(data => {
-					int currI = i;
-					var node = <p class='Text' color={data.Item1}>{text.Substring(currI, data.Item2)}</p>;
-					i += data.Item2;
-					return node;
-				})}
-			</span>
+			{FindColorData()?.map(line => 
+				<span>
+					{line.map(data => {
+						int currI = i;
+						var node = <p class='Text' color={data.Item1}>{text.Replace('\n', ' ').Substring(currI, data.Item2)}</p>;
+						i += data.Item2;
+						return node;
+					})}
+				</span>
+			)}	
 		</pseudo>
 	);
 }
@@ -86,7 +94,7 @@ const App = () => {
 
 	HtmlNode [node, setNode] = useState(null);
 
-	string text = '';
+	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
 	Action<string> setText = (string str)=> text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
@@ -164,18 +172,18 @@ const App = () => {
             const string html = "<App/>";
             StatePack pack = null;
 
-            Func<string, Task<IEnumerable<(Color, int)>>> colorHtml = async (code) => await Parser.ColorSyntaxHighlightedCSharpHtml(code);
+            Func<string, Task<List<List<(Color, int)>>>> colorHtml = async (code) => await Parser.ColorSyntaxHighlightedCSharpHtml(code);
             
             Func<int, string, Task<(HtmlNode, Exception, int)>> updateHtml = async (int updateCount, string text) => {
 	            HtmlNode node = null;
 	            Exception e = null;
 	            
 	            try {
-		            node = await HtmlProcessor.GenHtml(text, pack, 
+		            node = await HtmlProcessor.GenHtml("<App/>", pack, 
 			            macros: Macros.create(
 			            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
 			            "none", "<span/>"),
-			            components: HtmlComponents.Create(HtmlComponents.Slider, HtmlComponents.AllInput));
+			            components: HtmlComponents.Create(HtmlComponents.Slider, HtmlComponents.AllInput, text));
 	            } catch (Exception err) {
 		            e = err;
 		            Logger.log(e.StackTrace);
@@ -201,8 +209,20 @@ const App = () => {
 	            }
 
 	            if (newStr.Length == oldStr.Length + 1) {
-		            // creating html open/closed tags on tab
-		            if (typingState.cursorIndex >= 2 && newStr.CountOf("\t") > oldStr.CountOf("\t")) {
+
+		            char? onChar = null;
+		            if (typingState.cursorIndex < newStr.Length) onChar = newStr[typingState.cursorIndex - 1];
+
+		            var closeInto = new[] { ')','}','\''};
+		            if (typingState.cursorIndex > 0 && typingState.cursorIndex < newStr.Length && onChar.HasValue && closeInto.Contains(onChar.Value) && newStr[typingState.cursorIndex] == onChar.Value) {
+			            str = str[..(typingState.cursorIndex-1)] + str[typingState.cursorIndex..];
+		            } else if (typingState.cursorIndex > 0 && newStr[typingState.cursorIndex - 1] == '{') {
+			            str = str[..typingState.cursorIndex] + '}' + str[typingState.cursorIndex..];
+		            } else if (typingState.cursorIndex > 0 && newStr[typingState.cursorIndex - 1] == '(') {
+			            str = str[..typingState.cursorIndex] + ')' + str[typingState.cursorIndex..];
+		            } else if (typingState.cursorIndex > 0 && newStr[typingState.cursorIndex - 1] == '\'') {
+			            str = str[..typingState.cursorIndex] + '\'' + str[typingState.cursorIndex..];
+		            } else if (typingState.cursorIndex >= 2 && newStr.CountOf("\t") > oldStr.CountOf("\t")) { // creating html open/closed tags on tab
 			            int beforeIndex = typingState.cursorIndex - 2;
 		            
 			            if (!valid(newStr[beforeIndex])) return str;

@@ -466,12 +466,15 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 	{innerPropDefaults}
 	HtmlNode ___node = null;
 	{stateStr}
-	___node = {StringifyNode(returnContents)};
+	___node = {returnContents};
 	return ___node;
 }}
 ";
-			
-			
+			var basePairs = Parser.FindHtmlPairs(output).Where(htmlPair => htmlPair.nestCount == 0).Reverse();
+
+			foreach (HtmlPair htmlPair in basePairs) {
+				output = output[..htmlPair.openIndex] + StringifyNode(htmlPair.whole(output)) + output[(htmlPair.closeIndex + htmlPair.closeLen)..];
+			}
 			
 			applyNamedArrayElements: {
 				foreach (string key in namedArrayElements.Keys) {

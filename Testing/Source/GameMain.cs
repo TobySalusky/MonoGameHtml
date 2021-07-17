@@ -42,7 +42,7 @@ namespace Testing
             Window.IsBorderless = false;
             Window.AllowUserResizing = true;
             _graphics.ApplyChanges();
-            
+
             string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName,
                 "Assets");
 

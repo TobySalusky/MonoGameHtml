@@ -55,34 +55,68 @@ namespace MonoGameHtml {
 			return code;
 		}
 
-		public static async Task<IEnumerable<(Color, int)>> ColorSyntaxHighlightedCSharpHtml(string code) {
+		public static async Task<List<List<(Color, int)>>> ColorSyntaxHighlightedCSharpHtml(string code) {
 			var ranges = await ColorConsole.ConsoleMain.SyntaxHighlightCSharpHtml(code);
 
+			
 			static Color ClassificationToColor(Range range) {
+				
+				Color htmlBrace = new Color(255,132,101);
+				Color htmlTag = new Color(255,255,108);
+				Color htmlMacro = new Color(255, 101, 101);
+				Color orange = new Color(242, 142, 42);
+				Color number = new Color(124, 199, 255);
+
 				switch (range.ClassificationType)
 				{
 					case "keyword":
 					case "keyword - control":
-						return Color.DarkCyan;
+						return orange;
 					case "class name":
-						return Color.Magenta;
+						return Color.White;
 					case "number":
-						return Color.Cyan;
+						return number;
 					case "string":
 						return Color.LightGreen;
 					case "operator":
-						return Color.Yellow;
+						return htmlTag;
 					case "punctuation":
-						return Color.Yellow;
+						return Color.White;
+					case "HtmlBrackets":
+						return htmlTag;
+					case "HtmlBrace":
+						return htmlBrace;
+					case "HtmlTag":
+						return htmlTag;
+					case "HtmlMacro":
+						return htmlMacro;
+					case "KnownHtmlProp":
+						return Color.White;
+					case "UnknownHtmlProp":
+						return Color.Gray;
 					default:
 						return Color.White;
 				}
 			}
+			
 
-			return ranges.Select(range => (ClassificationToColor(range), range.TextSpan.Length));
+			var listList = new List<List<(Color, int)>>{new List<(Color, int)>()};
+
+			foreach (var range in ranges) {
+				if (range.ClassificationType == "LINEBREAK") {
+					listList[^1].Add((ClassificationToColor(range), range.TextSpan.Length));
+					listList.Add(new List<(Color, int)>());
+				}
+				else {
+					listList[^1].Add((ClassificationToColor(range), range.TextSpan.Length));
+				}
+			}
+			
+			//return ranges.Select(range => (ClassificationToColor(range), range.TextSpan.Length));
+			return listList;
 		}
 		
-		private static bool StartingHtml(string code, IReadOnlyDictionary<int, DelimPair> braceDict, IReadOnlyDictionary<int, DelimPair> singleQuoteDict, 
+		public static bool StartingHtml(string code, IReadOnlyDictionary<int, DelimPair> braceDict, IReadOnlyDictionary<int, DelimPair> singleQuoteDict, 
 			IReadOnlyDictionary<int, DelimPair> doubleQuoteDict, int startIndex, out int closeStartIndex, bool selfClosing = false) {
         	closeStartIndex = -1;
 
@@ -169,6 +203,29 @@ namespace MonoGameHtml {
         }
 
 		
+		public static bool EndingHtml(string code, int startIndex, out int closeEndIndex) {
+			closeEndIndex = -1;
+
+			for (int i = startIndex + 1; i < code.Length; i++) {
+				char c = code[i];
+				if (i == startIndex + 1) {
+					if (c == '/') continue;
+				} else if (i == startIndex + 2) {
+					if (c.IsLetter()) continue;
+				} else {
+					if (c.IsAlphanumeric()) continue;
+					if (c == '>') {
+						closeEndIndex = i;
+						return true;
+					}
+				}
+				break;
+			}
+
+			return false;
+		}
+
+		
 		public static List<HtmlPair> FindHtmlPairs(string code) {
 
 			/***
@@ -189,30 +246,7 @@ namespace MonoGameHtml {
 			for (int i = 0; i < code.Length; i++) { // fill output string
 				output += (code[i] == '\n') ? '\n' : 'x';
 			}
-
 			
-			bool EndingHtml(int startIndex, out int closeEndIndex) {
-				closeEndIndex = -1;
-
-				for (int i = startIndex + 1; i < code.Length; i++) {
-					char c = code[i];
-					if (i == startIndex + 1) {
-						if (c == '/') continue;
-					} else if (i == startIndex + 2) {
-						if (c.IsLetter()) continue;
-					} else {
-						if (c.IsAlphanumeric()) continue;
-						if (c == '>') {
-							closeEndIndex = i;
-							return true;
-						}
-					}
-					break;
-				}
-
-				return false;
-			}
-
 			void InsertOutputChar(int i, char c) {
 				output = output[..i] + c + output[(i + 1)..];
 			}
@@ -233,7 +267,7 @@ namespace MonoGameHtml {
 
 						i = closeStart;
 					}}
-					{if (EndingHtml(i, out int closeEnd)) {
+					{if (EndingHtml(code, i, out int closeEnd)) {
 						InsertOutputChar(i, '2');
 						InsertOutputChar(closeEnd, '3');
 

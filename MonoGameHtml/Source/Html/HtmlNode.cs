@@ -1178,5 +1178,15 @@ namespace MonoGameHtml {
 				}
 			}
 		}
+
+		public static HashSet<string> KnownPropNames = new HashSet<string> {
+			"dimens","width","height","backgroundColor","color","tint","src","objectFit",
+			"left","top","bottom","right","position","props","propsUnder",
+			"renderAdd","onPress","onPressRemove","onHover","onTick","onMouseEnter","onMouseExit","onMouseMove","onMouseDrag","ref",
+			"textContent","class","flex","flexDirection","justifyContent","alignItems","align","alignX","alignY",
+			"padding","paddingLeft","paddingRight","paddingTop","paddingBottom","paddingInline","paddingBlock",
+			"margin","marginLeft","marginRight","marginTop","marginBottom","marginInline","marginBlock",
+			"textAlign","fontSize","fontFamily","borderWidth","borderColor","borderRadius"
+		};
 	}
 }

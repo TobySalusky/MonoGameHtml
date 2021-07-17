@@ -31,13 +31,19 @@ const TextRender = (Func<string> textFunc) => {
 	
 	string [text, setText] = useState('');
 
-	IEnumerable<(Color, int)> colorData = null;
-	var store = new Dictionary<string, IEnumerable<(Color, int)>>();
+	List<List<(Color, int)>> colorData = null;
 
 	int i = 0;
 
-	IEnumerable<(Color, int)> FindColorData() {
+	List<List<(Color, int)>> FindColorData() {
 		i = 0;
+
+		if (colorData != null) {
+			int len = colorData.Select(line => line.Select(data => data.Item2).Sum()).Sum();
+			if (len <= text.Length) return colorData;
+		}
+
+		/*
 		if (colorData != null) {
 			int len = colorData.Select(data => data.Item2).Sum();
 			if (len == text.Length) return colorData;
@@ -45,10 +51,10 @@ const TextRender = (Func<string> textFunc) => {
 			if (len < text.Length) {
 				return colorData.Concat(arr[(Color.White, text.Length - len)]);
 			}
-		} 
+		}*/
 
 		
-		return arr[(Color.White, text.Length)];
+		return null;
 	}
 
 	return (
@@ -56,28 +62,29 @@ const TextRender = (Func<string> textFunc) => {
 			onTick={()=>{
 				string newText = textFunc();
 				if (text != newText) {
-					if (store.ContainsKey(newText)) {
-						colorData = store[newText];
-					} else {
-						Task.Run(()=>{ // TODO: make sure you dont run out of memory!! clear it, maybe
-							$colorHtml(text).ContinueWith(task => {
-								store[newText] = task.Result;
-								if (newText == text) colorData = task.Result;
-							});
-						});	
-					}
+					colorData = null;
 					setText(newText);
+					Task.Run(()=>{
+						$colorHtml(text).ContinueWith(task => {
+							if (newText == text) {
+								colorData = task.Result;
+								setText(newText);
+							}
+						});
+					});
 				}
 			}}
 		>
-			<span>
-				{FindColorData().map(data => {
-					int currI = i;
-					var node = <p class='Text' color={data.Item1}>{text.Substring(currI, data.Item2)}</p>;
-					i += data.Item2;
-					return node;
-				})}
-			</span>
+			{FindColorData()?.map(line => 
+				<span>
+					{line.map(data => {
+						int currI = i;
+						var node = <p class='Text' color={data.Item1}>{text.Replace('\n', ' ').Substring(currI, data.Item2)}</p>;
+						i += data.Item2;
+						return node;
+					})}
+				</span>
+			)}	
 		</pseudo>
 	);
 }", @"
@@ -86,7 +93,7 @@ const App = () => {
 
 	HtmlNode [node, setNode] = useState(null);
 
-	string text = '';
+	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
 	Action<string> setText = (string str)=> text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
@@ -281,41 +288,46 @@ Action<string> setText = (___val) => {
 	___node.stateChangeDown();
 };
 
-IEnumerable<(Color, int)> colorData = null;
-var store = new Dictionary<string, IEnumerable<(Color, int)>>();
+List<List<(Color, int)>> colorData = null;
 int i = 0;
-IEnumerable<(Color, int)> FindColorData() {
+List<List<(Color, int)>> FindColorData() {
 i = 0;
+if (colorData != null) {
+int len = colorData.Select(line => line.Select(data => data.Item2).Sum()).Sum();
+if (len <= text.Length) return colorData;
+}
+/*
 if (colorData != null) {
 int len = colorData.Select(data => data.Item2).Sum();
 if (len == text.Length) return colorData;
 if (len < text.Length) {
 return colorData.Concat((new []{(Color.White, text.Length - len)}));
 }
-}
-return (new []{(Color.White, text.Length)});
+}*/
+return null;
 }
 	___node = newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["onTick"]=((Action)(()=>{
 				string newText = textFunc();
 				if (text != newText) {
-					if (store.ContainsKey(newText)) {
-						colorData = store[newText];
-					} else {
-						Task.Run(()=>{ // TODO: make sure you dont run out of memory!! clear it, maybe
-							((System.Func<System.String,System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<System.ValueTuple<Microsoft.Xna.Framework.Color,System.Int32>>>>)___vars["colorHtml"])(text).ContinueWith(task => {
-								store[newText] = task.Result;
-								if (newText == text) colorData = task.Result;
-							});
-						});	
-					}
+					colorData = null;
 					setText(newText);
+					Task.Run(()=>{
+						((System.Func<System.String,System.Threading.Tasks.Task<System.Collections.Generic.List<System.Collections.Generic.List<System.ValueTuple<Microsoft.Xna.Framework.Color,System.Int32>>>>>)___vars["colorHtml"])(text).ContinueWith(task => {
+							if (newText == text) {
+								colorData = task.Result;
+								setText(newText);
+							}
+						});
+					});
 				}
-			}))}, children: nodeArr(newNode("span", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((FindColorData().Select(data => {
-					int currI = i;
-					var node = newNode("p", props: new Dictionary<string, object> {["class"]="Text", ["color"]=(data.Item1)}, textContent: (Func<string>)(()=> ""+(text.Substring(currI, data.Item2))+""));
-					i += data.Item2;
-					return node;
-				}).ToArray()))))));
+			}))}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((FindColorData()?.Select(line => 
+				newNode("span", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((line.Select(data => {
+						int currI = i;
+						var node = newNode("p", props: new Dictionary<string, object> {["class"]="Text", ["color"]=(data.Item1)}, textContent: (Func<string>)(()=> ""+(text.Replace("\n", " ").Substring(currI, data.Item2))+""));
+						i += data.Item2;
+						return node;
+					}).ToArray()))))
+			).ToArray()))));
 	return ___node;
 }
 
@@ -329,7 +341,7 @@ Action<HtmlNode> setNode = (___val) => {
 	___node.stateChangeDown();
 };
 
-string text = "";
+string text = $"const App = () => {{{"\n"}{"\t"}return ({"\n"}{"\t"}{"\t"}{"\n"}{"\t"});{"\n"}}}";
 Action<string> setText = (string str)=> text=str;
 int updateCount = 0, currUpdateCount = 0;
 bool updating = false;
