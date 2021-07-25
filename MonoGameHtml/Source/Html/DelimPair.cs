@@ -11,7 +11,7 @@ namespace MonoGameHtml {
 
 		public int AfterClose => closeIndex + closeLen;
 
-		public static readonly (string, string) Parens = ("(", ")"), Carrots = ("<", ">"), // TODO: do something special with carrots!!
+		public static readonly (string, string) Parens = ("(", ")"), GenericCarrots = ("<", ">"), // TODO: do something special with carrots!!
 			SquareBrackets = ("[", "]"), CurlyBrackets = ("{", "}"), 
 			Quotes = ("\"", "\""), SingleQuotes = ("'", "'");
 		
@@ -108,21 +108,46 @@ namespace MonoGameHtml {
 				return genPairs(str, open, close, (str, delim, i) => 
 					allNestOf(0, str.nestAmountsLen(i, delim.Length, dict)));
 			}*/
+			if ((open == "<" || close == ">") && req == null) {
+				int openCount = 0;
+				return genPairs(str, open, close, (str, delim, i) => {
+					if (delim == open) {
+						for (int j = i - 1; j >= 0; j--) {
+							if (str[j].IsWhiteSpace()) continue;
+							if (str[j].IsValidReferenceNameCharacter()) {
+								openCount++;
+								return true;
+							}
+							return false;
+						}
+						return false;
+					}
+
+					if (openCount > 0) {
+						openCount--;
+						return true;
+					}
+					return false;
+				});
+			}
 
 			Stack<int> stack = new Stack<int>();
 			List<DelimPair> pairs = new List<DelimPair>();
 
+			bool hasReq = req != null;
+
 			int openLen = open.Length, closeLen = close.Length;
 			for (int i = 0; i < str.Length; i++) {
-				if (req != null && (!req(str, open, i) && !req(str, close, i))) continue; // skips when the requirement is not met
 
 				if (i <= str.Length - openLen && (i > str.Length - closeLen || str.Substring(i, closeLen) != close || (open == close && stack.Count == 0)) &&
 				    str.Substring(i, openLen) == open) {
+					if (hasReq && (!req(str, open, i))) continue; // skips when the requirement is not met
 					stack.Push(i);
 					continue;
 				}
 
 				if (i <= str.Length - closeLen && str.Substring(i, closeLen) == close) {
+					if (hasReq && (!req(str, close, i))) continue; // skips when the requirement is not met
 					pairs.Add(new DelimPair(stack.Pop(), i, openLen, closeLen));
 				}
 			}
@@ -134,7 +159,7 @@ namespace MonoGameHtml {
 					if (pair.isWithin(other)) pair.nestCount++;
 				}
 			}
-
+			
 			return pairs;
 		}
 

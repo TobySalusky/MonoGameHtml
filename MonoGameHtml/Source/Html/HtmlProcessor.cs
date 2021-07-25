@@ -383,12 +383,14 @@ namespace MonoGameHtml {
 			string stateStr = "";
 			state: {
 				string stateDefinitions = componentContents[..mainReturnIndex];
-				string[] lines = stateDefinitions.Split(new [] { '\r', '\n' });
-				foreach (string str in lines) {
+
+				string[] statements = stateDefinitions.SplitUnNested(";").Select(statement => statement.Trim().EndsWith(";") ? statement : statement + ';').ToArray();
+
+				foreach (string str in statements) {
 					string line = str.Trim();
 					const string stateOpen = "useState(";
 					int stateIndex = line.indexOf(stateOpen);
-					
+
 					if (stateIndex != -1) {
 						string type = line.Substring(0, line.indexOf(" "));
 						string afterType = line.Substring(line.indexOf(" ") + 1);
@@ -405,9 +407,99 @@ Action<{type}> {varNames[1]} = (___val) => {{
 	___node.stateChangeDown();
 }};
 ";
-					} else if (line != "") {
-						if (line.StartsWith("var")) { // multi-inline var declarations
-							var splitOnCommas = line.SplitUnNestedCommas();
+					} else if (line != "") {// TODO: IMPORTANT! instead of splitting lines, split un-nested semicolons !!!!!!!!!!!
+						if (line.StartsWith("var")) {
+							int afterEquals = line.indexOf("=") + 1;
+							string initialization = line[afterEquals..].Trim();
+							Logger.log("DOING LINE",line, initialization);
+
+							if (initialization.StartsWith("(")) {
+								DelimPair parenPair = initialization.searchPairs(DelimPair.Parens, 0);
+
+								bool colon = false, arrow = false;
+								int colonIndex = -1, arrowIndex = -1;
+								for (int i = parenPair.AfterClose; i < initialization.Length - 1; i++) {
+									char c = initialization[i];
+									
+									if (c.IsWhiteSpace()) continue;
+
+									if (!arrow) {
+										if (!colon && c == ':') {
+											colon = true;
+											colonIndex = i;
+											continue;
+										}
+
+										if (colon && c.IsValidTypeNameCharacter()) {
+											continue;
+										}
+
+										if (initialization.Substring(i, 2) == "=>") {
+											arrow = true;
+											arrowIndex = i;
+											i++;
+											continue;
+										}
+									} else {
+
+										string body;
+										if (c == '{') {
+											DelimPair bracketPair = initialization.searchPairs(DelimPair.CurlyBrackets, i);
+											body = $"{{{bracketPair.contents(initialization)}}}";
+										} else {
+											body = initialization[(arrowIndex + 2)..].Trim();
+											while (body.EndsWith(";")) {
+												body = body[..^1];
+											}
+										}
+
+										Logger.log("TEST?", initialization);
+										// do stuff
+
+										var decs = parenPair.contents(initialization).SplitUnNestedCommas().
+											Select(dec => dec.SplitUnNested(" ").Select(str => str.Trim()).Where(str => str != "").ToArray());
+										string varNames = "", varTypes = "";
+
+										foreach (string[] list in decs) {
+											if (list.Length != 2) break;
+											if (varNames != "") {
+												varNames += ", ";
+												varTypes += ", ";
+											}
+
+											varTypes += list[0];
+											varNames += list[1];
+										}
+
+										string returnType = colon ? initialization[(colonIndex + 1)..arrowIndex].Trim() : "";
+
+										string fType = "Action";
+										if (returnType != "") {
+											if (varTypes != "") varTypes += ", ";
+											varTypes += returnType;
+											fType = "Func";
+										}
+
+										string possibleGenerics = varTypes == "" ? "" : $"<{varTypes}>";
+
+										string resultStr = $"({fType}{possibleGenerics})(({varNames})=>{body});";
+
+										initialization = initialization[..parenPair.openIndex] + resultStr;
+										Logger.log("TEST", initialization);
+										line = $"{line[..afterEquals]} {initialization}";
+										
+									}
+									break;
+								}
+								
+							}
+
+
+
+
+							// multi-inline var declarations
+							// Multiple 'var'-s per line (I have mixed feelings)
+							/*var splitOnCommas = line.SplitUnNestedCommas();
 							
 							if (splitOnCommas.Count > 1) {
 								var declarations = splitOnCommas;
@@ -418,7 +510,7 @@ Action<{type}> {varNames[1]} = (___val) => {{
 									if (!varDeclaration.EndsWith(";")) varDeclaration += ";";
 									line += varDeclaration + "\n";
 								}
-							}
+							}*/
 						}
 
 						stateStr += $"\n{line}";
@@ -529,6 +621,12 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			code = ApplyMacros(code, macros);
 			code = Parser.ExpandSelfClosedHtmlTags(code);
 			code = code.Replace("\"", "'");
+			code = InlineActionFuncCasts(code);
+			return code;
+		}
+
+		private static string InlineActionFuncCasts(string code) {
+			// TODO:
 			return code;
 		}
 

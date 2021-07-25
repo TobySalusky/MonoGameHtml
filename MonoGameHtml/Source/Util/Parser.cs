@@ -296,7 +296,7 @@ namespace MonoGameHtml {
 			return pairs;
 		}
 
-		public static List<string> SplitUnNestedCommas(this string str) { 
+		public static List<string> SplitUnNested(this string str, string target) { 
 			var list = new List<string>();
 
 			int nextStart = 0;
@@ -306,13 +306,15 @@ namespace MonoGameHtml {
 				nextStart = i+1;
 			}
 
+			int targetLen = target.Length;
+
 			var dict = DelimPair.searchAll(str,
 				DelimPair.Parens, DelimPair.CurlyBrackets, DelimPair.SquareBrackets,
-				DelimPair.Quotes, DelimPair.SingleQuotes, DelimPair.Carrots);
+				DelimPair.Quotes, DelimPair.SingleQuotes, DelimPair.GenericCarrots);
 
-			for (int i = 0; i < str.Length; i++) {
-				if (str.Substring(i, 1) == ",") {
-					bool unNested = DelimPair.allNestOf(0, str.nestAmountsLen(i, 1, dict));
+			for (int i = 0; i < str.Length + 1 - targetLen; i++) {
+				if (str.Substring(i, targetLen) == target) {
+					bool unNested = DelimPair.allNestOf(0, str.nestAmountsLen(i, targetLen, dict));
 					if (unNested) {
 						Next(i);
 					}
@@ -321,6 +323,10 @@ namespace MonoGameHtml {
 			Next(str.Length);
 
 			return list;
+		}
+
+		public static List<string> SplitUnNestedCommas(this string str) {
+			return SplitUnNested(str, ",");
 		}
 	}
 }

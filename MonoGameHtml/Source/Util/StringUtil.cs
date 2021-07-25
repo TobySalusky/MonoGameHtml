@@ -17,8 +17,12 @@ namespace MonoGameHtml {
             return (c >= '0' && c <= '9') || c.IsLetter();
         }
 
-        public static bool IsValidReferenceNameCharacter(this char c) {
-            return c == '_' || c.IsAlphanumeric();
+        public static bool IsValidReferenceNameCharacter(this char c) { // major oversimplification TODO: improve?
+            return c == '@' || c == '_' || c.IsAlphanumeric();
+        }
+        
+        public static bool IsValidTypeNameCharacter(this char c) {
+            return c.IsValidReferenceNameCharacter() || c == '.' || c == '<' || c == '>' || c.IsWhiteSpace();
         }
 
 
@@ -105,7 +109,7 @@ namespace MonoGameHtml {
             foreach (var key in dict.Keys) {
                 nestDict[key] = 0;
                 foreach (var pair in dict[key]) {
-                    if (pair.openIndex + pair.openLen < start && pair.closeIndex > end) nestDict[key]++;
+                    if (pair.openIndex + pair.openLen - 1 < start && pair.closeIndex > end) nestDict[key]++;
                 }
             }
             return nestDict;
