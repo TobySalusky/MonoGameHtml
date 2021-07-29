@@ -226,6 +226,7 @@ namespace MonoGameHtml {
 		}
 
 		
+		// prerequisite that all self-closing nodes have been expanded!
 		public static List<HtmlPair> FindHtmlPairs(string code) {
 
 			/***

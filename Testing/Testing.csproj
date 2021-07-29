@@ -27,7 +27,9 @@
     <PackageReference Include="Google.Cloud.Speech.V1" Version="2.2.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.34" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0-preview.5.21301.5" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0-1.final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="3.11.0-1.final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.11.0-1.final" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="ScrapySharp" Version="3.0.0" />

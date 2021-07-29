@@ -17,3 +17,17 @@
 .Text {
     font-size: 26px;
 }
+
+.CodePredictionBox {
+    position: fixed;
+    background-color: #2c2c32;
+    border-color: aliceblue;
+    border-width: 1px;
+    border-radius: 5px;
+    padding: 5px;
+    margin-top: 5px;
+}
+
+.CodePrediction {
+    color: white;
+}

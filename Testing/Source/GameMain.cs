@@ -36,8 +36,8 @@ namespace Testing
             // TODO: Add your initialization logic here
             base.Initialize();
             
-            _graphics.PreferredBackBufferHeight = 1080/2;
-            _graphics.PreferredBackBufferWidth = 1920/2;
+            _graphics.PreferredBackBufferHeight = 1080 - 200;
+            _graphics.PreferredBackBufferWidth = 1920 - 200;
             _graphics.IsFullScreen = false;
             Window.IsBorderless = false;
             Window.AllowUserResizing = true;

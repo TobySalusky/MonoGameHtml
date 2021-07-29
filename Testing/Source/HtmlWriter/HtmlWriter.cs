@@ -28,6 +28,82 @@ const SearchBar = (Action<string> setText, string path = '') => {
 	);
 }
 
+const Predictor = (
+	Func<string> textFunc, 
+	Func<int> indexFunc, 
+	Action<List<string>> setPredictions, 
+	TypingState typingState
+) => {
+
+	string text = '';
+	int index = 0;
+	
+	int cursorX = 0, cursorY = 0;
+	
+	string searchFor = '';
+	List<string> newList = null;
+	List<string> [list, setListState] = useState(null);
+	var setList = (List<string> list) => {
+		setPredictions(list);
+		setListState(list);
+	};
+
+	var clear = () => {
+		if (list != null) setList(null);
+	};
+
+	var tick = () => {
+	
+		if (newList != null) {
+			setList(newList);
+			newList = null;
+		}
+	
+		int newIndex = indexFunc();
+		if (index != newIndex) {
+			index = newIndex;
+			clear();
+		}
+	
+		string newText = textFunc();
+		if (text != newText) {
+			text = newText;
+			searchFor = $findSearchFor(text, typingState.cursorIndex);
+			try {
+				(cursorX, cursorY) = $cursorPos(typingState, text);
+				Task.Run(() => {
+					$predict(searchFor, text, typingState.cursorIndex).ContinueWith((task) => {
+						if (text == newText) newList = task.Result;
+					});
+				});
+				//setList($predict(newText, index));
+			} catch (Exception e) {
+				Logger.log(e.StackTrace);
+				clear();
+			}
+		}
+	};
+
+	return (
+		<pseudo onTick={tick}>
+			{(list == null || list.Count == 0) ? <p>Nothing Here</p> :
+				<div left={cursorX} top={cursorY} class='CodePredictionBox'>
+					{list.map(str => {
+						int searchIndex = str.IndexOf(searchFor);
+						return (
+							<span>
+								<h6 class='CodePrediction'>{str[..searchIndex]}</h6>
+								<h6 class='CodePrediction' color='orange'>{searchFor}</h6>
+								<h6 class='CodePrediction'>{str[(searchIndex+searchFor.Length)..]}</h6>
+							</span>
+						);
+					})}
+				</div>
+			}
+		</pseudo>
+	);
+}
+
 const TextRender = (Func<string> textFunc) => {
 	
 	string [text, setText] = useState('');
@@ -92,10 +168,13 @@ const TextRender = (Func<string> textFunc) => {
 
 const App = () => {
 
+	List<string> predictions = null;
+	var setPredictions = (List<string> list) => predictions = list;
+
 	HtmlNode [node, setNode] = useState(null);
 
 	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
-	Action<string> setText = (string str)=> text=str;
+	Action<string> setText = (string str) => text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
 	Exception [exception, setException] = useState(null);
@@ -123,7 +202,7 @@ const App = () => {
 				text={string: text} setText={setText}
 				diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
-					return $htmlDiff(oldStr, newStr, typingState);
+					return $htmlDiff(oldStr, newStr, typingState, predictions);
 				})}
 				onTick={()=>{
 					if (!updating && currUpdateCount != updateCount) {
@@ -152,7 +231,8 @@ const App = () => {
 				}}
 				/>
 				<TextRender textFunc={string: correctText()}/>
-		
+				<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
+				setPredictions={setPredictions} typingState={typingState}/>
 			</div>
 			<div flex={1} backgroundColor='white'>
 				<html/>
@@ -183,7 +263,7 @@ const App = () => {
 			            macros: Macros.create(
 			            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
 			            "none", "<span/>"),
-			            components: HtmlComponents.Create(HtmlComponents.Slider, HtmlComponents.AllInput, text));
+			            components: HtmlComponents.Create(text));
 	            } catch (Exception err) {
 		            e = err;
 		            Logger.log(e.StackTrace);
@@ -201,7 +281,7 @@ const App = () => {
 	            return str;
             }
 
-            Func<string, string, TypingState, string> htmlDiff = (oldStr, newStr, typingState) => {
+            Func<string, string, TypingState, List<string>, string> htmlDiff = (oldStr, newStr, typingState, predictions) => {
 	            string str = newStr;
 
 	            static bool valid(char c) {
@@ -222,6 +302,15 @@ const App = () => {
 			            str = str[..typingState.cursorIndex] + ')' + str[typingState.cursorIndex..];
 		            } else if (typingState.cursorIndex > 0 && newStr[typingState.cursorIndex - 1] == '\'') {
 			            str = str[..typingState.cursorIndex] + '\'' + str[typingState.cursorIndex..];
+		            } else if ((predictions != null && predictions.Any()) && ((newStr.CountOf("\t") > oldStr.CountOf("\t")) || (newStr.CountOf("\n") > oldStr.CountOf("\n")))) {
+			            // use completion
+			            string prediction = predictions[0];
+			            for (int i = typingState.cursorIndex - 2; i >= 0; i--) {
+				            if (newStr[i].IsValidReferenceNameCharacter()) continue;
+				            str = str[..(i + 1)] + prediction + str[typingState.cursorIndex..];
+				            typingState.cursorIndex = i + prediction.Length + 1;
+				            break;
+			            }
 		            } else if (typingState.cursorIndex >= 2 && newStr.CountOf("\t") > oldStr.CountOf("\t")) { // creating html open/closed tags on tab
 			            int beforeIndex = typingState.cursorIndex - 2;
 		            
@@ -328,13 +417,25 @@ const App = () => {
 	            return list;
             };
 
+            Func<TypingState, string, (int, int)> cursorPos = (typingState, realText) => {
+	            Vector2 pos = TextInputUtil.cursorPositionAtIndex(typingState.node, typingState, realText, typingState.cursorIndex);
+	            pos.Y += typingState.node.font.FindHeight();
+	            return ((int)pos.X, (int)pos.Y);
+            };
+
+            Func<string, string, int, Task<List<string>>> predict = async (searchFor, code, index) => await CodePredictor.Predict(searchFor, code, index);
+            Func<string, int, string> findSearchFor = (code, index) => CodePredictor.FindSearchFor(code, index);
+
             pack = StatePack.Create(
                 "updateHtml", updateHtml,
                 "loadingText", (Func<float, string>) loadingText,
                 "htmlDiff", htmlDiff,
                 "renderTabs", renderTabs,
                 "searchHtml", searchHtml,
-                "colorHtml", colorHtml
+                "colorHtml", colorHtml,
+                "predict",  predict,
+                "cursorPos", cursorPos,
+                "findSearchFor", findSearchFor
             );
 
             gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 

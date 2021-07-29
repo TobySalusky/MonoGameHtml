@@ -27,6 +27,82 @@ const SearchBar = (Action<string> setText, string path = '') => {
 	);
 }", @"
 
+const Predictor = (
+	Func<string> textFunc, 
+	Func<int> indexFunc, 
+	Action<List<string>> setPredictions, 
+	TypingState typingState
+) => {
+
+	string text = '';
+	int index = 0;
+	
+	int cursorX = 0, cursorY = 0;
+	
+	string searchFor = '';
+	List<string> newList = null;
+	List<string> [list, setListState] = useState(null);
+	var setList = (List<string> list) => {
+		setPredictions(list);
+		setListState(list);
+	};
+
+	var clear = () => {
+		if (list != null) setList(null);
+	};
+
+	var tick = () => {
+	
+		if (newList != null) {
+			setList(newList);
+			newList = null;
+		}
+	
+		int newIndex = indexFunc();
+		if (index != newIndex) {
+			index = newIndex;
+			clear();
+		}
+	
+		string newText = textFunc();
+		if (text != newText) {
+			text = newText;
+			searchFor = $findSearchFor(text, typingState.cursorIndex);
+			try {
+				(cursorX, cursorY) = $cursorPos(typingState, text);
+				Task.Run(() => {
+					$predict(searchFor, text, typingState.cursorIndex).ContinueWith((task) => {
+						if (text == newText) newList = task.Result;
+					});
+				});
+				//setList($predict(newText, index));
+			} catch (Exception e) {
+				Logger.log(e.StackTrace);
+				clear();
+			}
+		}
+	};
+
+	return (
+		<pseudo onTick={tick}>
+			{(list == null || list.Count == 0) ? <p>Nothing Here</p> :
+				<div left={cursorX} top={cursorY} class='CodePredictionBox'>
+					{list.map(str => {
+						int searchIndex = str.IndexOf(searchFor);
+						return (
+							<span>
+								<h6 class='CodePrediction'>{str[..searchIndex]}</h6>
+								<h6 class='CodePrediction' color='orange'>{searchFor}</h6>
+								<h6 class='CodePrediction'>{str[(searchIndex+searchFor.Length)..]}</h6>
+							</span>
+						);
+					})}
+				</div>
+			}
+		</pseudo>
+	);
+}", @"
+
 const TextRender = (Func<string> textFunc) => {
 	
 	string [text, setText] = useState('');
@@ -91,10 +167,13 @@ const TextRender = (Func<string> textFunc) => {
 
 const App = () => {
 
+	List<string> predictions = null;
+	var setPredictions = (List<string> list) => predictions = list;
+
 	HtmlNode [node, setNode] = useState(null);
 
 	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
-	Action<string> setText = (string str)=> text=str;
+	Action<string> setText = (string str) => text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
 	Exception [exception, setException] = useState(null);
@@ -122,7 +201,7 @@ const App = () => {
 				text={string: text} setText={setText}
 				diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
-					return $htmlDiff(oldStr, newStr, typingState);
+					return $htmlDiff(oldStr, newStr, typingState, predictions);
 				})}
 				onTick={()=>{
 					if (!updating && currUpdateCount != updateCount) {
@@ -151,7 +230,8 @@ const App = () => {
 				}}
 				></pseudo>
 				<TextRender textFunc={string: correctText()}></TextRender>
-		
+				<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
+				setPredictions={setPredictions} typingState={typingState}></Predictor>
 			</div>
 			<div flex={1} backgroundColor='white'>
 				<html></html>
@@ -272,9 +352,75 @@ HtmlNode CreateSearchBar(string tag, Dictionary<string, object> props = null, st
 	HtmlNode ___node = null;
 	
 List<(string stringName, string contents)> htmlSearchList = ((System.Func<System.String,System.Collections.Generic.List<System.ValueTuple<System.String,System.String>>>)___vars["searchHtml"])(path);
+;
 	___node = newNode("div", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((true ? null : htmlSearchList.Select(instance =>
 				newNode("p", props: new Dictionary<string, object> {["onPress"]=((Action)(()=>setText(instance.contents)))}, textContent: (Func<string>)(()=> ""+(instance.stringName)+""))
 			).ToArray()))));
+	return ___node;
+}
+
+HtmlNode CreatePredictor(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? textFunc = null, Func<int>? indexFunc = null, Action<List<string>>? setPredictions = null, TypingState? typingState = null) {
+	
+	HtmlNode ___node = null;
+	
+string text = "";
+int index = 0;
+int cursorX = 0, cursorY = 0;
+string searchFor = "";
+List<string> newList = null;
+List<string> list = null;
+Action<List<string>> setListState = (___val) => {
+	list = ___val;
+	___node.stateChangeDown();
+};
+
+var setList = (Action<List<string>>)((list)=>{
+		setPredictions(list);
+		setListState(list);
+	});
+var clear = (Action)(()=>{
+		if (list != null) setList(null);
+	});
+var tick = (Action)(()=>{
+	
+		if (newList != null) {
+			setList(newList);
+			newList = null;
+		}
+	
+		int newIndex = indexFunc();
+		if (index != newIndex) {
+			index = newIndex;
+			clear();
+		}
+	
+		string newText = textFunc();
+		if (text != newText) {
+			text = newText;
+			searchFor = ((System.Func<System.String,System.Int32,System.String>)___vars["findSearchFor"])(text, typingState.cursorIndex);
+			try {
+				(cursorX, cursorY) = ((System.Func<MonoGameHtml.TypingState,System.String,System.ValueTuple<System.Int32,System.Int32>>)___vars["cursorPos"])(typingState, text);
+				Task.Run(() => {
+					((System.Func<System.String,System.String,System.Int32,System.Threading.Tasks.Task<System.Collections.Generic.List<System.String>>>)___vars["predict"])(searchFor, text, typingState.cursorIndex).ContinueWith((task) => {
+						if (text == newText) newList = task.Result;
+					});
+				});
+				//setList(((System.Func<System.String,System.String,System.Int32,System.Threading.Tasks.Task<System.Collections.Generic.List<System.String>>>)___vars["predict"])(newText, index));
+			} catch (Exception e) {
+				Logger.log(e.StackTrace);
+				clear();
+			}
+		}
+	});
+;
+	___node = newNode("pseudo", props: new Dictionary<string, object> {["onTick"]=(tick)}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(((list == null || list.Count == 0) ? newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing Here") :
+				newNode("div", props: new Dictionary<string, object> {["left"]=(cursorX), ["top"]=(cursorY), ["class"]="CodePredictionBox"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((list.Select(str => {
+						int searchIndex = str.IndexOf(searchFor);
+						return (
+							newNode("span", props: new Dictionary<string, object> {}, children: nodeArr(newNode("h6", props: new Dictionary<string, object> {["class"]="CodePrediction"}, textContent: (Func<string>)(()=> ""+(str[..searchIndex])+"")), newNode("h6", props: new Dictionary<string, object> {["class"]="CodePrediction", ["color"]="orange"}, textContent: (Func<string>)(()=> ""+(searchFor)+"")), newNode("h6", props: new Dictionary<string, object> {["class"]="CodePrediction"}, textContent: (Func<string>)(()=> ""+(str[(searchIndex+searchFor.Length)..])+""))))
+						);
+					}).ToArray()))))
+			))));
 	return ___node;
 }
 
@@ -291,21 +437,28 @@ Action<string> setText = (___val) => {
 List<List<(Color, int)>> colorData = null;
 int i = 0;
 List<List<(Color, int)>> FindColorData() {
-i = 0;
-if (colorData != null) {
-int len = colorData.Select(line => line.Select(data => data.Item2).Sum()).Sum();
-if (len <= text.Length) return colorData;
-}
-/*
-if (colorData != null) {
-int len = colorData.Select(data => data.Item2).Sum();
-if (len == text.Length) return colorData;
-if (len < text.Length) {
-return colorData.Concat((new []{(Color.White, text.Length - len)}));
-}
-}*/
-return null;
-}
+		i = 0;
+
+		if (colorData != null) {
+			int len = colorData.Select(line => line.Select(data => data.Item2).Sum()).Sum();
+			if (len <= text.Length) return colorData;
+		}
+
+		/*
+		if (colorData != null) {
+			int len = colorData.Select(data => data.Item2).Sum();
+			if (len == text.Length) return colorData;
+			
+			if (len < text.Length) {
+				return colorData.Concat((new []{(Color.White, text.Length - len)}));
+			}
+		}*/
+
+		
+		return null;
+	}
+
+	;
 	___node = newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["onTick"]=((Action)(()=>{
 				string newText = textFunc();
 				if (text != newText) {
@@ -335,6 +488,8 @@ HtmlNode CreateApp(string tag, Dictionary<string, object> props = null, string t
 	
 	HtmlNode ___node = null;
 	
+List<string> predictions = null;
+var setPredictions = (Action<List<string>>)((list)=>predictions = list);
 HtmlNode node = null;
 Action<HtmlNode> setNode = (___val) => {
 	node = ___val;
@@ -342,7 +497,7 @@ Action<HtmlNode> setNode = (___val) => {
 };
 
 string text = $"const App = () => {{{"\n"}{"\t"}return ({"\n"}{"\t"}{"\t"}{"\n"}{"\t"});{"\n"}}}";
-Action<string> setText = (string str)=> text=str;
+Action<string> setText = (string str) => text=str;
 int updateCount = 0, currUpdateCount = 0;
 bool updating = false;
 Exception exception = null;
@@ -354,11 +509,13 @@ Action<Exception> setException = (___val) => {
 TypingState typingState = null;
 string path = "/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWriter/HtmlWriter.cs";
 string correctText() {
-return text.Replace("\t", TextInputUtil.spacesPerTab);
-}
+		return text.Replace("\t", TextInputUtil.spacesPerTab);
+	}
+
+    ;
 	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, children: nodeArr(CreateFrameCounter("FrameCounter", props: new Dictionary<string, object> {}, textContent: ""), CreateSearchBar("SearchBar", props: new Dictionary<string, object> {["path"]=(path), ["setText"]=(setText)}, textContent: "", path: (path), setText: (setText)), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["-borderWidth"]=((Func<int>)(() => (0))), ["multiline"]=(true), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), ["text"]=((Func<string>)(() => (text))), ["setText"]=(setText), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
-					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState);
+					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
 				})), ["onTick"]=((Action)(()=>{
 					if (!updating && currUpdateCount != updateCount) {
 					
@@ -379,10 +536,10 @@ return text.Replace("\t", TextInputUtil.spacesPerTab);
 					}
 				}))}, textContent: "", multiline: (true), useTypingState: ((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), text: ((Func<string>)(() => (text))), setText: (setText), diff: ((Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
-					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState);
+					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
 				}))), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["renderAdd"]=((Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
 					((System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch,System.String,MonoGameHtml.TypingState>)___vars["renderTabs"])(spriteBatch, text, typingState);
-				}))}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=((Func<string>)(() => (correctText())))}, textContent: "", textFunc: ((Func<string>)(() => (correctText())))))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (node ?? 
+				}))}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=((Func<string>)(() => (correctText())))}, textContent: "", textFunc: ((Func<string>)(() => (correctText())))), CreatePredictor("Predictor", props: new Dictionary<string, object> {["textFunc"]=((Func<string>)(() => (text))), ["indexFunc"]=((Func<int>)(() => (typingState.cursorIndex))), ["setPredictions"]=(setPredictions), ["typingState"]=(typingState)}, textContent: "", textFunc: ((Func<string>)(() => (text))), indexFunc: ((Func<int>)(() => (typingState.cursorIndex))), setPredictions: (setPredictions), typingState: (typingState)))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (node ?? 
 					(
 						(exception == null || text == "") ? 
 							newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing to display...") : 
@@ -397,11 +554,12 @@ HtmlNode CreateTextInput(string tag, Dictionary<string, object> props = null, st
 	HtmlNode ___node = null;
 	
 TypingState typingState = new TypingState {
-multiline = multiline,
-diff = diff,
-undoFrequency = 1F,
-};
+		multiline = multiline,
+		diff = diff,
+		undoFrequency = 1F,
+	};
 useTypingState?.Invoke(typingState);
+;
 	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=((Action)(()=>{
 			bool isActive = (active != null) ? active.Invoke() : true;
 			if (isActive) {
@@ -422,13 +580,15 @@ HtmlNode CreateTextBox(string tag, Dictionary<string, object> props = null, stri
 	HtmlNode ___node = null;
 	
 if (text == null && setText == null) {
-string str = textContent ?? "";
-text = () => str;
-setText = newStr => str = newStr;
-}
-bool active = false;
+		string str = textContent ?? "";
+		text = () => str;
+		setText = newStr => str = newStr;
+	}
+	
+	bool active = false;
 HtmlNode node = null;
 TypingState typingState = null;
+;
 	___node = newNode("div", props: new Dictionary<string, object> {["ref"]=((Action<HtmlNode>)((HtmlNode el)=>{
 			node = el;
 			typingState.node = el;
@@ -453,6 +613,7 @@ HtmlNode CreateKeyInput(string tag, Dictionary<string, object> props = null, str
 	
 	HtmlNode ___node = null;
 	
+;
 	___node = newNode("div", props: new Dictionary<string, object> {}, textContent: "");
 	return ___node;
 }
@@ -463,6 +624,7 @@ HtmlNode CreateFrameCounter(string tag, Dictionary<string, object> props = null,
 	
 var fpsCounter = new FrameCounter();
 int updateCount = 0;
+;
 	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=((Action)(()=>{
 			fpsCounter.update(deltaTime);
 			int currUpdate = (int) (timePassed / updateTime);

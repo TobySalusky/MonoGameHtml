@@ -167,6 +167,7 @@ namespace MonoGameHtml {
 			string text = node.textContent[..Math.Min(node.textContent.Length, typingState.findDisplayCursorIndex(realText, cursorIndex))];
 			float x = node.UnpaddedX + font.MeasureString(text[Math.Max(0, text.lastIndexOf("\n"))..]).X;
 			float y = node.UnpaddedY + Math.Max(0, font.MeasureString(text).Y - height);
+			
 			return new Vector2(x, y);
 		}
 

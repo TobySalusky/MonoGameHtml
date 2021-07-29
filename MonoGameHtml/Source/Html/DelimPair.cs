@@ -23,6 +23,10 @@ namespace MonoGameHtml {
 			this.nestCount = nestCount;
 		}
 
+		public bool indexIsInside(int index) { 
+			return (index > openIndex) && (index < AfterClose - 1);
+		}
+
 		public bool isWithin(DelimPair other) {
 			return (openIndex >= (other.openIndex + other.openLen) && closeIndex < other.closeIndex);
 		}
