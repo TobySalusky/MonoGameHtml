@@ -190,6 +190,39 @@ const Switch = (Func<string> caseFunc) => {
 		</div>
 	);
 }
+", Table = @"
+const Table = () => {
+  var headers = new List<HtmlNode>();
+  var data = new List<List<HtmlNode>>();
+
+  foreach (var child in children) {
+    if (child.tag == 'th') {
+      headers.Add(child);
+      data.Add(new List<HtmlNode>());
+    }
+  }
+
+  int dataCount = 0;
+  foreach (var child in children) {
+    if (child.tag == 'td') {
+      data[dataCount % data.Count].Add(child);
+      dataCount++;
+    }
+  }
+
+  return (
+    <span>
+      {nStream(headers.Count).map(i =>
+        <div>
+          <html/>
+          {headers[i]}
+          {data[i].ToArray()}
+        </div>
+      )}
+    </div>
+  );
+}
+
 ";
 
 		public static string AllInput = @$"

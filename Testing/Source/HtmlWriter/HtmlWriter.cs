@@ -173,7 +173,7 @@ const App = () => {
 
 	HtmlNode [node, setNode] = useState(null);
 
-	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
+	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}' + HtmlComponents.Table;
 	Action<string> setText = (string str) => text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
@@ -206,6 +206,8 @@ const App = () => {
 				})}
 				onTick={()=>{
 					if (!updating && currUpdateCount != updateCount) {
+
+						Logger.log(text);
 					
 						updating = true;
 						Task.Run(()=>{

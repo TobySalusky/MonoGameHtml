@@ -112,6 +112,18 @@ namespace MonoGameHtml {
 				}
 			}
 			
+			for (int i = 0; i < listList.Count; i++) {
+            	var list = listList[i];
+            	for (int j = list.Count - 1; j > 0; j--) {
+            		var elem = list[j];
+            		var prevElem = list[j - 1];
+            		if (elem.Item1 == prevElem.Item1) {
+            			list.RemoveAt(j);
+            			list[j - 1] = (elem.Item1, elem.Item2 + prevElem.Item2);
+            		}
+            	}
+            }
+			
 			//return ranges.Select(range => (ClassificationToColor(range), range.TextSpan.Length));
 			return listList;
 		}

@@ -172,7 +172,7 @@ const App = () => {
 
 	HtmlNode [node, setNode] = useState(null);
 
-	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
+	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}' + HtmlComponents.Table;
 	Action<string> setText = (string str) => text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
@@ -205,6 +205,8 @@ const App = () => {
 				})}
 				onTick={()=>{
 					if (!updating && currUpdateCount != updateCount) {
+
+						Logger.log(text);
 					
 						updating = true;
 						Task.Run(()=>{
@@ -496,7 +498,7 @@ Action<HtmlNode> setNode = (___val) => {
 	___node.stateChangeDown();
 };
 
-string text = $"const App = () => {{{"\n"}{"\t"}return ({"\n"}{"\t"}{"\t"}{"\n"}{"\t"});{"\n"}}}";
+string text = $"const App = () => {{{"\n"}{"\t"}return ({"\n"}{"\t"}{"\t"}{"\n"}{"\t"});{"\n"}}}" + HtmlComponents.Table;
 Action<string> setText = (string str) => text=str;
 int updateCount = 0, currUpdateCount = 0;
 bool updating = false;
@@ -518,6 +520,8 @@ string correctText() {
 					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
 				})), ["onTick"]=((Action)(()=>{
 					if (!updating && currUpdateCount != updateCount) {
+
+						Logger.log(text);
 					
 						updating = true;
 						Task.Run(()=>{
