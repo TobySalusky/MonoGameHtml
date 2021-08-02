@@ -51,6 +51,7 @@ namespace Testing {
 
             } catch (Exception e) {
                 Logger.log(e.StackTrace);
+                Logger.log(e.Message);
             }
 
             return null;

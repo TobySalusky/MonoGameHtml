@@ -193,30 +193,33 @@ const Switch = (Func<string> caseFunc) => {
 ", Table = @"
 const Table = () => {
   var headers = new List<HtmlNode>();
-  var data = new List<List<HtmlNode>>();
-
-  foreach (var child in children) {
-    if (child.tag == 'th') {
-      headers.Add(child);
-      data.Add(new List<HtmlNode>());
+  var data = new List<HtmlNode>();
+  
+  void recurse(HtmlNode[] childArr) {
+    foreach (var child in childArr) {
+      if (child.tag == 'th') headers.Add(child);
+      else if (child.tag == 'td') data.Add(child);
+	  else if (child.children != null) recurse(child.children);
     }
   }
 
-  int dataCount = 0;
-  foreach (var child in children) {
-    if (child.tag == 'td') {
-      data[dataCount % data.Count].Add(child);
-      dataCount++;
-    }
+  recurse(children);
+
+  var cols = new List<HtmlNode>[headers.Count]; // TODO: more efficient calculation of column lengths
+  for (int i = 0; i < cols.Length; i++) {
+    cols[i] = new List<HtmlNode>();
+  }
+  for (int i = 0; i < data.Count; i++) {
+    cols[i % cols.Length].Add(data[i]);
   }
 
   return (
     <span>
-      {nStream(headers.Count).map(i =>
+      {nStream(cols.Length).map(i =>
         <div>
           <html/>
           {headers[i]}
-          {data[i].ToArray()}
+          {cols[i].ToArray()}
         </div>
       )}
     </div>

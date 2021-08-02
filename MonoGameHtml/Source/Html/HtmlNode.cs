@@ -182,6 +182,10 @@ namespace MonoGameHtml {
 				findBase().bottomUpInit();
 				
 				findBase().layoutDown();
+
+				foreach (var child in children) {
+					//Logger.log(tag, child.tag, child.width, child.height);
+				}
 			}
 		}
 
@@ -323,10 +327,14 @@ namespace MonoGameHtml {
 					initTextContent(textContentProp);
 					if (textContent == "") textContent = null;
 				}
-
+				
+				if (tag == "td") Logger.log(tag, textContent);
 				if (textContent != null) font = Fonts.getFontSafe(fontFamily, fontSize); // default
 
-				if (props.Keys.Count == 0) goto finishProps;
+				if (props.Keys.Count == 0) {
+					if (textContent != null) onFontChange();
+					goto finishProps;
+				}
 				
 				if (props.ContainsKey("left")) left = prop<int>("left");
 				if (props.ContainsKey("right")) right = prop<int>("right");
@@ -419,8 +427,10 @@ namespace MonoGameHtml {
 				if (props.ContainsKey("fontSize")) fontSize = (int) props["fontSize"];
 				if (props.ContainsKey("textAlign")) textAlign = Enum.Parse<TextAlignType>((string) props["textAlign"]);
 				
+				if (tag == "td") Logger.log(textContent, width, height);
 				if (textContent != null) onFontChange();
-				
+				if (tag == "td") Logger.log(textContent, width, height);
+
 				if (props.ContainsKey("-fontSize")) {
 					object funcProp = props["-fontSize"];
 					if (funcProp is Func<int> intFunc) { 
@@ -973,7 +983,7 @@ namespace MonoGameHtml {
 
 		internal void update(float deltaTime, MouseInfo mouse) {
 			
-			onTick?.Invoke();
+	 		onTick?.Invoke();
 			
 			if (actionList != null) {
 				foreach (Action action in actionList) {

@@ -69,18 +69,18 @@ const Predictor = (
 		if (text != newText) {
 			text = newText;
 			searchFor = $findSearchFor(text, typingState.cursorIndex);
-			try {
-				(cursorX, cursorY) = $cursorPos(typingState, text);
-				Task.Run(() => {
+			(cursorX, cursorY) = $cursorPos(typingState, text);
+			Task.Run(() => {
+				try {
 					$predict(searchFor, text, typingState.cursorIndex).ContinueWith((task) => {
 						if (text == newText) newList = task.Result;
 					});
-				});
-				//setList($predict(newText, index));
-			} catch (Exception e) {
-				Logger.log(e.StackTrace);
-				clear();
-			}
+				} catch (Exception e) {
+					Logger.log(e.StackTrace);
+					Logger.log(e.Message);
+					clear();
+				}
+			});			
 		}
 	};
 
@@ -142,12 +142,17 @@ const TextRender = (Func<string> textFunc) => {
 					colorData = null;
 					setText(newText);
 					Task.Run(()=>{
-						$colorHtml(text).ContinueWith(task => {
-							if (newText == text) {
-								colorData = task.Result;
-								setText(newText);
-							}
-						});
+						try {
+							$colorHtml(text).ContinueWith(task => {
+								if (newText == text) {
+									colorData = task.Result;
+									setText(newText);
+								}
+							});
+						} catch (Exception e) {
+							Logger.log(e.StackTrace);
+							Logger.log(e.Message);
+						}
 					});
 				}
 			}}
@@ -211,6 +216,7 @@ const App = () => {
 					
 						updating = true;
 						Task.Run(()=>{
+							try {
 						    $updateHtml(updateCount, text).ContinueWith(task => {
 						    	int thisUpdateCount = task.Result.Item3;
 						    	if (thisUpdateCount > currUpdateCount) {
@@ -221,6 +227,7 @@ const App = () => {
 									setNode(task.Result.Item1);
 						    	}
 							});
+							} catch (Exception e) {Logger.log('????', e.StackTrace);}
 						});
 						
 					}
@@ -269,6 +276,7 @@ const App = () => {
 	            } catch (Exception err) {
 		            e = err;
 		            Logger.log(e.StackTrace);
+		            Logger.log(e.Message);
 	            }
 
 	            return (node, e, updateCount);
