@@ -81,7 +81,11 @@ namespace MonoGameHtml {
 
 		// FUNCTIONS
 		public bool hover;
-		public Action onPress, onPressRemove, onMouseEnter, onMouseExit, onMouseMove, onMouseDrag, onHover, onTick, onMouseDown, onMouseUp; // TODO: add MouseInfo as parameter
+		public Action onPress, onPressRemove, onMouseEnter,
+			onMouseExit, onMouseMove, onMouseDrag, onHover,
+			onTick, onMouseDown, onMouseUp; // TODO: add MouseInfo as parameter
+
+		public Action<HtmlNode> onResize;
 		public Action<SpriteBatch> renderAdd;
 		// mouse input
 		public bool clicked;
@@ -200,18 +204,18 @@ namespace MonoGameHtml {
 		}
 
 		public void onWidthChange() {
-			onResize();
+			triggerOnResize();
 		}
 		
 		public void onHeightChange() {
-			onResize();
+			triggerOnResize();
 		}
 
 		public HtmlNode findBase() {
 			return (parent == null) ? this : parent.findBase();
 		}
 
-		public void onResize() { // TODO: sus? do i need to do a topDownInit()  ??????
+		public void triggerOnResize() { // TODO: sus? do i need to do a topDownInit()  ??????
 			// TODO:
 			HtmlNode baseNode = findBase();
 			
@@ -226,6 +230,8 @@ namespace MonoGameHtml {
 					borderRadius = (int) props["borderRadius"];
 				}
 			}
+			
+			onResize?.Invoke(this);
 		}
 		
 		public void onFontChange() {
@@ -235,7 +241,7 @@ namespace MonoGameHtml {
 			if (DynamicHeight) height = (int) textDimens.Y;
 
 			//if (DynamicWidth || DynamicHeight) onResize();// TODO: FIGURE OUT WHAT THE HECK IS GOING ON
-			onResize();
+			triggerOnResize();
 		}
 
 		public bool propHasAny(string propName) {
@@ -328,7 +334,6 @@ namespace MonoGameHtml {
 					if (textContent == "") textContent = null;
 				}
 				
-				if (tag == "td") Logger.log(tag, textContent);
 				if (textContent != null) font = Fonts.getFontSafe(fontFamily, fontSize); // default
 
 				if (props.Keys.Count == 0) {
@@ -427,9 +432,7 @@ namespace MonoGameHtml {
 				if (props.ContainsKey("fontSize")) fontSize = (int) props["fontSize"];
 				if (props.ContainsKey("textAlign")) textAlign = Enum.Parse<TextAlignType>((string) props["textAlign"]);
 				
-				if (tag == "td") Logger.log(textContent, width, height);
 				if (textContent != null) onFontChange();
-				if (tag == "td") Logger.log(textContent, width, height);
 
 				if (props.ContainsKey("-fontSize")) {
 					object funcProp = props["-fontSize"];
@@ -462,7 +465,7 @@ namespace MonoGameHtml {
 								string val = strFunc();
 								width = NodeUtil.widthFromProp(val, parent);
 								height = NodeUtil.heightFromProp(val, parent);
-								if (width != initWidth || height != initHeight) onResize();
+								if (width != initWidth || height != initHeight) triggerOnResize();
 							});
 							break;
 						case Func<int> intFunc:
@@ -472,7 +475,7 @@ namespace MonoGameHtml {
 								int val = intFunc();
 								width = val;
 								height = val;
-								if (width != initWidth || height != initHeight) onResize();
+								if (width != initWidth || height != initHeight) triggerOnResize();
 							});
 							break;
 					}
@@ -494,7 +497,7 @@ namespace MonoGameHtml {
 										height = NodeUtil.heightFromProp("100%", parent);
 									}
 								}
-								onResize();
+								triggerOnResize();
 							}
 						});
 					}
@@ -545,27 +548,46 @@ namespace MonoGameHtml {
 					}
 				}
 
+				Action<HtmlNode> CreateOptionalNodeAction(string propName) {
+					return props[propName] switch {
+						Action<HtmlNode> nodeAction => nodeAction,
+						Action action => (node) => action(),
+					};
+				}
+
+				void TrySetOptionalNodeAction(string propName, ref Action<HtmlNode> actionRef) {
+					if (props.ContainsKey(propName)) {
+						actionRef = CreateOptionalNodeAction(propName);
+					}
+				}
+
+				void TrySet<T>(string propName, ref T valRef) {
+					if (props.ContainsKey(propName)) valRef = prop<T>(propName);
+				}
+
 				if (props.ContainsKey("renderAdd")) renderAdd = prop<Action<SpriteBatch>>("renderAdd");
-				if (props.ContainsKey("onPress")) onPress = prop<Action>("onPress");
-				if (props.ContainsKey("onPressRemove")) onPressRemove = prop<Action>("onPressRemove");
-				if (props.ContainsKey("onMouseMove")) onMouseMove = prop<Action>("onMouseMove");
-				if (props.ContainsKey("onMouseDrag")) onMouseDrag = prop<Action>("onMouseDrag");
-				if (props.ContainsKey("onMouseEnter")) onMouseEnter = prop<Action>("onMouseEnter");
-				if (props.ContainsKey("onMouseExit")) onMouseExit = prop<Action>("onMouseExit");
-				if (props.ContainsKey("onHover")) onHover = prop<Action>("onHover");
-				if (props.ContainsKey("onTick")) onTick = prop<Action>("onTick");
-				if (props.ContainsKey("onMouseDown")) onMouseDown = prop<Action>("onMouseDown");
-				if (props.ContainsKey("onMouseUp")) onMouseUp = prop<Action>("onMouseUp");
+				
+				TrySetOptionalNodeAction(nameof(onResize), ref onResize);
 
+				TrySet(nameof(onPress), ref onPress);
+				TrySet(nameof(onPressRemove), ref onPressRemove);
+				TrySet(nameof(onMouseMove), ref onMouseMove);
+				TrySet(nameof(onMouseDrag), ref onMouseDrag);
+				TrySet(nameof(onMouseEnter), ref onMouseEnter);
+				TrySet(nameof(onMouseExit), ref onMouseExit);
+				TrySet(nameof(onHover), ref onHover);
+				TrySet(nameof(onTick), ref onTick);
+				TrySet(nameof(onMouseDown), ref onMouseDown);
+				TrySet(nameof(onMouseUp), ref onMouseUp);
 
-				if (props.ContainsKey("borderWidth")) borderWidth = prop<int>("borderWidth");
+				TrySet(nameof(borderWidth), ref borderWidth);
 				if (props.ContainsKey("-borderWidth")) { 
 					object funcProp = props["-borderWidth"];
 					if (funcProp is Func<int> func) { 
 						bindAction(() => {
 							int initBorderWidth = borderWidth;
 							borderWidth = func();
-							if (initBorderWidth != borderWidth) onResize();
+							if (initBorderWidth != borderWidth) triggerOnResize();
 						});
 					}
 				}
@@ -650,7 +672,7 @@ namespace MonoGameHtml {
 						if (DynamicWidth && DynamicHeight) { 
 							width = imgTexture.Width;
 							height = imgTexture.Height;
-							onResize();
+							triggerOnResize();
 						}
 					} else if (props.ContainsKey("-src")) {
 						var imgFunc = prop<Func<Texture2D>>("-src");
@@ -662,7 +684,7 @@ namespace MonoGameHtml {
 							                              && (initTexture.Width != imgTexture.Width || initTexture.Height != imgTexture.Height)) {
 								width = imgTexture.Width;
 								height = imgTexture.Height;
-								onResize();
+								triggerOnResize();
 							}
 						});
 					}
@@ -671,7 +693,7 @@ namespace MonoGameHtml {
 				
 				// REF function
 				if (props.ContainsKey("ref")) {
-					prop<Action<HtmlNode>>("ref")(this);
+					CreateOptionalNodeAction("ref")(this);
 				}
 			} finishProps: { }
 
@@ -1187,6 +1209,38 @@ namespace MonoGameHtml {
 					child.render(spriteBatch);
 				}
 			}
+		}
+		
+		// ReSharper disable once UnusedMember.Global
+		public HtmlNode GetPrevious() {
+			if (parent == null) {
+				throw new Exception("can not get previous node when no parent exists");
+			}
+
+			var childArr = parent.children;
+			for (int i = 0; i < childArr.Length; i++) {
+				if (childArr[i] == this) {
+					return i == 0 ? null : childArr[i - 1];
+				}
+			}
+
+			throw new Exception("did not find this node in its parent's child array");
+		}
+		
+		// ReSharper disable once UnusedMember.Global
+		public HtmlNode GetNext() {
+			if (parent == null) {
+				throw new Exception("can not get next node when no parent exists");
+			}
+
+			var childArr = parent.children;
+			for (int i = 0; i < childArr.Length; i++) {
+				if (childArr[i] == this) {
+					return i == childArr.Length - 1 ? null : childArr[i + 1];
+				}
+			}
+
+			throw new Exception("did not find this node in its parent's child array");
 		}
 
 		public static HashSet<string> KnownPropNames = new HashSet<string> {

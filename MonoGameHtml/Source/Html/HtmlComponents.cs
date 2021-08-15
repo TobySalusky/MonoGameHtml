@@ -48,7 +48,8 @@ const Slider = (
         </div>
 	);
 }
-", Toggle = @"
+",
+			Toggle = @"
 const Toggle = (
     Action<bool> onChange,
     object back: 'darkgray',
@@ -70,7 +71,8 @@ const Toggle = (
         </span>
 	);
 }
-", TextInput = @"
+",
+			TextInput = @"
 const TextInput = (
 	Func<string> text, Action<string> setText, Func<bool> active, bool multiline = false, Func<string,string,string> diff,
 	Action<TypingState> useTypingState
@@ -99,7 +101,8 @@ const TextInput = (
 		}}/>
 	);
 }
-", TextBox = @"
+",
+			TextBox = @"
 const TextBox = (
 	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false, bool cursorVisible = true,
 	Action<TypingState> useTypingState
@@ -143,12 +146,14 @@ const TextBox = (
 		</div>
 	);
 }
-", KeyInput = @"
+",
+			KeyInput = @"
 const KeyInput = () => {
 	
     return (<div/>);
 }
-", FrameCounter = @"
+",
+			FrameCounter = @"
 const FrameCounter = (float updateTime = 1F) => {
 
 	var fpsCounter = new FrameCounter();
@@ -165,7 +170,8 @@ const FrameCounter = (float updateTime = 1F) => {
 		}}/>
 	);
 }
-", Switch = @"
+",
+			Switch = @"
 const Switch = (Func<string> caseFunc) => {
 
 	Dictionary<string, HtmlNode> nodeDict = new Dictionary<string, HtmlNode>();
@@ -190,48 +196,179 @@ const Switch = (Func<string> caseFunc) => {
 		</div>
 	);
 }
-", Table = @"
+",
+			Table = @"
 const Table = () => {
-  var headers = new List<HtmlNode>();
-  var data = new List<HtmlNode>();
-  
-  void recurse(HtmlNode[] childArr) {
-    foreach (var child in childArr) {
-      if (child.tag == 'th') headers.Add(child);
-      else if (child.tag == 'td') data.Add(child);
-	  else if (child.children != null) recurse(child.children);
-    }
-  }
+	var headers = new List<HtmlNode>();
+	var data = new List<HtmlNode>();
+	var rowHeights = new List<int>();
+	
+	void Recurse(HtmlNode[] childArr) {
+		foreach (var child in childArr) {
+			if (child.tag == 'th') headers.Add(child);
+			else if (child.tag == 'td') data.Add(child);
+	    	else if (child.children != null) Recurse(child.children);
+		}
+	}
 
-  recurse(children);
+	Recurse(children);
 
-  var cols = new List<HtmlNode>[headers.Count]; // TODO: more efficient calculation of column lengths
-  for (int i = 0; i < cols.Length; i++) {
-    cols[i] = new List<HtmlNode>();
-  }
-  for (int i = 0; i < data.Count; i++) {
-    cols[i % cols.Length].Add(data[i]);
-  }
+	var cols = new List<HtmlNode>[headers.Count]; // TODO: more efficient calculation of column lengths
+	for (int i = 0; i < cols.Length; i++) {
+		cols[i] = new List<HtmlNode>();
+	}
+	for (int i = 0; i < data.Count; i++) {
+	    var list = cols[i % cols.Length];
+		list.Add(data[i]);
+		if (list.Count > rowHeights.Count) rowHeights.Add(-1);
+	}
+	
+	props = null; // TODO: automatic memory release on unnecessary construction vars?
+	children = null;
 
-  return (
-    <span>
-      {nStream(cols.Length).map(i =>
-        <div>
-          <html/>
-          {headers[i]}
-          {cols[i].ToArray()}
-        </div>
-      )}
-    </div>
-  );
+    void SetRowHeight(int row, int val, HtmlNode mainNode) {
+	    rowHeights[row] = val;
+	    for (int i = 0; i < cols.Length; i++) {
+	        if (row < cols[i].Count) {
+	            var node = cols[i][row];
+	            node.width = mainNode.children[i].width;
+	            node.height = val; // TODO: make width property, this is pretty unsafe
+	        }
+	    }
+	}
+
+	return (
+		<span onResize={(HtmlNode node)=>{
+            bool flag = false;
+            for (int i = 0; i < rowHeights.Count; i++) {
+                int max = 0;
+                for (int j = 0; j < cols.Length; j++) {
+                    if (i < cols[j].Count) {
+                        max = Math.Max(max, cols[j][i].height);
+                    }
+                }
+                if (max != rowHeights[i]) {
+                    SetRowHeight(i, max, node);
+                    flag = true;
+                }
+            }
+            
+            if (flag) node.triggerOnResize();
+		}}>
+			{nStream(cols.Length).map(i =>
+				<div>
+					<html/>
+					{headers[i]}
+					{cols[i].ToArray()}
+				</div>
+			)}
+		</div>
+	);
 }
+", If = @"
+const If = (bool val = false, Func<HtmlNode[]> childrenFunc) => {
 
+    HtmlNode[] nodeArray = null;
+    if (val) {
+        nodeArray = children ?? childrenFunc();
+    }
+    
+	return (
+	    <if ref={(HtmlNode node) => {
+	        if (val) return;
+	        HtmlNode next = node.GetNext();
+	        if (next != null && (next.tag == 'else' || next.tag == 'elif')) {
+	            next.prop<Action>('trigger')();
+	        }
+	    }}>
+	        <html/>
+	        {nodeArray}
+        </if>
+	);
+}
+", Elif = @"
+const Elif = (bool val = false, Func<HtmlNode[]> childrenFunc) => {
+    
+    HtmlNode[] [nodeArray, setNodeArray] = useState(null);
+    
+    var onTrigger = () => {
+        if (val) {
+	        setNodeArray(children ?? childrenFunc());
+	    } else {
+	        HtmlNode next = ___node.GetNext();
+	        if (next != null && (next.tag == 'else' || next.tag == 'elif')) {
+	            next.prop<Action>('trigger')();
+	        }
+	    }
+    };
+    
+	return (
+	    <elif trigger={onTrigger}>
+	        <html/>
+	        {nodeArray}
+        </elif>
+	);
+}
+", Else = @"
+const Else = (Func<HtmlNode[]> childrenFunc) => {
+    
+    HtmlNode[] [nodeArray, setNodeArray] = useState(null);
+    
+	return (
+		<else trigger={()=>setNodeArray(children ?? childrenFunc())}>
+			<html/>
+		    {nodeArray}
+        </else>
+	);
+}
+", Try = @"
+const Try = (Func<HtmlNode[]> childrenFunc) => { // TODO: add ability to force dynamic children!!!
+
+    HtmlNode[] nodeArray = null;
+	bool err = false;
+    try {
+        nodeArray = childrenFunc();
+    } catch (Exception) {
+		err = true;
+	}
+    
+	return (
+	    <if ref={(HtmlNode node) => {
+	        if (!err) return;
+	        HtmlNode next = node.GetNext();
+	        if (next != null && next.tag == 'catch') {
+	            next.prop<Action>('trigger')();
+	        }
+	    }}>
+	        <html/>
+	        {nodeArray}
+        </if>
+	);
+}
+", Catch = @"
+const Catch = (Func<HtmlNode[]> childrenFunc) => {
+    
+    HtmlNode[] [nodeArray, setNodeArray] = useState(null);
+    
+	return (
+		<catch trigger={()=>setNodeArray(children ?? childrenFunc())}>
+			<html/>
+		    {nodeArray}
+        </catch>
+	);
+}
 ";
 
 		public static string AllInput = @$"
 {TextInput}
 {TextBox}
 {KeyInput}
+", AllControlFlow = @$"
+{If}
+{Elif}
+{Else}
+{Try}
+{Catch}
 ";
 	}
  }

@@ -178,7 +178,7 @@ const App = () => {
 
 	HtmlNode [node, setNode] = useState(null);
 
-	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}' + HtmlComponents.Table;
+	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
 	Action<string> setText = (string str) => text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
@@ -272,7 +272,7 @@ const App = () => {
 			            macros: Macros.create(
 			            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
 			            "none", "<span/>"),
-			            components: HtmlComponents.Create(text));
+			            components: HtmlComponents.Create(text, HtmlComponents.AllControlFlow));
 	            } catch (Exception err) {
 		            e = err;
 		            Logger.log(e.StackTrace);
