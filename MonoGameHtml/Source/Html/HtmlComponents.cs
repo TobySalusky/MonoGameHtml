@@ -369,6 +369,7 @@ const Catch = (Func<HtmlNode[]> childrenFunc) => {
 {Else}
 {Try}
 {Catch}
+{Switch}
 ";
 	}
  }
