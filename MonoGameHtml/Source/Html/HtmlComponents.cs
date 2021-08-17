@@ -170,34 +170,67 @@ const FrameCounter = (float updateTime = 1F) => {
 		}}/>
 	);
 }
-",
-			Switch = @"
-const Switch = (Func<string> caseFunc) => {
+", Switch = @"
+const Switch = (object __parens__) => {
 
-	Dictionary<string, HtmlNode> nodeDict = new Dictionary<string, HtmlNode>();
-	
-	foreach (HtmlNode node in children) {
-		if (!node.props.ContainsKey('case')) continue;
-		string thisCase = node.prop<string>('case');
-		nodeDict[thisCase] = node;
-	}
-	
-	string [currCase, setCurrCase] = useState(caseFunc());
-	
-	return (
-		<div onTick={()=>{
-			string newCase = caseFunc();
+	string [currCase, setCurrCase] = useState('');
+
+	Action onTick = null;
+	string init = null;
+	if (__parens__ is Func<string> func) {
+		Action action = () => {
+			string newCase = func();
 			if (newCase != currCase) {
 				setCurrCase(newCase);
 			}
-		}}>
+		};
+		onTick = action;
+		init = func();
+	} else {
+		init = __parens__.ToString();
+	}
+	setCurrCase(init);
+
+	Dictionary<string, HtmlNode> nodeDict = new Dictionary<string, HtmlNode>();
+	HtmlNode def = null;
+	
+	foreach (HtmlNode node in children) {
+		if (node.props.ContainsKey('default') && node.prop<bool>('default') == true) {
+			def = node;
+			continue;
+		}
+		if (!node.props.ContainsKey('case')) continue;
+		string thisCase = node.prop<string>('case');
+		nodeDict[thisCase] = node;
+	};
+
+	
+	return (
+		<div onTick={onTick}>
 			<html/>
-			{nodeDict.ContainsKey(currCase) ? nodeDict[currCase] : null}
+			{nodeDict.ContainsKey(currCase) ? nodeDict[currCase] : def}
 		</div>
 	);
 }
-",
-			Table = @"
+", Case = @"
+const Case = (object __parens__) => {
+	return (
+		<case case={__parens__.ToString()}>
+			<html/>
+			{children}
+		</case>
+	);
+}
+", Default = @"
+const Default = () => {
+	return (
+		<case default={true}>
+			<html/>
+			{children}
+		</case>
+	);
+}
+", Table = @"
 const Table = () => {
 	var headers = new List<HtmlNode>();
 	var data = new List<HtmlNode>();
@@ -266,16 +299,16 @@ const Table = () => {
 	);
 }
 ", If = @"
-const If = (bool val = false, Func<HtmlNode[]> childrenFunc) => {
+const If = (bool __parens__ = false, Func<HtmlNode[]> childrenFunc) => {
 
     HtmlNode[] nodeArray = null;
-    if (val) {
+    if (__parens__) {
         nodeArray = children ?? childrenFunc();
     }
     
 	return (
 	    <if ref={(HtmlNode node) => {
-	        if (val) return;
+	        if (__parens__) return;
 	        HtmlNode next = node.GetNext();
 	        if (next != null && (next.tag == 'else' || next.tag == 'elif')) {
 	            next.prop<Action>('trigger')();
@@ -287,12 +320,12 @@ const If = (bool val = false, Func<HtmlNode[]> childrenFunc) => {
 	);
 }
 ", Elif = @"
-const Elif = (bool val = false, Func<HtmlNode[]> childrenFunc) => {
+const Elif = (bool __parens__ = false, Func<HtmlNode[]> childrenFunc) => {
     
     HtmlNode[] [nodeArray, setNodeArray] = useState(null);
     
     var onTrigger = () => {
-        if (val) {
+        if (__parens__) {
 	        setNodeArray(children ?? childrenFunc());
 	    } else {
 	        HtmlNode next = ___node.GetNext();
@@ -325,19 +358,19 @@ const Else = (Func<HtmlNode[]> childrenFunc) => {
 const Try = (Func<HtmlNode[]> childrenFunc) => { // TODO: add ability to force dynamic children!!!
 
     HtmlNode[] nodeArray = null;
-	bool err = false;
+	Exception exception = null;
     try {
         nodeArray = childrenFunc();
-    } catch (Exception) {
-		err = true;
+    } catch (Exception e) {
+		exception = e;
 	}
     
 	return (
 	    <if ref={(HtmlNode node) => {
-	        if (!err) return;
+	        if (exception == null) return;
 	        HtmlNode next = node.GetNext();
 	        if (next != null && next.tag == 'catch') {
-	            next.prop<Action>('trigger')();
+	            next.prop<Action<Exception>>('trigger')(exception);
 	        }
 	    }}>
 	        <html/>
@@ -346,12 +379,15 @@ const Try = (Func<HtmlNode[]> childrenFunc) => { // TODO: add ability to force d
 	);
 }
 ", Catch = @"
-const Catch = (Func<HtmlNode[]> childrenFunc) => {
+const Catch = (Action<Exception> __parens__, Func<HtmlNode[]> childrenFunc) => {
     
     HtmlNode[] [nodeArray, setNodeArray] = useState(null);
     
 	return (
-		<catch trigger={()=>setNodeArray(children ?? childrenFunc())}>
+		<catch trigger={(Exception exception)=>{
+			setNodeArray(children ?? childrenFunc());
+			__parens__?.Invoke(exception);
+		}}>
 			<html/>
 		    {nodeArray}
         </catch>
@@ -370,6 +406,8 @@ const Catch = (Func<HtmlNode[]> childrenFunc) => {
 {Try}
 {Catch}
 {Switch}
+{Case}
+{Default}
 ";
 	}
  }

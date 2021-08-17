@@ -13,6 +13,7 @@ namespace MonoGameHtml {
 			// TODO: DO NOT MAKE DELIM PAIRS WITH QUOTES INSIDE OF STRINGS!
 			var singleQuoteDict = DelimPair.genPairDict(code, DelimPair.SingleQuotes);
 			var doubleQuoteDict = DelimPair.genPairDict(code, DelimPair.Quotes);
+			var parenDict = DelimPair.genPairDict(code, DelimPair.Parens);
 
 			string FindTag(int afterOpenCarrot) {
 				string tag = "";
@@ -35,11 +36,11 @@ namespace MonoGameHtml {
 				char c = code[i];
 
 				if (c == '<') {
-					if (StartingHtml(code, braceDict, singleQuoteDict, doubleQuoteDict, i, out int closeStart, true)) {
+					HtmlStartInfo startInfo = new HtmlStartInfo(code, i, true, false, braceDict, singleQuoteDict, doubleQuoteDict, parenDict);
+					if (startInfo.valid) {
 						
-						selfClosingRanges.Push((i, closeStart));
-						
-						i = closeStart;
+						selfClosingRanges.Push((startInfo.startIndex, startInfo.closeIndex));
+						i = startInfo.closeIndex;
 					}
 				}
 			}
@@ -66,11 +67,12 @@ namespace MonoGameHtml {
 				Color htmlMacro = new Color(255, 101, 101);
 				Color orange = new Color(242, 142, 42);
 				Color number = new Color(124, 199, 255);
-
+				
 				switch (range.ClassificationType)
 				{
 					case "keyword":
 					case "keyword - control":
+					case "HtmlTagControl":
 						return orange;
 					case "class name":
 						return Color.White;
@@ -112,6 +114,7 @@ namespace MonoGameHtml {
 				}
 			}
 			
+			// yikes
 			for (int i = 0; i < listList.Count; i++) {
             	var list = listList[i];
             	for (int j = list.Count - 1; j > 0; j--) {
@@ -124,96 +127,8 @@ namespace MonoGameHtml {
             	}
             }
 			
-			//return ranges.Select(range => (ClassificationToColor(range), range.TextSpan.Length));
 			return listList;
 		}
-		
-		public static bool StartingHtml(string code, IReadOnlyDictionary<int, DelimPair> braceDict, IReadOnlyDictionary<int, DelimPair> singleQuoteDict, 
-			IReadOnlyDictionary<int, DelimPair> doubleQuoteDict, int startIndex, out int closeStartIndex, bool selfClosing = false) {
-        	closeStartIndex = -1;
-
-        	// TODO: when bold/annotations come in, this will have to be case-based
-        	// looks backwards to check that the preceding character is not part of a valid variable name
-        	// avoids capturing generics as HTML
-        	for (int i = startIndex - 1; i >= 0; i--) {
-        		if (code[i].IsWhiteSpace()) continue;
-        		if (code[i].IsValidReferenceNameCharacter()) {
-        			return false;
-        		}
-        		break;
-        	}
-
-        	bool tagDone = false, propName = false, propEnter = false;
-        	
-        	for (int i = startIndex + 1; i < code.Length; i++) {
-        		char c = code[i];
-        		if (i == startIndex + 1) {
-        			if (c.IsLetter()) continue;
-        		} else {
-	                if (c.IsAlphanumeric()) {
-        				if (tagDone) propName = true;
-        				continue;
-        			}
-
-	                if (tagDone && c == '-') {// TODO: temporary- remove dash
-		                propName = true;
-		                continue;
-	                }
-
-	                if (c.IsWhiteSpace()) {
-        				tagDone = true;
-        				continue;
-        			}
-
-        			if (propName) {
-        				if (c == '=') {
-        					if (propEnter) break;
-        					propEnter = true;
-        					continue;
-        				}
-
-        				if (propEnter) {
-        					switch (c) {
-        						case '{':
-        							i = braceDict[i].closeIndex;
-        							propName = false;
-        							propEnter = false;
-        							break;
-        						case '\'':
-        							i = singleQuoteDict[i].closeIndex;
-        							propName = false;
-        							propEnter = false;
-        							break;
-        						case '"':
-        							i = doubleQuoteDict[i].closeIndex;
-        							propName = false;
-        							propEnter = false;
-        							break;
-        					}
-
-        					continue;
-        				}
-        			}
-
-                    if (selfClosing) {
-	                    if (c == '/' && (i + 1) < code.Length && code[i + 1] == '>') {
-		                    closeStartIndex = i;
-		                    return true;
-	                    }
-                    } else {
-	                    if (c == '>') {
-		                    closeStartIndex = i;
-		                    return true;
-	                    }
-                    }
-                }
-
-        		break;
-        	}
-
-        	return false;
-        }
-
 		
 		public static bool EndingHtml(string code, int startIndex, out int closeEndIndex) {
 			closeEndIndex = -1;
@@ -237,9 +152,9 @@ namespace MonoGameHtml {
 			return false;
 		}
 
-		
+
 		// prerequisite that all self-closing nodes have been expanded!
-		public static List<HtmlPair> FindHtmlPairs(string code) {
+		public static List<HtmlPair> FindHtmlPairs(string code, bool extractData = false) {
 
 			/***
 			 * TODO: add context type (C# vs HTML vs HTML/C# (dynamic html))
@@ -253,18 +168,9 @@ namespace MonoGameHtml {
 			// TODO: DO NOT MAKE DELIM PAIRS WITH QUOTES INSIDE OF STRINGS!
 			var singleQuoteDict = DelimPair.genPairDict(code, DelimPair.SingleQuotes);
 			var doubleQuoteDict = DelimPair.genPairDict(code, DelimPair.Quotes);
+			var parenDict = DelimPair.genPairDict(code, DelimPair.Parens);
 
-			string output = "";
-
-			for (int i = 0; i < code.Length; i++) { // fill output string
-				output += (code[i] == '\n') ? '\n' : 'x';
-			}
-			
-			void InsertOutputChar(int i, char c) {
-				output = output[..i] + c + output[(i + 1)..];
-			}
-
-			var openRanges = new Stack<(int, int)>();
+			var startInfoStack = new Stack<HtmlStartInfo>();
 			var pairs = new List<HtmlPair>();
 			
 			// loop through and check
@@ -272,31 +178,33 @@ namespace MonoGameHtml {
 				char c = code[i];
 
 				if (c == '<') {
-					{if (StartingHtml(code, braceDict, singleQuoteDict, doubleQuoteDict, i, out int closeStart)) {
-						InsertOutputChar(i, '0');
-						InsertOutputChar(closeStart, '1');
+					HtmlStartInfo startInfo = new HtmlStartInfo(code, i, false, extractData,
+						braceDict, singleQuoteDict, doubleQuoteDict, parenDict);
 
-						openRanges.Push((i, closeStart));
+					if (startInfo.valid) {
 
-						i = closeStart;
-					}}
-					{if (EndingHtml(code, i, out int closeEnd)) {
-						InsertOutputChar(i, '2');
-						InsertOutputChar(closeEnd, '3');
+						startInfoStack.Push(startInfo);
 
-						var (openStart, openEnd) = openRanges.Pop();
-						pairs.Add(new HtmlPair(openStart, i, openEnd - openStart + 1, closeEnd - i + 1));
+						i = startInfo.closeIndex;
+					}
+					
+					if (EndingHtml(code, i, out int closeEnd)) {
+
+						HtmlStartInfo topStartInfo = startInfoStack.Pop();
+						int openStart = topStartInfo.startIndex, openEnd = topStartInfo.closeIndex;
+						HtmlPair htmlPair = new HtmlPair(openStart, i, openEnd - openStart + 1, closeEnd - i + 1) {
+							jsxFrags = topStartInfo.jsxFrags
+						};
+
+						pairs.Add(htmlPair);
 						
 						i = closeEnd;
-					}}
+					}
 				}
 			}
 
+			// add nesting
 			foreach (var pair in pairs) {
-				/*Logger.log("test1",pair.whole(code));
-				Logger.log("test2",pair.contents(code));
-				Logger.log("test3",pair.openContents(code));*/
-				
 				foreach (var other in pairs) {
 					if (pair == other) continue;
 
@@ -304,8 +212,6 @@ namespace MonoGameHtml {
 				}
 			}
 			
-			//Logger.log(code);
-			//Logger.log(output);
 			return pairs;
 		}
 
@@ -327,6 +233,38 @@ namespace MonoGameHtml {
 
 			for (int i = 0; i < str.Length + 1 - targetLen; i++) {
 				if (str.Substring(i, targetLen) == target) {
+					bool unNested = DelimPair.allNestOf(0, str.nestAmountsLen(i, targetLen, dict));
+					if (unNested) {
+						Next(i);
+					}
+				}
+			}
+			Next(str.Length);
+
+			return list;
+		}
+		
+		[Obsolete("This method is bad, please rewrite.", false)]
+		// assumes otherTarget as equal length
+		public static List<string> SplitUnNested(this string str, string target, string otherTarget) { 
+			var list = new List<string>();
+
+			int nextStart = 0;
+			
+			void Next(int i) { 
+				list.Add(str.Sub(nextStart, i));
+				nextStart = i+1;
+			}
+
+			int targetLen = target.Length;
+
+			var dict = DelimPair.searchAll(str,
+				DelimPair.Parens, DelimPair.CurlyBrackets, DelimPair.SquareBrackets,
+				DelimPair.Quotes, DelimPair.SingleQuotes, DelimPair.GenericCarrots);
+
+			for (int i = 0; i < str.Length + 1 - targetLen; i++) {
+				string segment = str.Substring(i, targetLen);
+				if (segment == target || segment == otherTarget) {
 					bool unNested = DelimPair.allNestOf(0, str.nestAmountsLen(i, targetLen, dict));
 					if (unNested) {
 						Next(i);

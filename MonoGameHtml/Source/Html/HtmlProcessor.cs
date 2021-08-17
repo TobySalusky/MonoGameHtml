@@ -19,156 +19,101 @@ namespace MonoGameHtml {
 			public readonly Dictionary<string, List<PropInfo>> componentProps = new Dictionary<string, List<PropInfo>>();
 		}
 
+		private static string EditJsx(string jsx) {
+			const string funcTypeRegex = @"^[a-zA-Z0-9\[\]<>()\.@_]+~?:";
+			string withoutSpaces = Util.noSpaces(jsx);
+							
+			if (Regex.IsMatch(withoutSpaces, funcTypeRegex)) { // dynamic value (auto generate Func)
+				int sep = jsx.indexOf(":");
+				bool typeless = false;
+				if (sep != -1) {
+					string returnType = jsx.Substring(0, sep).Trim();
+
+					if (new Regex("^[a-zA-z<>~]+$").IsMatch(returnType)) { 
+						jsx = jsx.Substring(sep + 1).Trim();
+						if (returnType.EndsWith("~")) {
+							returnType = returnType.Substring(0, returnType.Length - 1);
+							jsx = $"({returnType})({jsx})"; // auto-cast
+						}
+
+						jsx = $"(Func<{returnType}>)(() => {jsx})";
+					} else {
+						typeless = true;
+					}
+				} else {
+					typeless = true;
+				}
+
+				if (typeless) {
+					jsx = $"(Func<object>)(() => {jsx.Trim()})";
+				}
+			} else if (Util.noSpaces(jsx).StartsWith("()=>")) { // parameter-less Action
+				int sep = jsx.indexOf("=>");
+				jsx = jsx.Substring(sep + 2).Trim();
+				jsx = $"(Action)(()=>{jsx})";
+			} else if (Util.noSpaces(jsx).StartsWith("(")) { // handles possible Actions with parameters
+				DelimPair parenPair = jsx.searchPairs(DelimPair.Parens, jsx.indexOf("("));
+
+				if (Util.noSpaces(parenPair.removeFrom(jsx)).StartsWith("=>")) { // (if parens are followed by =>)
+					var actionArgs = parenPair.contents(jsx).SplitUnNestedCommas();
+					var actionTypes = actionArgs.Select(arg => arg.Substring(0, arg.indexOf(" ")));
+					string actionTypeString = "";
+					foreach (string type in actionTypes) {
+						actionTypeString += (actionTypeString == "") ? type : $",{type}";
+					}
+
+					jsx = $"(Action<{actionTypeString}>)({jsx})";
+				}
+			}
+
+			return jsx;
+		}
+
 		private static string StringifyNode(string node) {
 			node = node.Trim();
 
-			var htmlPairs = Parser.FindHtmlPairs(node);
+			var htmlPairs = Parser.FindHtmlPairs(node, true);
 			
 			HtmlPair mainPair = htmlPairs[^1];
 			
-			/*List<string> childNodes = new List<string>();
-			List<int> childNodesIndices = new List<int>();
-			string mainInnerContents = "";
-			int mainStartIndex = 0;
-			foreach (HtmlPair pair in htmlPairs) {
-				if (pair.nestCount == 1) {
-					string subNode = PairToNodeStr(node, pair, carrotDict);
-					childNodes.Add(subNode);
-					childNodesIndices.Add(pair.openIndex);
-				} else if (pair.nestCount == 0) {
-					mainStartIndex = carrotDict[pair.openIndex].closeIndex + 1;
-					mainInnerContents = node.Sub(mainStartIndex, pair.closeIndex);
-				}
-			}*/
 			var childNodes = htmlPairs.Where(pair => pair.nestCount == 1).ToList();
 			string mainInnerContents = mainPair.contents(node);
 			int mainStartIndex = mainPair.contentStartIndex();
 
-
-			//childNodesIndices = childNodesIndices.Select(i => i - mainStartIndex).ToList();
 			var childNodesIndicesDict = new Dictionary<int, string>();
 			foreach (HtmlPair htmlPair in htmlPairs) {
 				childNodesIndicesDict[htmlPair.openIndex - mainStartIndex] = htmlPair.whole(node);
 			}
-
-			/*string headerContent = carrotDict[mainPair.openIndex].contents(node);
-
-			string output;
 			
-			int firstSpace = headerContent.indexOf(" ");
-			string tag = (firstSpace == -1) ? headerContent : headerContent.Substring(0, firstSpace);
-			string data = (firstSpace == -1) ? null : headerContent.Substring(firstSpace + 1).Trim();*/
-
 			string tag = mainPair.openingTag(node);
-			string data = mainPair.propString(node);
 			
 			char firstTagLetter = tag[0];
 			bool customComponent = (firstTagLetter >= 'A' && firstTagLetter <= 'Z');
 			
-			var props = new Dictionary<string, string>();
+			string output = customComponent ? $"Create{tag}(" : "newNode(";
+			output += $"'{tag}', ";
 
-			string output;
+
+			// PROP SECTION =============================================
+			var props = mainPair.jsxFrags ?? new Dictionary<string, string>(); // TODO: PLEASE REMOVE THIS
+			var keys = props.Keys.ToArray();
+			for (int i = 0; i < keys.Length; i++) {
+				string key = keys[i];
+				props[key] = EditJsx(props[key]);
+			}
 			
-			processHeader: {
-				
-				output = customComponent ? $"Create{tag}(" : "newNode(";
-				
-				output += $"'{tag}', ";
-				
-				processData: {
-					if (data == null) goto finishData;
+			string propStr = "props: new Dictionary<string, object> {";
 
-					var quoteDict = DelimPair.genPairDict(data, "'", "'"); // TODO: quote pairing will need to be more complex
-					var bracketDict = DelimPair.genPairDict(data, "{", "}");
-
-					int lastFin = 0;
-					string currLabel = "InvalidProp";
-
-					char[] chars = data.ToCharArray();
-					for (int i = 0; i < data.Length; i++) {
-						if (chars[i] == '=') {
-							currLabel = data.Substring(lastFin, i - lastFin).Trim();
-						}
-
-						if (chars[i] == '\'') {
-							int fin = quoteDict[i].closeIndex;
-							string str = data.Substring(i + 1, fin - (i + 1));
-							props[currLabel] = $"'{str}'";
-							lastFin = fin + 1;
-							i = fin;
-						}
-
-						if (chars[i] == '{') {
-							int fin = bracketDict[i].closeIndex;
-							string jsx = data.Substring(i + 1, fin - (i + 1)).Trim();
-
-							const string funcTypeRegex = @"^[a-zA-Z0-9\[\]<>()\.@_]+~?:";
-							string withoutSpaces = Util.noSpaces(jsx);
-							
-							if (Regex.IsMatch(withoutSpaces, funcTypeRegex)) { // dynamic value (auto generate Func)
-								int sep = jsx.indexOf(":");
-								bool typeless = false;
-								if (sep != -1) { 
-									string returnType = jsx.Substring(0, sep).Trim();
-
-									if (new Regex("^[a-zA-z<>~]+$").IsMatch(returnType)) { 
-										jsx = jsx.Substring(sep + 1).Trim();
-										if (returnType.EndsWith("~")) {
-											returnType = returnType.Substring(0, returnType.Length - 1);
-											jsx = $"({returnType})({jsx})"; // auto-cast
-										}
-
-										jsx = $"(Func<{returnType}>)(() => ({jsx}))";
-									} else {
-										typeless = true;
-									}
-								} else {
-									typeless = true;
-								}
-
-								if (typeless) {
-									jsx = $"(Func<object>)(() => ({jsx.Trim()}))";
-								}
-							} else if (Util.noSpaces(jsx).StartsWith("()=>")) { // parameter-less Action
-								int sep = jsx.indexOf("=>");
-								jsx = jsx.Substring(sep + 2).Trim();
-								jsx = $"(Action)(()=>{jsx})";
-							} else if (Util.noSpaces(jsx).StartsWith("(")) { // handles possible Actions with parameters
-								DelimPair parenPair = jsx.searchPairs(DelimPair.Parens, jsx.indexOf("("));
-
-								if (Util.noSpaces(parenPair.removeFrom(jsx)).StartsWith("=>")) { // (if parens are followed by =>)
-									var actionArgs = parenPair.contents(jsx).SplitUnNestedCommas();
-									var actionTypes = actionArgs.Select(arg => arg.Substring(0, arg.indexOf(" ")));
-									string actionTypeString = "";
-									foreach (string type in actionTypes) {
-										actionTypeString += (actionTypeString == "") ? type : $",{type}";
-									}
-
-									jsx = $"(Action<{actionTypeString}>)({jsx})";
-								}
-							}
-
-							props[currLabel] = $"({jsx})";
-							lastFin = fin + 1;
-							i = fin;
-						}
-					}
-
-					string propStr = "props: new Dictionary<string, object> {";
-
-					var keys = props.Keys;
-					string startWith = "";
-					foreach (string key in keys) {
-						propStr += $"{startWith}['{key}']={props[key]}";
-						startWith = ", ";
-					}
-
-					propStr += "}, ";
-					output += propStr;
-
-				} finishData: { }
+			string startWith = "";
+			foreach (string key in keys) {
+				propStr += $"{startWith}['{key}']={props[key]}";
+				startWith = ", ";
 			}
 
+			propStr += "}, ";
+			output += propStr;
+
+			// CHILDREN SECTION ============================================
 			if (childNodes.Count > 0) {
 
 				bool staticChildren = true;
@@ -275,11 +220,6 @@ namespace MonoGameHtml {
 			}
 			
 			return output + ")";
-		}
-
-		private static string PairToNodeStr(string str, DelimPair htmlPair, Dictionary<int, DelimPair> carrotDict) {
-			return str.Substring(htmlPair.openIndex,
-				(carrotDict[htmlPair.closeIndex].closeIndex + 1) - htmlPair.openIndex);
 		}
 
 		private static void AddComponentPropNames(string code) { 
@@ -404,7 +344,7 @@ namespace MonoGameHtml {
 {type} {varNames[0]} = {initValue};
 Action<{type}> {varNames[1]} = (___val) => {{
 	{varNames[0]} = ___val;
-	___node.stateChangeDown();
+	___node?.stateChangeDown();
 }};
 ";
 					} else if (line != "") {// TODO: IMPORTANT! instead of splitting lines, split un-nested semicolons !!!!!!!!!!!

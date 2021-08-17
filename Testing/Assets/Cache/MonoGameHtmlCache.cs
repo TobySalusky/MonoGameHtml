@@ -75,8 +75,8 @@ const Predictor = (
 						if (text == newText) newList = task.Result;
 					});
 				} catch (Exception e) {
-					Logger.log(e.StackTrace);
-					Logger.log(e.Message);
+					//Logger.log(e.StackTrace);
+					//Logger.log(e.Message);
 					clear();
 				}
 			});			
@@ -149,8 +149,8 @@ const TextRender = (Func<string> textFunc) => {
 								}
 							});
 						} catch (Exception e) {
-							Logger.log(e.StackTrace);
-							Logger.log(e.Message);
+							//Logger.log(e.StackTrace);
+							//Logger.log(e.Message);
 						}
 					});
 				}
@@ -414,8 +414,8 @@ var tick = (Action)(()=>{
 						if (text == newText) newList = task.Result;
 					});
 				} catch (Exception e) {
-					Logger.log(e.StackTrace);
-					Logger.log(e.Message);
+					//Logger.log(e.StackTrace);
+					//Logger.log(e.Message);
 					clear();
 				}
 			});			
@@ -482,8 +482,8 @@ List<List<(Color, int)>> FindColorData() {
 								}
 							});
 						} catch (Exception e) {
-							Logger.log(e.StackTrace);
-							Logger.log(e.Message);
+							//Logger.log(e.StackTrace);
+							//Logger.log(e.Message);
 						}
 					});
 				}

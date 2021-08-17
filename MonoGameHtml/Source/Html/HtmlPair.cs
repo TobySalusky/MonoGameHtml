@@ -1,9 +1,11 @@
-﻿namespace MonoGameHtml {
+﻿using System.Collections.Generic;
+
+namespace MonoGameHtml {
     public class HtmlPair : DelimPair {
         
-        public HtmlPair(int openIndex, int closeIndex, int openLen = 1, int closeLen = 1, int nestCount = 0) : base(openIndex, closeIndex, openLen, closeLen, nestCount) {
-            
-        }
+        public Dictionary<string, string> jsxFrags;
+
+        public HtmlPair(int openIndex, int closeIndex, int openLen = 1, int closeLen = 1, int nestCount = 0) : base(openIndex, closeIndex, openLen, closeLen, nestCount) {}
 
         public string headerContents(string str) {
             return str.Substring(openIndex + 1, openLen - 2).Trim();

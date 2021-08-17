@@ -79,67 +79,83 @@ namespace MonoGameHtml.ColorConsole {
             // TODO: DO NOT MAKE DELIM PAIRS WITH QUOTES INSIDE OF STRINGS!
             var singleQuoteDict = DelimPair.genPairDict(code, DelimPair.SingleQuotes);
             var doubleQuoteDict = DelimPair.genPairDict(code, DelimPair.Quotes);
+            var parenDict = DelimPair.genPairDict(code, DelimPair.Parens);
 
+            static string GetTagType(string tag) {
+                Logger.log("test", tag);
+                if (tag == "Try" || tag == "Catch" ||
+                    tag == "If" || tag == "Elif" || tag == "Else" ||
+                    tag == "Switch" || tag == "Case" || tag == "Default") return "HtmlTagControl";
+                return "HtmlTag";
+            }
+            
             for (int i = 0; i < arr.Length; i++) {
                 if (code[i] == '<') {
-                    {
-                        if (Parser.StartingHtml(code, braceDict, singleQuoteDict, doubleQuoteDict, i, out int endIndex) || 
-                            Parser.StartingHtml(code, braceDict, singleQuoteDict, doubleQuoteDict, i, out endIndex, true)) {
-                            SetRange(i, 1, "HtmlBrackets");
-                            SetRange(endIndex, 1, "HtmlBrackets");
-
-                            int tagLen = 0;
-                            for (int j = i + 1; j < endIndex; j++) {
-                                char c = code[j];
-                                if (c.IsAlphanumeric()) {
-                                    tagLen++;
-                                    continue;
-                                }
-                                break;
-                            }
-
-                            SetRange(i + 1, tagLen, "HtmlTag");
-
-                            int propNameStart = i + 1 + tagLen;
-
-                            for (int j = i + tagLen; j < endIndex; j++) {
-                                char c = code[j];
-
-                                if (c == '{') {
-
-                                    int equalsAt = code[..j].lastIndexOf("=");
-
-                                    string propName = code[propNameStart..equalsAt].Trim();
-                                    string propClassification = HtmlNode.KnownPropNames.Contains(propName)
-                                        ? "KnownHtmlProp"
-                                        : "UnknownHtmlProp";
-                                    SetRange(propNameStart, equalsAt - propNameStart, propClassification);
-
-                                    SetRange(j, 1, "HtmlBrace");
-                                    j = braceDict[j].closeIndex - 1;
-                                    SetRange(j + 1, 1, "HtmlBrace");
-                                    propNameStart = j + 2;
-                                } else if (c == '\'') {
-
-                                    int equalsAt = code[..j].lastIndexOf("=");
-
-                                    string propName = code[propNameStart..equalsAt].Trim();
-                                    string propClassification = HtmlNode.KnownPropNames.Contains(propName)
-                                        ? "KnownHtmlProp"
-                                        : "UnknownHtmlProp";
-                                    SetRange(propNameStart, equalsAt - propNameStart, propClassification);
-                                    j = singleQuoteDict[j].closeIndex;
-                                    propNameStart = j + 1;
-                                }
-                            }
-
-                        }
+                    
+                    HtmlStartInfo startInfo = new HtmlStartInfo(code, i, false, false, braceDict, singleQuoteDict,
+                        doubleQuoteDict, parenDict);
+                    if (!startInfo.valid) {
+                        startInfo = new HtmlStartInfo(code, i, true, false, braceDict, singleQuoteDict,
+                            doubleQuoteDict, parenDict);
                     }
-                    {if (Parser.EndingHtml(code, i, out int endIndex)) {
+
+                    if (startInfo.valid) {
+                        SetRange(i, 1, "HtmlBrackets");
+                        SetRange(startInfo.closeIndex, 1, "HtmlBrackets");
+
+                        int tagLen = 0;
+                        for (int j = i + 1; j < startInfo.closeIndex; j++) {
+                            char c = code[j];
+                            if (c.IsAlphanumeric()) {
+                                tagLen++;
+                                continue;
+                            }
+                            break;
+                        }
+                        
+
+                        SetRange(i + 1, tagLen, GetTagType(code.Substring(i+1, tagLen)));
+
+                        int propNameStart = i + 1 + tagLen;
+
+                        for (int j = i + tagLen; j < startInfo.closeIndex; j++) {
+                            char c = code[j];
+
+                            if (c == '{') {
+
+                                int equalsAt = code[..j].lastIndexOf("=");
+
+                                string propName = code[propNameStart..equalsAt].Trim();
+                                string propClassification = HtmlNode.KnownPropNames.Contains(propName)
+                                    ? "KnownHtmlProp"
+                                    : "UnknownHtmlProp";
+                                SetRange(propNameStart, equalsAt - propNameStart, propClassification);
+
+                                SetRange(j, 1, "HtmlBrace");
+                                j = braceDict[j].closeIndex - 1;
+                                SetRange(j + 1, 1, "HtmlBrace");
+                                propNameStart = j + 2;
+                            } else if (c == '\'') {
+
+                                int equalsAt = code[..j].lastIndexOf("=");
+
+                                string propName = code[propNameStart..equalsAt].Trim();
+                                string propClassification = HtmlNode.KnownPropNames.Contains(propName)
+                                    ? "KnownHtmlProp"
+                                    : "UnknownHtmlProp";
+                                SetRange(propNameStart, equalsAt - propNameStart, propClassification);
+                                j = singleQuoteDict[j].closeIndex;
+                                propNameStart = j + 1;
+                            }
+                        }
+
+                    }
+                    
+                    if (Parser.EndingHtml(code, i, out int endIndex)) {
                         SetRange(i, 2, "HtmlBrackets");
-                        SetRange(i + 2, endIndex - i - 1, "HtmlTag");
+                        SetRange(i + 2, endIndex - i - 2, GetTagType(code.Substring(i + 2, endIndex - i - 2)));
                         SetRange(endIndex, 1, "HtmlBrackets");
-                    }}
+                    }
                 }
             }
 
