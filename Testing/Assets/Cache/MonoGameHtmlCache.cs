@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.IO;
 using MonoGameHtml;
 
 namespace MonoGameHtmlGeneratedCode {
@@ -85,7 +86,7 @@ const Predictor = (
 
 	return (
 		<pseudo onTick={tick}>
-			{(list == null || list.Count == 0) ? <p>Nothing Here</p> :
+			{(list == null || list.Count == 0) ? <p></p> :
 				<div left={cursorX} top={cursorY} class='CodePredictionBox'>
 					{list.map(str => {
 						int searchIndex = str.IndexOf(searchFor);
@@ -171,6 +172,52 @@ const TextRender = (Func<string> textFunc) => {
 }", @"
 
 const App = () => {
+		
+	int [screen, setScreen] = useState(0);
+	string activeFilePath = null;
+	
+	var useFileAtPath = (string path) => {
+		activeFilePath = path;
+		setScreen(0);
+	};
+	
+	return (
+		<body>
+			{<dynamic></dynamic>} 
+			<If (screen == 0) dimens='100%'>
+				<Main openFileScreen={()=>setScreen(1)} activeFilePath={activeFilePath}></Main>
+			</If>
+			<Else dimens='100%' position='fixed' top={0} left={0}>
+				<FileScreen useFileAtPath={useFileAtPath}></FileScreen>
+			</Else>
+		</body>
+	);
+}", @"
+
+const FileScreen = (Action<string> useFileAtPath) => {
+
+	string[] paths = $getMonoHtmlFilePaths();
+
+	return (
+		<body props={props} class='FileTabContainer'>
+			{paths.map(path =>
+				<FileTab onPress={()=>useFileAtPath(path)} path={path}></FileTab>
+			)}
+		</body>
+	);
+}", @"
+
+const FileTab = (string path) => {
+	return (
+		<div props={props} class='FileTab'>
+			<h3>{path.Substring(path.LastIndexOf(@'\') + 1)}</h3>
+			<div class='Divide'></div>
+			<p>{path}</p>
+		</div>
+	);
+}", @"
+
+const Main = (Action openFileScreen, string activeFilePath) => {
 
 	List<string> predictions = null;
 	var setPredictions = (List<string> list) => predictions = list;
@@ -178,6 +225,15 @@ const App = () => {
 	HtmlNode [node, setNode] = useState(null);
 
 	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
+	
+	if (activeFilePath != null) {
+		try {
+			text = File.ReadAllText(activeFilePath);
+		} catch (Exception) {
+			Logger.log('IDE FAILED TO READ FROM FILE PATH');
+		}
+	}
+	
 	Action<string> setText = (string str) => text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
@@ -185,18 +241,15 @@ const App = () => {
 	
 	TypingState typingState = null;
 	
-	string path = '/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWriter/HtmlWriter.cs';
-
 	string correctText() {
 		return text.Replace('\t', TextInputUtil.spacesPerTab);
 	}
 
     return (
-        <body flexDirection='row'>
+        <body flexDirection='row' props={props}>
+        
         	<FrameCounter></FrameCounter>
-			
-			<SearchBar path={path} setText={setText}></SearchBar>
-			
+						
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'
@@ -241,10 +294,13 @@ const App = () => {
 				<TextRender textFunc={string: correctText()}></TextRender>
 				<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
 				setPredictions={setPredictions} typingState={typingState}></Predictor>
+				<div backgroundColor='red' onPress={openFileScreen}>
+        			files...
+				</div>
 			</div>
 			<div flex={1} backgroundColor='white'>
 				<html></html>
-				{node ?? 
+				{node ??  
 					(
 						(exception == null || text == '') ? 
 							<p>Nothing to display...</p> : 
@@ -332,8 +388,7 @@ const TextBox = (
 
 
 const KeyInput = () => {
-	
-    return (<div></div>);
+    return (<todo></todo>);
 }", @"
 const FrameCounter = (float updateTime = 1F) => {
 
@@ -350,25 +405,197 @@ const FrameCounter = (float updateTime = 1F) => {
 			}
 		}}></div>
 	);
+}", @"
+
+const If = (bool __parens__ = false) => {
+
+    HtmlNode[] nodeArray = null;
+    if (__parens__) {
+        nodeArray = ((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null));
+    }
+    
+	return (
+	    <if propsUnder={props} ref={(HtmlNode node) => {
+	        if (__parens__) return;
+	        HtmlNode next = node.GetNext();
+	        if (next != null && (next.tag == 'else' || next.tag == 'elif')) {
+	            next.prop<Action>('trigger')();
+	        }
+	    }}>
+	        <html></html>
+	        {nodeArray}
+        </if>
+	);
+}", @"
+
+
+const Elif = (bool __parens__ = false) => {
+    
+    HtmlNode[] [nodeArray, setNodeArray] = useState(null);
+    
+    var onTrigger = () => {
+        if (__parens__) {
+	        setNodeArray(((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null)));
+	    } else {
+	        HtmlNode next = ___node.GetNext();
+	        if (next != null && (next.tag == 'else' || next.tag == 'elif')) {
+	            next.prop<Action>('trigger')();
+	        }
+	    }
+    };
+    
+	return (
+	    <elif propsUnder={props} trigger={onTrigger}>
+	        <html></html>
+	        {nodeArray}
+        </elif>
+	);
+}", @"
+
+
+const Else = () => {
+    
+    HtmlNode[] [nodeArray, setNodeArray] = useState(null);
+    
+	return (
+		<else propsUnder={props} trigger={()=>setNodeArray(((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null)))}>
+			<html></html>
+		    {nodeArray}
+        </else>
+	);
+}", @"
+
+
+const Try = () => { // TODO: add ability to force dynamic children!!!
+
+    HtmlNode[] nodeArray = null;
+	Exception exception = null;
+    try {
+        nodeArray = childrenFunc();
+    } catch (Exception e) {
+		exception = e;
+	}
+    
+	return (
+	    <try propsUnder={props} ref={(HtmlNode node) => {
+	        if (exception == null) return;
+	        HtmlNode next = node.GetNext();
+	        if (next != null && next.tag == 'catch') {
+	            next.prop<Action<Exception>>('trigger')(exception);
+	        }
+	    }}>
+	        <html></html>
+	        {nodeArray}
+        </try>
+	);
+}", @"
+
+
+const Catch = (Action<Exception> __parens__) => {
+    
+    HtmlNode[] [nodeArray, setNodeArray] = useState(null);
+    
+	return (
+		<catch propsUnder={props} trigger={(Exception exception)=>{
+			setNodeArray(((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null)));
+			__parens__?.Invoke(exception);
+		}}>
+			<html></html>
+		    {nodeArray}
+        </catch>
+	);
+}", @"
+
+
+const Switch = (object __parens__) => {
+
+	if (__parens__ == null) throw new Exception('Switch-value may not be null');
+
+	string [currCase, setCurrCase] = useState('');
+
+	Action onTick = null;
+	string init = null;
+	if (__parens__ is Func<string> func) {
+		Action action = () => {
+			string newCase = func();
+			if (newCase != currCase) {
+				setCurrCase(newCase);
+			}
+		};
+		onTick = action;
+		init = func();
+	} else {
+		init = __parens__.ToString();
+	}
+	setCurrCase(init);
+
+	Dictionary<string, HtmlNode> nodeDict = new Dictionary<string, HtmlNode>();
+	HtmlNode def = null;
+	
+	var extractContent = (HtmlNode node): HtmlNode => {
+		HtmlNode[] nodeContents = node.Contents;
+		if (nodeContents.Length == 1) return nodeContents[0];
+		return (
+			<fragment>
+				<html></html>{nodeContents}
+			</fragment>
+		);
+	};
+	
+	foreach (HtmlNode node in ((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null))) {
+		if (node.props.ContainsKey('default') && node.prop<bool>('default') == true) {
+			def = (node.tag == 'default') ? extractContent(node) : node;
+			continue;
+		}
+		if (!node.props.ContainsKey('case')) continue;
+		string thisCase = node.prop<string>('case');
+		nodeDict[thisCase] = (node.tag == 'case') ? extractContent(node) : node;
+	};
+
+	
+	return (nodeDict.ContainsKey(currCase) ? nodeDict[currCase] : def);
+}", @"
+
+
+const Case = (object __parens__) => {
+	
+	if (__parens__ == null) throw new Exception('Case-value may not be null');
+
+	return (
+		<case case={__parens__.ToString()} propsUnder={props}>
+			<html></html>
+			{((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null))}
+		</case>
+	);
+}", @"
+
+
+const Default = () => {
+	return (
+		<case default={true} propsUnder={props}>
+			<html></html>
+			{((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null))}
+		</case>
+	);
 }" };
 }
 
 protected override HtmlNode cachedNode() {
 	/*IMPORTS_DONE*/
 
-HtmlNode CreateSearchBar(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Action<string>? setText = null, string path = "") {
+HtmlNode CreateSearchBar(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Action<string>? setText = null, string path = "") {
 	
 	HtmlNode ___node = null;
 	
 List<(string stringName, string contents)> htmlSearchList = ((System.Func<System.String,System.Collections.Generic.List<System.ValueTuple<System.String,System.String>>>)___vars["searchHtml"])(path);
 ;
 	___node = newNode("div", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((true ? null : htmlSearchList.Select(instance =>
-				newNode("p", props: new Dictionary<string, object> {["onPress"]=((Action)(()=>setText(instance.contents)))}, textContent: (Func<string>)(()=> ""+(instance.stringName)+""))
+				newNode("p", props: new Dictionary<string, object> {["onPress"]=(Action)(()=>setText(instance.contents))}, textContent: (Func<string>)(()=> ""+(instance.stringName)+""))
 			).ToArray()))));
 	return ___node;
 }
 
-HtmlNode CreatePredictor(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? textFunc = null, Func<int>? indexFunc = null, Action<List<string>>? setPredictions = null, TypingState? typingState = null) {
+HtmlNode CreatePredictor(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Func<string>? textFunc = null, Func<int>? indexFunc = null, Action<List<string>>? setPredictions = null, TypingState? typingState = null) {
 	
 	HtmlNode ___node = null;
 	
@@ -380,7 +607,7 @@ List<string> newList = null;
 List<string> list = null;
 Action<List<string>> setListState = (___val) => {
 	list = ___val;
-	___node.stateChangeDown();
+	___node?.stateChangeDown();
 };
 
 var setList = (Action<List<string>>)((list)=>{
@@ -422,8 +649,8 @@ var tick = (Action)(()=>{
 		}
 	});
 ;
-	___node = newNode("pseudo", props: new Dictionary<string, object> {["onTick"]=(tick)}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(((list == null || list.Count == 0) ? newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing Here") :
-				newNode("div", props: new Dictionary<string, object> {["left"]=(cursorX), ["top"]=(cursorY), ["class"]="CodePredictionBox"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((list.Select(str => {
+	___node = newNode("pseudo", props: new Dictionary<string, object> {["onTick"]=tick}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(((list == null || list.Count == 0) ? newNode("p", props: new Dictionary<string, object> {}, textContent: "") :
+				newNode("div", props: new Dictionary<string, object> {["left"]=cursorX, ["top"]=cursorY, ["class"]="CodePredictionBox"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((list.Select(str => {
 						int searchIndex = str.IndexOf(searchFor);
 						return (
 							newNode("span", props: new Dictionary<string, object> {}, children: nodeArr(newNode("h6", props: new Dictionary<string, object> {["class"]="CodePrediction"}, textContent: (Func<string>)(()=> ""+(str[..searchIndex])+"")), newNode("h6", props: new Dictionary<string, object> {["class"]="CodePrediction", ["color"]="orange"}, textContent: (Func<string>)(()=> ""+(searchFor)+"")), newNode("h6", props: new Dictionary<string, object> {["class"]="CodePrediction"}, textContent: (Func<string>)(()=> ""+(str[(searchIndex+searchFor.Length)..])+""))))
@@ -433,14 +660,14 @@ var tick = (Action)(()=>{
 	return ___node;
 }
 
-HtmlNode CreateTextRender(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? textFunc = null) {
+HtmlNode CreateTextRender(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Func<string>? textFunc = null) {
 	
 	HtmlNode ___node = null;
 	
 string text = "";
 Action<string> setText = (___val) => {
 	text = ___val;
-	___node.stateChangeDown();
+	___node?.stateChangeDown();
 };
 
 List<List<(Color, int)>> colorData = null;
@@ -468,7 +695,7 @@ List<List<(Color, int)>> FindColorData() {
 	}
 
 	;
-	___node = newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["onTick"]=((Action)(()=>{
+	___node = newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["onTick"]=(Action)(()=>{
 				string newText = textFunc();
 				if (text != newText) {
 					colorData = null;
@@ -487,10 +714,10 @@ List<List<(Color, int)>> FindColorData() {
 						}
 					});
 				}
-			}))}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((FindColorData()?.Select(line => 
+			})}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((FindColorData()?.Select(line => 
 				newNode("span", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((line.Select(data => {
 						int currI = i;
-						var node = newNode("p", props: new Dictionary<string, object> {["class"]="Text", ["color"]=(data.Item1)}, textContent: (Func<string>)(()=> ""+(text.Replace("\n", " ").Substring(currI, data.Item2))+""));
+						var node = newNode("p", props: new Dictionary<string, object> {["class"]="Text", ["color"]=data.Item1}, textContent: (Func<string>)(()=> ""+(text.Replace("\n", " ").Substring(currI, data.Item2))+""));
 						i += data.Item2;
 						return node;
 					}).ToArray()))))
@@ -498,7 +725,48 @@ List<List<(Color, int)>> FindColorData() {
 	return ___node;
 }
 
-HtmlNode CreateApp(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null) {
+HtmlNode CreateApp(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
+	
+	HtmlNode ___node = null;
+	
+int screen = 0;
+Action<int> setScreen = (___val) => {
+	screen = ___val;
+	___node?.stateChangeDown();
+};
+
+string activeFilePath = null;
+var useFileAtPath = (Action<string>)((path)=>{
+		activeFilePath = path;
+		setScreen(0);
+	});
+;
+	___node = newNode("body", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((newNode("dynamic", props: new Dictionary<string, object> {}, textContent: "")), CreateIf("If", props: new Dictionary<string, object> {["__parens__"]=screen == 0, ["dimens"]="100%"}, children: nodeArr(CreateMain("Main", props: new Dictionary<string, object> {["openFileScreen"]=(Action)(()=>setScreen(1)), ["activeFilePath"]=activeFilePath}, children: null, childrenFunc: null, textContent: "", openFileScreen: (Action)(()=>setScreen(1)), activeFilePath: activeFilePath)), childrenFunc: null, textContent: null, __parens__: screen == 0), CreateElse("Else", props: new Dictionary<string, object> {["dimens"]="100%", ["position"]="fixed", ["top"]=0, ["left"]=0}, children: nodeArr(CreateFileScreen("FileScreen", props: new Dictionary<string, object> {["useFileAtPath"]=useFileAtPath}, children: null, childrenFunc: null, textContent: "", useFileAtPath: useFileAtPath)), childrenFunc: null, textContent: null))));
+	return ___node;
+}
+
+HtmlNode CreateFileScreen(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Action<string>? useFileAtPath = null) {
+	
+	HtmlNode ___node = null;
+	
+string[] paths = ((System.Func<System.String[]>)___vars["getMonoHtmlFilePaths"])();
+;
+	___node = newNode("body", props: new Dictionary<string, object> {["props"]=props, ["class"]="FileTabContainer"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((paths.Select(path =>
+				CreateFileTab("FileTab", props: new Dictionary<string, object> {["onPress"]=(Action)(()=>useFileAtPath(path)), ["path"]=path}, children: null, childrenFunc: null, textContent: "", path: path)
+			).ToArray()))));
+	return ___node;
+}
+
+HtmlNode CreateFileTab(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, string? path = null) {
+	
+	HtmlNode ___node = null;
+	
+;
+	___node = newNode("div", props: new Dictionary<string, object> {["props"]=props, ["class"]="FileTab"}, children: nodeArr(newNode("h3", props: new Dictionary<string, object> {}, textContent: (Func<string>)(()=> ""+(path.Substring(path.LastIndexOf(@"\") + 1))+"")), newNode("div", props: new Dictionary<string, object> {["class"]="Divide"}, textContent: ""), newNode("p", props: new Dictionary<string, object> {}, textContent: (Func<string>)(()=> ""+(path)+""))));
+	return ___node;
+}
+
+HtmlNode CreateMain(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Action? openFileScreen = null, string? activeFilePath = null) {
 	
 	HtmlNode ___node = null;
 	
@@ -507,30 +775,37 @@ var setPredictions = (Action<List<string>>)((list)=>predictions = list);
 HtmlNode node = null;
 Action<HtmlNode> setNode = (___val) => {
 	node = ___val;
-	___node.stateChangeDown();
+	___node?.stateChangeDown();
 };
 
 string text = $"const App = () => {{{"\n"}{"\t"}return ({"\n"}{"\t"}{"\t"}{"\n"}{"\t"});{"\n"}}}";
-Action<string> setText = (string str) => text=str;
+if (activeFilePath != null) {
+		try {
+			text = File.ReadAllText(activeFilePath);
+		} catch (Exception) {
+			Logger.log("IDE FAILED TO READ FROM FILE PATH");
+		}
+	}
+	
+	Action<string> setText = (string str) => text=str;
 int updateCount = 0, currUpdateCount = 0;
 bool updating = false;
 Exception exception = null;
 Action<Exception> setException = (___val) => {
 	exception = ___val;
-	___node.stateChangeDown();
+	___node?.stateChangeDown();
 };
 
 TypingState typingState = null;
-string path = "/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWriter/HtmlWriter.cs";
 string correctText() {
 		return text.Replace("\t", TextInputUtil.spacesPerTab);
 	}
 
     ;
-	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row"}, children: nodeArr(CreateFrameCounter("FrameCounter", props: new Dictionary<string, object> {}, textContent: ""), CreateSearchBar("SearchBar", props: new Dictionary<string, object> {["path"]=(path), ["setText"]=(setText)}, textContent: "", path: (path), setText: (setText)), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["-borderWidth"]=((Func<int>)(() => (0))), ["multiline"]=(true), ["useTypingState"]=((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), ["text"]=((Func<string>)(() => (text))), ["setText"]=(setText), ["diff"]=((Func<string,string,string>)((string oldStr, string newStr)=>{
+	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row", ["props"]=props}, children: nodeArr(CreateFrameCounter("FrameCounter", props: new Dictionary<string, object> {}, children: null, childrenFunc: null, textContent: ""), newNode("div", props: new Dictionary<string, object> {["flex"]=1, ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["-borderWidth"]=(Func<int>)(() => 0), ["multiline"]=true, ["useTypingState"]=(Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp), ["text"]=(Func<string>)(() => text), ["setText"]=setText, ["diff"]=(Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
-				})), ["onTick"]=((Action)(()=>{
+				}), ["onTick"]=(Action)(()=>{
 					if (!updating && currUpdateCount != updateCount) {
 
 						Logger.log(text);
@@ -552,12 +827,12 @@ string correctText() {
 						});
 						
 					}
-				}))}, textContent: "", multiline: (true), useTypingState: ((Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp)), text: ((Func<string>)(() => (text))), setText: (setText), diff: ((Func<string,string,string>)((string oldStr, string newStr)=>{
+				})}, children: null, childrenFunc: null, textContent: "", multiline: true, useTypingState: (Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp), text: (Func<string>)(() => text), setText: setText, diff: (Func<string,string,string>)((string oldStr, string newStr)=>{
 					updateCount++;
 					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
-				}))), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["renderAdd"]=((Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
+				})), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["renderAdd"]=(Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
 					((System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch,System.String,MonoGameHtml.TypingState>)___vars["renderTabs"])(spriteBatch, text, typingState);
-				}))}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=((Func<string>)(() => (correctText())))}, textContent: "", textFunc: ((Func<string>)(() => (correctText())))), CreatePredictor("Predictor", props: new Dictionary<string, object> {["textFunc"]=((Func<string>)(() => (text))), ["indexFunc"]=((Func<int>)(() => (typingState.cursorIndex))), ["setPredictions"]=(setPredictions), ["typingState"]=(typingState)}, textContent: "", textFunc: ((Func<string>)(() => (text))), indexFunc: ((Func<int>)(() => (typingState.cursorIndex))), setPredictions: (setPredictions), typingState: (typingState)))), newNode("div", props: new Dictionary<string, object> {["flex"]=(1), ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (node ?? 
+				})}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => correctText())}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => correctText())), CreatePredictor("Predictor", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => text), ["indexFunc"]=(Func<int>)(() => typingState.cursorIndex), ["setPredictions"]=setPredictions, ["typingState"]=typingState}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => text), indexFunc: (Func<int>)(() => typingState.cursorIndex), setPredictions: setPredictions, typingState: typingState), newNode("div", props: new Dictionary<string, object> {["backgroundColor"]="red", ["onPress"]=openFileScreen}, textContent: "files..."))), newNode("div", props: new Dictionary<string, object> {["flex"]=1, ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (node ??  
 					(
 						(exception == null || text == "") ? 
 							newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing to display...") : 
@@ -567,7 +842,7 @@ string correctText() {
 	return ___node;
 }
 
-HtmlNode CreateTextInput(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? text = null, Action<string>? setText = null, Func<bool>? active = null, bool multiline = false, Func<string,string,string>? diff = null, Action<TypingState>? useTypingState = null) {
+HtmlNode CreateTextInput(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Func<string>? text = null, Action<string>? setText = null, Func<bool>? active = null, bool multiline = false, Func<string,string,string>? diff = null, Action<TypingState>? useTypingState = null) {
 	
 	HtmlNode ___node = null;
 	
@@ -578,7 +853,7 @@ TypingState typingState = new TypingState {
 	};
 useTypingState?.Invoke(typingState);
 ;
-	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=((Action)(()=>{
+	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=(Action)(()=>{
 			bool isActive = (active != null) ? active.Invoke() : true;
 			if (isActive) {
 				typingState.time = timePassed;
@@ -589,11 +864,11 @@ useTypingState?.Invoke(typingState);
 					setText(newStr);
 				}
 			}
-		}))}, textContent: "");
+		})}, textContent: "");
 	return ___node;
 }
 
-HtmlNode CreateTextBox(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<string>? text = null, Action<string>? setText = null, Func<string,string,string>? diff = null, bool multiline = false, bool cursorVisible = true, Action<TypingState>? useTypingState = null) {
+HtmlNode CreateTextBox(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Func<string>? text = null, Action<string>? setText = null, Func<string,string,string>? diff = null, bool multiline = false, bool cursorVisible = true, Action<TypingState>? useTypingState = null) {
 	
 	HtmlNode ___node = null;
 	
@@ -607,53 +882,224 @@ if (text == null && setText == null) {
 HtmlNode node = null;
 TypingState typingState = null;
 ;
-	___node = newNode("div", props: new Dictionary<string, object> {["ref"]=((Action<HtmlNode>)((HtmlNode el)=>{
+	___node = newNode("div", props: new Dictionary<string, object> {["ref"]=(Action<HtmlNode>)((HtmlNode el)=>{
 			node = el;
 			typingState.node = el;
-		})), ["class"]="TextBox", ["props"]=(props), ["onMouseDown"]=((Action)(()=>active=node.clicked)), ["-borderWidth"]=((Func<int>)(() => ((active) ? 1 : 0))), ["-textContent"]=((Func<string>)(() => (text().Replace("\t", TextInputUtil.spacesPerTab)))), ["renderAdd"]=((Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{
+		}), ["class"]="TextBox", ["props"]=props, ["onMouseDown"]=(Action)(()=>active=node.clicked), ["-borderWidth"]=(Func<int>)(() => (active) ? 1 : 0), ["-textContent"]=(Func<string>)(() => text().Replace("\t", TextInputUtil.spacesPerTab)), ["renderAdd"]=(Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{
 				if (!cursorVisible || !active || ((timePassed - typingState.lastEditOrMove > 1) && ((timePassed % 1F) < 0.5F))) return;
 				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
-			})), ["onPress"]=((Action)(()=>{
+			}), ["onPress"]=(Action)(()=>{
 				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
-			})), ["onMouseDrag"]=((Action)(()=>{
+			}), ["onMouseDrag"]=(Action)(()=>{
 				TextInputUtil.setCursorFromPos(mousePos, node, typingState, text());
-			}))}, children: nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=(text), ["setText"]=(setText), ["diff"]=(diff), ["active"]=((Func<bool>)(() => (active))), ["multiline"]=(multiline), ["useTypingState"]=((Action<TypingState>)((TypingState state)=>{
+			})}, children: nodeArr(CreateTextInput("TextInput", props: new Dictionary<string, object> {["text"]=text, ["setText"]=setText, ["diff"]=diff, ["active"]=(Func<bool>)(() => active), ["multiline"]=multiline, ["useTypingState"]=(Action<TypingState>)((TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
-				}))}, textContent: "", text: (text), setText: (setText), diff: (diff), active: ((Func<bool>)(() => (active))), multiline: (multiline), useTypingState: ((Action<TypingState>)((TypingState state)=>{
+				})}, children: null, childrenFunc: null, textContent: "", text: text, setText: setText, diff: diff, active: (Func<bool>)(() => active), multiline: multiline, useTypingState: (Action<TypingState>)((TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
-				})))));
+				}))));
 	return ___node;
 }
 
-HtmlNode CreateKeyInput(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null) {
+HtmlNode CreateKeyInput(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
 	
 	HtmlNode ___node = null;
 	
 ;
-	___node = newNode("div", props: new Dictionary<string, object> {}, textContent: "");
+	___node = newNode("todo", props: new Dictionary<string, object> {}, textContent: "");
 	return ___node;
 }
 
-HtmlNode CreateFrameCounter(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, float updateTime = 1F) {
+HtmlNode CreateFrameCounter(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, float updateTime = 1F) {
 	
 	HtmlNode ___node = null;
 	
 var fpsCounter = new FrameCounter();
 int updateCount = 0;
 ;
-	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=((Action)(()=>{
+	___node = newNode("div", props: new Dictionary<string, object> {["onTick"]=(Action)(()=>{
 			fpsCounter.update(deltaTime);
 			int currUpdate = (int) (timePassed / updateTime);
 			if (currUpdate != updateCount) {
 				updateCount = currUpdate;
 				game.Window.Title = $"FPS: {(int) fpsCounter.AverageFramesPerSecond}";
 			}
-		}))}, textContent: "");
+		})}, textContent: "");
 	return ___node;
 }
-HtmlNode node = CreateApp("App", props: new Dictionary<string, object> {}, textContent: "");
+
+HtmlNode CreateIf(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, bool __parens__ = false) {
+	
+	HtmlNode ___node = null;
+	
+HtmlNode[] nodeArray = null;
+if (__parens__) {
+        nodeArray = ((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null));
+    }
+    
+	;
+	___node = newNode("if", props: new Dictionary<string, object> {["propsUnder"]=props, ["ref"]=(Action<HtmlNode>)((HtmlNode node) => {
+	        if (__parens__) return;
+	        HtmlNode next = node.GetNext();
+	        if (next != null && (next.tag == "else" || next.tag == "elif")) {
+	            next.prop<Action>("trigger")();
+	        }
+	    })}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (nodeArray))));
+	return ___node;
+}
+
+HtmlNode CreateElif(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, bool __parens__ = false) {
+	
+	HtmlNode ___node = null;
+	
+HtmlNode[] nodeArray = null;
+Action<HtmlNode[]> setNodeArray = (___val) => {
+	nodeArray = ___val;
+	___node?.stateChangeDown();
+};
+
+var onTrigger = (Action)(()=>{
+        if (__parens__) {
+	        setNodeArray(((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null)));
+	    } else {
+	        HtmlNode next = ___node.GetNext();
+	        if (next != null && (next.tag == "else" || next.tag == "elif")) {
+	            next.prop<Action>("trigger")();
+	        }
+	    }
+    });
+;
+	___node = newNode("elif", props: new Dictionary<string, object> {["propsUnder"]=props, ["trigger"]=onTrigger}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (nodeArray))));
+	return ___node;
+}
+
+HtmlNode CreateElse(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
+	
+	HtmlNode ___node = null;
+	
+HtmlNode[] nodeArray = null;
+Action<HtmlNode[]> setNodeArray = (___val) => {
+	nodeArray = ___val;
+	___node?.stateChangeDown();
+};
+
+;
+	___node = newNode("else", props: new Dictionary<string, object> {["propsUnder"]=props, ["trigger"]=(Action)(()=>setNodeArray(((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null))))}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (nodeArray))));
+	return ___node;
+}
+
+HtmlNode CreateTry(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
+	
+	HtmlNode ___node = null;
+	
+// TODO: add ability to force dynamic children!!!
+
+    HtmlNode[] nodeArray = null;
+Exception exception = null;
+try {
+        nodeArray = childrenFunc();
+    } catch (Exception e) {
+		exception = e;
+	}
+    
+	;
+	___node = newNode("try", props: new Dictionary<string, object> {["propsUnder"]=props, ["ref"]=(Action<HtmlNode>)((HtmlNode node) => {
+	        if (exception == null) return;
+	        HtmlNode next = node.GetNext();
+	        if (next != null && next.tag == "catch") {
+	            next.prop<Action<Exception>>("trigger")(exception);
+	        }
+	    })}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (nodeArray))));
+	return ___node;
+}
+
+HtmlNode CreateCatch(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Action<Exception>? __parens__ = null) {
+	
+	HtmlNode ___node = null;
+	
+HtmlNode[] nodeArray = null;
+Action<HtmlNode[]> setNodeArray = (___val) => {
+	nodeArray = ___val;
+	___node?.stateChangeDown();
+};
+
+;
+	___node = newNode("catch", props: new Dictionary<string, object> {["propsUnder"]=props, ["trigger"]=(Action<Exception>)((Exception exception)=>{
+			setNodeArray(((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null)));
+			__parens__?.Invoke(exception);
+		})}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (nodeArray))));
+	return ___node;
+}
+
+HtmlNode CreateSwitch(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, object? __parens__ = null) {
+	
+	HtmlNode ___node = null;
+	
+if (__parens__ == null) throw new Exception("Switch-value may not be null");
+string currCase = "";
+Action<string> setCurrCase = (___val) => {
+	currCase = ___val;
+	___node?.stateChangeDown();
+};
+
+Action onTick = null;
+string init = null;
+if (__parens__ is Func<string> func) {
+		Action action = () => {
+			string newCase = func();
+			if (newCase != currCase) {
+				setCurrCase(newCase);
+			}
+		};
+		onTick = action;
+		init = func();
+	} else {
+		init = __parens__.ToString();
+	}
+	setCurrCase(init);
+Dictionary<string, HtmlNode> nodeDict = new Dictionary<string, HtmlNode>();
+HtmlNode def = null;
+var extractContent = (Func<HtmlNode, HtmlNode>)((node)=>{
+		HtmlNode[] nodeContents = node.Contents;
+		if (nodeContents.Length == 1) return nodeContents[0];
+		return (
+			newNode("fragment", props: new Dictionary<string, object> {}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (nodeContents))))
+		);
+	});
+foreach (HtmlNode node in ((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null))) {
+		if (node.props.ContainsKey("default") && node.prop<bool>("default") == true) {
+			def = (node.tag == "default") ? extractContent(node) : node;
+			continue;
+		}
+		if (!node.props.ContainsKey("case")) continue;
+		string thisCase = node.prop<string>("case");
+		nodeDict[thisCase] = (node.tag == "case") ? extractContent(node) : node;
+	};
+;
+	___node = nodeDict.ContainsKey(currCase) ? nodeDict[currCase] : def;
+	return ___node;
+}
+
+HtmlNode CreateCase(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, object? __parens__ = null) {
+	
+	HtmlNode ___node = null;
+	
+if (__parens__ == null) throw new Exception("Case-value may not be null");
+;
+	___node = newNode("case", props: new Dictionary<string, object> {["case"]=__parens__.ToString(), ["propsUnder"]=props}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null))))));
+	return ___node;
+}
+
+HtmlNode CreateDefault(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
+	
+	HtmlNode ___node = null;
+	
+;
+	___node = newNode("case", props: new Dictionary<string, object> {["default"]=true, ["propsUnder"]=props}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (((childrenFunc != null) ? childrenFunc() : ((children != null) ? children : null))))));
+	return ___node;
+}
+HtmlNode node = CreateApp("App", props: new Dictionary<string, object> {}, children: null, childrenFunc: null, textContent: "");
 setupNode(node);
 return node;
 }/*CACHE_END*/

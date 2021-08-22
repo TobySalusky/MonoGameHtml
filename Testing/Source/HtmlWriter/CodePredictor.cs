@@ -14,10 +14,6 @@ namespace Testing {
 
         private static AdhocWorkspace workspace;
         private static Project scriptProject;
-        
-        static CodePredictor() {
-            
-        }
 
         private static async Task<List<string>> PredictCS(string searchFor, string code, int index) { // TODO: overhaul
             try {

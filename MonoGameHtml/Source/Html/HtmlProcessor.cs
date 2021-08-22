@@ -72,6 +72,8 @@ namespace MonoGameHtml {
 		private static string StringifyNode(string node) {
 			node = node.Trim();
 
+			//if (node == "<html></html>") return "null";
+
 			var htmlPairs = Parser.FindHtmlPairs(node, true);
 			
 			HtmlPair mainPair = htmlPairs[^1];
@@ -91,7 +93,7 @@ namespace MonoGameHtml {
 			bool customComponent = (firstTagLetter >= 'A' && firstTagLetter <= 'Z');
 			
 			string output = customComponent ? $"Create{tag}(" : "newNode(";
-			output += $"'{tag}', ";
+			output += $"'{tag}'";
 
 
 			// PROP SECTION =============================================
@@ -110,10 +112,11 @@ namespace MonoGameHtml {
 				startWith = ", ";
 			}
 
-			propStr += "}, ";
-			output += propStr;
+			propStr += "}";
+			//output += propStr;
 
 			// CHILDREN SECTION ============================================
+			string childrenStr = "children: null", childrenFuncStr = "childrenFunc: null", textContentStr = "textContent: null", textContentFuncStr = "textContentFunc: null";
 			if (childNodes.Count > 0) {
 
 				bool staticChildren = true;
@@ -129,32 +132,32 @@ namespace MonoGameHtml {
 					}
 				}
 
-				if (staticChildren) { 
-					output += "children: nodeArr(";
+				if (staticChildren) {
+					childrenStr = "children: nodeArr(";
 					for (int i = 0; i < childNodes.Count; i++) {
-						output += StringifyNode(childNodes[i].whole(node)) + ((i + 1 < childNodes.Count) ? ", " : "");
+						childrenStr += StringifyNode(childNodes[i].whole(node)) + ((i + 1 < childNodes.Count) ? ", " : "");
 					}
-
-					output += ")";
+					childrenStr += ')';
 				} else { // TODO: don't regenerate non-jsx segments (define them above creation code)
 
 					int elemCount = 0;
-					output += "childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(";
+					childrenFuncStr = "childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(";
 
 					int i = 0;
+					var chars = mainInnerContents.ToCharArray();
+					var bracketDict = DelimPair.genPairDict(mainInnerContents, DelimPair.CurlyBrackets);
 					while (i < mainInnerContents.Length) {
-						var chars = mainInnerContents.ToCharArray();
 
 						char c = chars[i];
 						if (c == '<' || c == '{') {
-							if (elemCount > 0) output += ", ";
+							if (elemCount > 0) childrenFuncStr += ", ";
 
 							if (c == '<') {
 								string thisChildNode = childNodesIndicesDict[i];
-								output += StringifyNode(thisChildNode);
+								childrenFuncStr += StringifyNode(thisChildNode);
 								i += thisChildNode.Length;
 							} else {
-								DelimPair bracketPair = mainInnerContents.searchPairs("{", "}", i);
+								DelimPair bracketPair = bracketDict[i];
 
 								string jsxChild = bracketPair.contents(mainInnerContents);
 
@@ -169,7 +172,7 @@ namespace MonoGameHtml {
 									}
 								}
 
-								output += $"({jsxChild})";
+								childrenFuncStr += $"({jsxChild})";
 
 								i = bracketPair.closeIndex + 1;
 							}
@@ -181,7 +184,7 @@ namespace MonoGameHtml {
 					}
 
 
-					output += "))";
+					childrenFuncStr += "))";
 				}
 				
 			} else {
@@ -200,12 +203,44 @@ namespace MonoGameHtml {
 					textExpression += $"+'{text}'";
 
 					string dynamicText = $"(Func<string>)(()=> {textExpression})";
-					output += $"textContent: {dynamicText}";
+					textContentStr = $"textContent: {dynamicText}";
 				} else { 
-					output += $"textContent: '{text}'";
+					textContentStr = $"textContent: '{text}'";
 				}
+				
+				// TODO: DO THIS FOR SPECIAL <multi></multi> tags that allow multiline text
+				// if (text.Contains("{")) {
+				// 	string textExpression = "";
+				// 	while (text.Contains("{")) {
+				// 		int index = text.indexOf("{");
+				// 		DelimPair pair = text.searchPairs("{", "}", index);
+				// 		if (textExpression != "") textExpression += "+";
+				// 		textExpression += $"@'{text.beforePair(pair).TrimAllLines()}'+({pair.contents(text)})";
+				// 		text = text.afterPair(pair);
+				// 	}
+				//
+				// 	textExpression += $"+@'{text.TrimAllLines()}'";
+				//
+				// 	string dynamicText = $"(Func<string>)(()=> {textExpression})";
+				// 	output += $"textContent: {dynamicText}";
+				// } else { 
+				// 	output += $"textContent: @'{text.TrimAllLines()}'";
+				// }
 			}
 			
+			// create output
+
+			if (customComponent) {
+				output += $", {propStr}, {childrenStr}, {childrenFuncStr}, {textContentStr}";
+			}
+			else {
+				output += $", {propStr}";
+				if (childrenStr != "children: null") output += $", {childrenStr}";
+				if (childrenFuncStr != "childrenFunc: null") output += $", {childrenFuncStr}";
+				if (textContentStr != "textContent: null") output += $", {textContentStr}";
+			}
+
+			// CUSTOM PROPS
 			if (customComponent && extras.componentProps.ContainsKey(tag)) {
 				foreach (string key in props.Keys) {
 					PropInfo? propInfo = null;
@@ -425,7 +460,7 @@ Action<{type}> {varNames[1]} = (___val) => {{
 										string resultStr = $"({fType}{possibleGenerics})(({varNames})=>{body});";
 
 										initialization = initialization[..parenPair.openIndex] + resultStr;
-										Logger.log("TEST", initialization);
+										//Logger.log("TEST", initialization);
 										line = $"{line[..afterEquals]} {initialization}";
 										
 									}
@@ -494,7 +529,7 @@ Action<{type}> {varNames[1]} = (___val) => {{
 			}
 
 			string output = @$"
-HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null{extraPropsString}) {{
+HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null{extraPropsString}) {{
 	{innerPropDefaults}
 	HtmlNode ___node = null;
 	{stateStr}
@@ -609,6 +644,8 @@ using System.Threading.Tasks;
 using MonoGameHtml;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.IO;
+
 /*IMPORTS_DONE*/
 ";
 			if (components.Length != 0) {

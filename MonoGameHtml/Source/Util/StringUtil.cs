@@ -35,6 +35,18 @@ namespace MonoGameHtml {
             return count;
         }
 
+        public static string[] SplitLines(this string str) {
+            return str.Split("\n");
+        }
+        
+        public static string TrimWithoutLines(this string str) {
+            return string.Join("", str.SplitLines().Select(str => str.Trim()));
+        }
+        
+        public static string TrimAllLines(this string str) {
+            return string.Join("\n", str.SplitLines().Select(str => str.Trim()));
+        } 
+
         public static string Sub(this string str, int startInclusive, int endExclusive) {
             return str.Substring(startInclusive, endExclusive - startInclusive);
         }

@@ -86,7 +86,7 @@ const Predictor = (
 
 	return (
 		<pseudo onTick={tick}>
-			{(list == null || list.Count == 0) ? <p>Nothing Here</p> :
+			{(list == null || list.Count == 0) ? <p/> :
 				<div left={cursorX} top={cursorY} class='CodePredictionBox'>
 					{list.map(str => {
 						int searchIndex = str.IndexOf(searchFor);
@@ -172,6 +172,52 @@ const TextRender = (Func<string> textFunc) => {
 }
 
 const App = () => {
+		
+	int [screen, setScreen] = useState(0);
+	string activeFilePath = null;
+	
+	var useFileAtPath = (string path) => {
+		activeFilePath = path;
+		setScreen(0);
+	};
+	
+	return (
+		<body>
+			{<dynamic/>} 
+			<If (screen == 0) @fill>
+				<Main openFileScreen={()=>setScreen(1)} activeFilePath={activeFilePath}/>
+			</If>
+			<Else @fill position='fixed' top={0} left={0}>
+				<FileScreen useFileAtPath={useFileAtPath}/>
+			</Else>
+		</body>
+	);
+}
+
+const FileScreen = (Action<string> useFileAtPath) => {
+
+	string[] paths = $getMonoHtmlFilePaths();
+
+	return (
+		<body props={props} class='FileTabContainer'>
+			{paths.map(path =>
+				<FileTab onPress={()=>useFileAtPath(path)} path={path}/>
+			)}
+		</body>
+	);
+}
+
+const FileTab = (string path) => {
+	return (
+		<div props={props} class='FileTab'>
+			<h3>{path.Substring(path.LastIndexOf(@'\') + 1)}</h3>
+			<div class='Divide'/>
+			<p>{path}</p>
+		</div>
+	);
+}
+
+const Main = (Action openFileScreen, string activeFilePath) => {
 
 	List<string> predictions = null;
 	var setPredictions = (List<string> list) => predictions = list;
@@ -179,6 +225,15 @@ const App = () => {
 	HtmlNode [node, setNode] = useState(null);
 
 	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
+	
+	if (activeFilePath != null) {
+		try {
+			text = File.ReadAllText(activeFilePath);
+		} catch (Exception) {
+			Logger.log('IDE FAILED TO READ FROM FILE PATH');
+		}
+	}
+	
 	Action<string> setText = (string str) => text=str;
 	int updateCount = 0, currUpdateCount = 0;
 	bool updating = false;
@@ -186,18 +241,15 @@ const App = () => {
 	
 	TypingState typingState = null;
 	
-	string path = '/Users/toby/Documents/GitHub/MonoGameHtml/Testing/Source/HtmlWriter/HtmlWriter.cs';
-
 	string correctText() {
 		return text.Replace('\t', TextInputUtil.spacesPerTab);
 	}
 
     return (
-        <body flexDirection='row'>
+        <body flexDirection='row' props={props}>
+        
         	<FrameCounter/>
-			
-			<SearchBar path={path} setText={setText}/>
-			
+						
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'
@@ -242,10 +294,13 @@ const App = () => {
 				<TextRender textFunc={string: correctText()}/>
 				<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
 				setPredictions={setPredictions} typingState={typingState}/>
+				<div backgroundColor='red' onPress={openFileScreen}>
+        			files...
+				</div>
 			</div>
 			<div flex={1} backgroundColor='white'>
 				<html/>
-				{node ?? 
+				{node ??  
 					(
 						(exception == null || text == '') ? 
 							<p>Nothing to display...</p> : 
@@ -272,7 +327,7 @@ const App = () => {
 			            macros: Macros.create(
 			            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
 			            "none", "<span/>"),
-			            components: HtmlComponents.Create(text, HtmlComponents.AllControlFlow));
+			            components: HtmlComponents.Create(HtmlComponents.AllControlFlow, text));
 	            } catch (Exception err) {
 		            e = err;
 		            Logger.log(e.StackTrace);
@@ -335,8 +390,17 @@ const App = () => {
 
 			            string tag = newStr.Sub(tagStart, beforeIndex + 1);
 
-			            str = newStr[..tagStart] + $"<{tag}></{tag}>" + newStr[typingState.cursorIndex..];
-			            typingState.cursorIndex = tagStart + tag.Length + 2;
+			            bool autoParens =    tag == "If"
+			                              || tag == "Elif"
+			                              || tag == "Else"
+			                              || tag == "Try"
+			                              || tag == "Catch"
+			                              || tag == "Switch"
+			                              || tag == "Case"
+			                              || tag == "Default";
+
+			            str = newStr[..tagStart] + $"<{tag}{(autoParens ? $" ()" : "")}></{tag}>" + newStr[typingState.cursorIndex..];
+			            typingState.cursorIndex = tagStart + tag.Length + 2 + (autoParens ? 1 : 0);
 
 		            } else if (newStr.CountOf("\n") > oldStr.CountOf("\n")) { // maintain tabs between lines
 			            int enterIndex = typingState.cursorIndex - 1;
@@ -434,7 +498,19 @@ const App = () => {
             };
 
             Func<string, string, int, Task<List<string>>> predict = async (searchFor, code, index) => await CodePredictor.Predict(searchFor, code, index);
-            Func<string, int, string> findSearchFor = (code, index) => CodePredictor.FindSearchFor(code, index);
+
+            Func<string[]> getMonoHtmlFilePaths = () => {
+	            try {
+		            string[] filePaths = Directory.GetFiles(@"C:\Users\Toby\Documents\GitHub\MonoGameHtml",
+			            "*.monohtml", SearchOption.AllDirectories);
+		            return filePaths;
+	            }
+	            catch (Exception e) {
+		            Logger.log("TEST FAILED");
+		            Logger.log(e, e.Message, e.StackTrace);
+		            return new string[]{};
+	            }
+            };
 
             pack = StatePack.Create(
                 "updateHtml", updateHtml,
@@ -445,11 +521,12 @@ const App = () => {
                 "colorHtml", colorHtml,
                 "predict",  predict,
                 "cursorPos", cursorPos,
-                "findSearchFor", findSearchFor
+                "findSearchFor", (Func<string, int, string>) CodePredictor.FindSearchFor,
+                "getMonoHtmlFilePaths", getMonoHtmlFilePaths
             );
 
             gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
-                components: HtmlComponents.Create(componentDefs, HtmlComponents.AllInput, HtmlComponents.FrameCounter));
+                components: HtmlComponents.Create(componentDefs, HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
 
             HtmlSettings.generateCache = false;
         }

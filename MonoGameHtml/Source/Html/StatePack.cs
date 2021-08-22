@@ -2,16 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Microsoft.VisualBasic.CompilerServices;
 using Microsoft.Xna.Framework;
 
 namespace MonoGameHtml {
 	public class StatePack {
 
 		public Dictionary<string, object> ___vars;
-		public Dictionary<string, string> ___types;
+		public Dictionary<string, string> ___types; // types aren't really necessary after compilation TODO: do something about this?
 
 		public float timePassed, deltaTime;
 		
@@ -28,14 +26,17 @@ namespace MonoGameHtml {
 
 		public static Game game => HtmlMain.game;
 		
+		// ReSharper disable once UnusedMember.Global
 		public static float random(float max = 1F) {
 			return Util.random(max);
 		}
-
+		
+		// ReSharper disable once UnusedMember.Global
 		public static float random(float min, float max) {
 			return Util.random(min, max);
 		}
 
+		/* Basically an override for the constructor that makes use of the cache */
 		public static StatePack Create(params object[] initialVariableNamesAndObjects) {
 			// uses cached StatePack-type if it exists
 			Type type = Assembly.GetEntryAssembly()!.GetType("MonoGameHtmlGeneratedCode.Cache");
@@ -55,7 +56,7 @@ namespace MonoGameHtml {
 				object obj = initialVariableNamesAndObjects[i + 1];
 				
 				string name = (string) initialVariableNamesAndObjects[i];
-				string type = typeString(obj);
+				string type = TypeString(obj);
 				___vars[name] = obj;
 				___types[name] = type;
 				
@@ -72,7 +73,7 @@ namespace MonoGameHtml {
 			return null;
 		}
 
-		internal string typeString(object obj) {
+		private static string TypeString(object obj) {
 			string type = obj.GetType().ToString();
 			
 			type = type.Replace("]", ">"); // for functions and such
@@ -96,7 +97,7 @@ namespace MonoGameHtml {
 				object obj = namesAndObjects[i + 1];
 				
 				string name = (string) namesAndObjects[i];
-				string type = typeString(obj);
+				string type = TypeString(obj);
 				
 				___vars[name] = obj;
 				___types[name] = type;
@@ -135,8 +136,11 @@ namespace MonoGameHtml {
 		public static HtmlNode[] nodeArr(params object[] objs) {
 
 			List<HtmlNode> nodes = new List<HtmlNode>();
+
+			if (objs == null) return new HtmlNode[0];
 			
 			foreach (var elem in objs) {
+				if (elem == null) continue;
 				switch (elem) {
 					case HtmlNode node:
 						nodes.Add(node);
@@ -146,12 +150,14 @@ namespace MonoGameHtml {
 						break;
 				}
 			}
+			
 			return nodes.ToArray();
 		}
 		
-		public static HtmlNode[] nodeArr(params HtmlNode[] nodes) {
+		/*public static HtmlNode[] nodeArr(params HtmlNode[] nodes) {
+			//return nodes.Where(node => node != null).ToArray();
 			return nodes;
-		}
+		}*/
 
 		public static int[] nStream(int n) { 
 			int[] arr = new int[n];

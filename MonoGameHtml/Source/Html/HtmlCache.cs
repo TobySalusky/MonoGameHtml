@@ -27,12 +27,22 @@
 
 			if (input == null || input.Length == 0) return;
 			
-			if (cachedInput == null || cachedInput.Length != input.Length) { 
-				UpdateCache(input, outputCode);
+			if (cachedInput == null || cachedInput.Length != input.Length) {
+				try {
+					UpdateCache(input, outputCode);
+				}
+				catch (Exception e) {
+					Logger.log("FAILED TO CACHE!", e);
+				}
 			} else {
 				for (int i = 0; i < input.Length; i++) {
-					if (input[i] != cachedInput[i]) { 
-						UpdateCache(input, outputCode);
+					if (input[i] != cachedInput[i]) {
+						try {
+							UpdateCache(input, outputCode);
+						}
+						catch (Exception e) {
+							Logger.log("FAILED TO CACHE!", e);
+						}
 					}
 				}
 			}
@@ -51,6 +61,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.IO;
 using MonoGameHtml;
 
 namespace MonoGameHtmlGeneratedCode {{

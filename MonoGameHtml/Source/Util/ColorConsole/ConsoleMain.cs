@@ -82,7 +82,6 @@ namespace MonoGameHtml.ColorConsole {
             var parenDict = DelimPair.genPairDict(code, DelimPair.Parens);
 
             static string GetTagType(string tag) {
-                Logger.log("test", tag);
                 if (tag == "Try" || tag == "Catch" ||
                     tag == "If" || tag == "Elif" || tag == "Else" ||
                     tag == "Switch" || tag == "Case" || tag == "Default") return "HtmlTagControl";

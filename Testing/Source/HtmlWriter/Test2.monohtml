@@ -1,0 +1,14 @@
+﻿const Catch = (Action<Exception> __parens__, Func<HtmlNode[]> childrenFunc) => {
+    
+    HtmlNode[] [nodeArray, setNodeArray] = useState(null);
+    
+	return (
+		<catch propsUnder={props} trigger={(Exception exception)=>{
+			setNodeArray(children ?? childrenFunc());
+			__parens__?.Invoke(exception);
+		}}>
+			<html/>
+		    {nodeArray}
+        </catch>
+	);
+}

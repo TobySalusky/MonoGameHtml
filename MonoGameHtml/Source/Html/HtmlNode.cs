@@ -18,6 +18,8 @@ namespace MonoGameHtml {
 		public HtmlNode parent;
 		public HtmlNode[] children;
 		public Func<HtmlNode[]> childrenFunc;
+
+		public HtmlNode[] Contents => (childrenFunc != null) ? childrenFunc() : children;
 		
 		public Dictionary<string, object> props;
 		//public Dictionary<string, object> funcs; // TODO:
@@ -117,6 +119,7 @@ namespace MonoGameHtml {
 
 			initTextContent(textContent);
 			this.children = children;
+			if (this.children != null && !this.children.Any()) this.children = null;
 			this.childrenFunc = childrenFunc;
 
 			makeParentOfChildren();
@@ -158,7 +161,7 @@ namespace MonoGameHtml {
 		public void generateChildren() {
 			children = childrenFunc();
 
-			if (children != null) { 
+			if (children != null) {
 				if (children.Contains(null)) { // remove null elements
 					children = children.Where(child => child != null).ToArray();
 				}

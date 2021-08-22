@@ -5,6 +5,7 @@ namespace MonoGameHtml {
 	public static class Macros {
 
 		public static string[] defaults = {
+			"text", "<p>{textContent}</p>",
 			"time", "timePassed",
 			"t", "timePassed",
 			"deltaTime", "deltaTime",
@@ -16,7 +17,11 @@ namespace MonoGameHtml {
 			"fill", "dimens='100%'",
 			"bg(str)", "backgroundColor='$$str'",
 			"col(str)", "color='$$str'",
-			"size(str)", "dimens={$$str}"
+			"size(str)", "dimens={$$str}",
+			"contents", "(childrenFunc != null ? childrenFunc() : children)",
+			"1", "(childrenFunc != null ? childrenFunc() : children) != null ? (childrenFunc != null ? childrenFunc() : children) : (new HtmlNode[]{<p>{textContent}</p>})",
+			"inner", "((childrenFunc != null ? childrenFunc() : children) ?? (new HtmlNode[]{<p>{textContent}</p>}))",
+			
 		};
 		
 		public static Dictionary<string, string> create(params string[] macroList) {

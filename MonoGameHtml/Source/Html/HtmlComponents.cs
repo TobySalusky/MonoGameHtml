@@ -149,8 +149,7 @@ const TextBox = (
 ",
 			KeyInput = @"
 const KeyInput = () => {
-	
-    return (<div/>);
+    return (<todo/>);
 }
 ",
 			FrameCounter = @"
@@ -170,8 +169,11 @@ const FrameCounter = (float updateTime = 1F) => {
 		}}/>
 	);
 }
-", Switch = @"
+", // TODO: recursion on Switch? perhaps add RecursiveSwitch/DeepSwitch component?
+			Switch = @"
 const Switch = (object __parens__) => {
+
+	if (__parens__ == null) throw new Exception('Switch-value may not be null');
 
 	string [currCase, setCurrCase] = useState('');
 
@@ -194,39 +196,47 @@ const Switch = (object __parens__) => {
 	Dictionary<string, HtmlNode> nodeDict = new Dictionary<string, HtmlNode>();
 	HtmlNode def = null;
 	
-	foreach (HtmlNode node in children) {
+	var extractContent = (HtmlNode node): HtmlNode => {
+		HtmlNode[] nodeContents = node.Contents;
+		if (nodeContents.Length == 1) return nodeContents[0];
+		return (
+			<fragment>
+				<html/>{nodeContents}
+			</fragment>
+		);
+	};
+	
+	foreach (HtmlNode node in @contents) {
 		if (node.props.ContainsKey('default') && node.prop<bool>('default') == true) {
-			def = node;
+			def = (node.tag == 'default') ? extractContent(node) : node;
 			continue;
 		}
 		if (!node.props.ContainsKey('case')) continue;
 		string thisCase = node.prop<string>('case');
-		nodeDict[thisCase] = node;
+		nodeDict[thisCase] = (node.tag == 'case') ? extractContent(node) : node;
 	};
 
 	
-	return (
-		<div onTick={onTick}>
-			<html/>
-			{nodeDict.ContainsKey(currCase) ? nodeDict[currCase] : def}
-		</div>
-	);
+	return (nodeDict.ContainsKey(currCase) ? nodeDict[currCase] : def);
 }
 ", Case = @"
 const Case = (object __parens__) => {
+	
+	if (__parens__ == null) throw new Exception('Case-value may not be null');
+
 	return (
-		<case case={__parens__.ToString()}>
+		<case case={__parens__.ToString()} propsUnder={props}>
 			<html/>
-			{children}
+			{@contents}
 		</case>
 	);
 }
 ", Default = @"
 const Default = () => {
 	return (
-		<case default={true}>
+		<case default={true} propsUnder={props}>
 			<html/>
-			{children}
+			{@contents}
 		</case>
 	);
 }
@@ -299,15 +309,15 @@ const Table = () => {
 	);
 }
 ", If = @"
-const If = (bool __parens__ = false, Func<HtmlNode[]> childrenFunc) => {
+const If = (bool __parens__ = false) => {
 
     HtmlNode[] nodeArray = null;
     if (__parens__) {
-        nodeArray = children ?? childrenFunc();
+        nodeArray = @contents;
     }
     
 	return (
-	    <if ref={(HtmlNode node) => {
+	    <if propsUnder={props} ref={(HtmlNode node) => {
 	        if (__parens__) return;
 	        HtmlNode next = node.GetNext();
 	        if (next != null && (next.tag == 'else' || next.tag == 'elif')) {
@@ -320,13 +330,13 @@ const If = (bool __parens__ = false, Func<HtmlNode[]> childrenFunc) => {
 	);
 }
 ", Elif = @"
-const Elif = (bool __parens__ = false, Func<HtmlNode[]> childrenFunc) => {
+const Elif = (bool __parens__ = false) => {
     
     HtmlNode[] [nodeArray, setNodeArray] = useState(null);
     
     var onTrigger = () => {
         if (__parens__) {
-	        setNodeArray(children ?? childrenFunc());
+	        setNodeArray(@contents);
 	    } else {
 	        HtmlNode next = ___node.GetNext();
 	        if (next != null && (next.tag == 'else' || next.tag == 'elif')) {
@@ -336,26 +346,26 @@ const Elif = (bool __parens__ = false, Func<HtmlNode[]> childrenFunc) => {
     };
     
 	return (
-	    <elif trigger={onTrigger}>
+	    <elif propsUnder={props} trigger={onTrigger}>
 	        <html/>
 	        {nodeArray}
         </elif>
 	);
 }
 ", Else = @"
-const Else = (Func<HtmlNode[]> childrenFunc) => {
+const Else = () => {
     
     HtmlNode[] [nodeArray, setNodeArray] = useState(null);
     
 	return (
-		<else trigger={()=>setNodeArray(children ?? childrenFunc())}>
+		<else propsUnder={props} trigger={()=>setNodeArray(@contents)}>
 			<html/>
 		    {nodeArray}
         </else>
 	);
 }
 ", Try = @"
-const Try = (Func<HtmlNode[]> childrenFunc) => { // TODO: add ability to force dynamic children!!!
+const Try = () => { // TODO: add ability to force dynamic children!!!
 
     HtmlNode[] nodeArray = null;
 	Exception exception = null;
@@ -366,7 +376,7 @@ const Try = (Func<HtmlNode[]> childrenFunc) => { // TODO: add ability to force d
 	}
     
 	return (
-	    <if ref={(HtmlNode node) => {
+	    <try propsUnder={props} ref={(HtmlNode node) => {
 	        if (exception == null) return;
 	        HtmlNode next = node.GetNext();
 	        if (next != null && next.tag == 'catch') {
@@ -375,17 +385,17 @@ const Try = (Func<HtmlNode[]> childrenFunc) => { // TODO: add ability to force d
 	    }}>
 	        <html/>
 	        {nodeArray}
-        </if>
+        </try>
 	);
 }
 ", Catch = @"
-const Catch = (Action<Exception> __parens__, Func<HtmlNode[]> childrenFunc) => {
+const Catch = (Action<Exception> __parens__) => {
     
     HtmlNode[] [nodeArray, setNodeArray] = useState(null);
     
 	return (
-		<catch trigger={(Exception exception)=>{
-			setNodeArray(children ?? childrenFunc());
+		<catch propsUnder={props} trigger={(Exception exception)=>{
+			setNodeArray(@contents);
 			__parens__?.Invoke(exception);
 		}}>
 			<html/>

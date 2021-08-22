@@ -53,7 +53,9 @@ namespace MonoGameHtml {
         public static string stringifyDict<T, K>(Dictionary<T, K> dict) {
             string str = "{";
             string startsWith = "";
-            foreach (var key in dict.Keys) {
+            var keys = dict.Keys.ToArray();
+            for (int i = 0; i < keys.Length; i++) {
+                T key = keys[i];
                 str += $"{startsWith}{key}: {dict[key]}";
                 startsWith = ", ";
             }
