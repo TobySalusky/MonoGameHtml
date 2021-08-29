@@ -1,0 +1,163 @@
+﻿const SaveBox = (Func<bool> open, Action<string,string> save, Func<string> contents, Func<string> activePath, Action close) => {
+
+	bool [saveBoxOpen, setSaveBoxOpen] = useState(false);
+	string text = '';
+
+	var submit = () => {
+		Logger.log('submitted', text);
+		save(text.EndsWith('.monohtml') ? text : text + '.monohtml', contents());
+		close();
+	};
+
+	return (
+		<div class="SaveBoxContainer" onTick={()=>{
+				if (open() != saveBoxOpen) {
+					setSaveBoxOpen(!saveBoxOpen);
+					if (activePath() != null) {
+						text = activePath();
+					} else {
+						text = Path.Join($scriptPath, "untitled");
+					}
+				}
+			}}>
+			{!saveBoxOpen ? null :
+				<div class="SaveBox">
+					<TextBox class="SaveTextBox" onEnter={submit} label="absolute path:" text={string: text} setText={(string str)=> text=str}/>
+					<div onPress={submit} class="SaveSubmit">
+						Save...
+					</div>
+				</div>
+			}
+		</div>
+	);
+}
+
+const MainScreen = (Action openFileScreen, string activeFilePath) => {
+
+	var trySaveFile = (string path, string contents) => {
+		try {
+			Logger.log('successfully saved to:', path);
+			File.WriteAllText(path, contents);
+			activeFilePath = path;
+		} catch (Exception e) {
+			Logger.log('failed to save file!', e.StackTrace, e);
+		}
+	};
+	
+	bool [showCode, setShowCode] = useState(false);
+	string [code, setCode] = useState('');
+	
+	List<string> predictions = null;
+	var setPredictions = (List<string> list) => predictions = list;
+
+	HtmlNode [node, setNode] = useState(null);
+	bool saveBoxOpen = false;
+
+	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
+	
+	if (activeFilePath != null) {
+		try {
+			text = File.ReadAllText(activeFilePath);
+		} catch (Exception) {
+			Logger.log('IDE FAILED TO READ FROM FILE PATH');
+		}
+	}
+	
+	Action<string> setText = (string str) => text=str;
+	int updateCount = 1, currUpdateCount = 0;
+	bool updating = false;
+	Exception [exception, setException] = useState(null);
+	
+	TypingState typingState = null;
+	
+	string correctText() {
+		return text.Replace('\t', TextInputUtil.spacesPerTab);
+	}
+
+    return (
+        <body flexDirection='row' props={props}>
+        
+        	<FrameCounter/>
+						
+        	<div flex={1} backgroundColor='#34353D'>
+				<TextBox 
+				class='HtmlBox'
+				-borderWidth={int: 0}
+				multiline={true}
+				useTypingState={@set(TypingState, typingState)}
+				text={string: text} setText={setText}
+				diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
+					updateCount++;
+					return $htmlDiff(oldStr, newStr, typingState, predictions);
+				})}
+				onTick={()=>{
+					if (code != $code) setCode($code);
+					
+					if (!updating && currUpdateCount != updateCount) {
+
+						Logger.log(text);
+					
+						updating = true;
+						Task.Run(()=>{
+							try {
+						    $updateHtml(updateCount, text).ContinueWith(task => {
+						    	int thisUpdateCount = task.Result.Item3;
+						    	if (thisUpdateCount > currUpdateCount) {
+						    		updating = false;
+									currUpdateCount = thisUpdateCount;
+						    		
+									setException(task.Result.Item2);
+									setNode(task.Result.Item1);
+						    	}
+							});
+							} catch (Exception e) {Logger.log('????', e.StackTrace);}
+						});
+						
+					}
+				}}
+				/>
+				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
+				<pseudo class='ReplaceText' 
+				renderAdd={(SpriteBatch spriteBatch)=>{ 
+					$renderTabs(spriteBatch, text, typingState);
+				}}
+				/>
+				<TextRender textFunc={string: correctText()}/>
+				<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
+				setPredictions={setPredictions} typingState={typingState}/>
+				
+				<span>
+					<div class="FileOptionButton" onPress={()=>showCode = !showCode}>
+						view code
+					</div>
+					<div class="FileOptionButton" onPress={openFileScreen}>
+						files...
+					</div>
+					<div class="FileOptionButton" onPress={()=>{
+							if (activeFilePath != null) {
+								trySaveFile(activeFilePath, text);
+							} else {
+								saveBoxOpen = true;
+							}
+						}}>
+						save...
+					</div>
+					<div class="FileOptionButton" onPress={()=>saveBoxOpen = true}>
+						save as...
+					</div>
+				</span>
+			</div>
+			<div flex={1} backgroundColor='white'>
+				<html/>
+				{showCode ? <p>{code}</p> : (node ??  
+					(
+						(exception == null || text == '') ? 
+							<p>Nothing to display...</p> : 
+							<p color='red'>{exception == null ? 'NULL?' : (exception.GetType().Name + '\n' + exception.Message)}</p>
+					)
+				)}
+			</div>
+			<SaveBox open={bool: saveBoxOpen} close={()=>saveBoxOpen=false} save={trySaveFile} contents={string: text} activePath={string: activeFilePath}/>
+		</body>
+    );
+}

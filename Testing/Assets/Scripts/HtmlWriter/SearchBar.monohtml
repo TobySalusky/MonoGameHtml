@@ -1,0 +1,14 @@
+﻿const SearchBar = (Action<string> setText, string path = '') => {
+
+	List<(string stringName, string contents)> htmlSearchList = $searchHtml(path);
+
+	return (
+		<div>
+			{true ? null : htmlSearchList.map(instance =>
+				<p onPress={()=>setText(instance.contents)}>
+					{instance.stringName}
+				</p>
+			)}
+		</div>
+	);
+}

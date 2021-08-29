@@ -8,6 +8,37 @@
     font-size: 26px;
 }
 
+.FileOptionButton {
+    background-color: #2c2c32;
+    color: lightblue;
+    padding: 2px;
+    margin-right: 10px;
+}
+
+.SaveBox {
+    padding: 10px;
+    background-color: #6f7a8d;
+}
+
+.SaveBoxContainer {
+    position: fixed;
+    top: 200px;
+    left: 1000px;
+}
+
+.SaveSubmit {
+    background-color: #2c2c32;
+    color: white;
+    padding: 10px;
+}
+
+.SaveTextBox {
+    width: 600px;
+    font-size: 14px;
+    padding: 4px;
+    background-color: white;
+}
+
 .ReplaceText {
     position: fixed;
     left: 10px;

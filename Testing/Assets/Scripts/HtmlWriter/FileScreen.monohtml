@@ -1,0 +1,23 @@
+﻿
+const FileTab = (string path) => {
+	return (
+		<div props={props} class='FileTab'>
+			<h3>{path.Substring(path.LastIndexOf(@'\') + 1)}</h3>
+			<div class='Divide'/>
+			<p>{path}</p>
+		</div>
+	);
+}
+
+const FileScreen = (Action<string> useFileAtPath) => {
+
+	string[] paths = $getMonoHtmlFilePaths();
+
+	return (
+		<body props={props} class='FileTabContainer'>
+			{paths.map(path =>
+				<FileTab onPress={()=>useFileAtPath(path)} path={path}/>
+			)}
+		</body>
+	);
+}

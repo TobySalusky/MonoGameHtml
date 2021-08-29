@@ -1,0 +1,22 @@
+const App = () => {
+		
+	int [screen, setScreen] = useState(0);
+	string activeFilePath = null;
+	
+	var useFileAtPath = (string path) => {
+		activeFilePath = path;
+		setScreen(0);
+	};
+	
+	return (
+		<body>
+			{<dynamic/>} 
+			<If (screen == 0) @fill>
+				<MainScreen openFileScreen={()=>setScreen(1)} activeFilePath={activeFilePath}/>
+			</If>
+			<Else @fill position='fixed' top={0} left={0}>
+				<FileScreen useFileAtPath={useFileAtPath}/>
+			</Else>
+		</body>
+	);
+}

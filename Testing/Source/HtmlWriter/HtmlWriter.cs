@@ -12,308 +12,8 @@ namespace Testing {
     public static class HtmlWriter {
 	    
         public static async void Init(GameMain gameMain) {
-	        const string componentDefs = @"
-const SearchBar = (Action<string> setText, string path = '') => {
 
-	List<(string stringName, string contents)> htmlSearchList = $searchHtml(path);
-
-	return (
-		<div>
-			{true ? null : htmlSearchList.map(instance =>
-				<p onPress={()=>setText(instance.contents)}>
-					{instance.stringName}
-				</p>
-			)}
-		</div>
-	);
-}
-
-const Predictor = (
-	Func<string> textFunc, 
-	Func<int> indexFunc, 
-	Action<List<string>> setPredictions, 
-	TypingState typingState
-) => {
-
-	string text = '';
-	int index = 0;
-	
-	int cursorX = 0, cursorY = 0;
-	
-	string searchFor = '';
-	List<string> newList = null;
-	List<string> [list, setListState] = useState(null);
-	var setList = (List<string> list) => {
-		setPredictions(list);
-		setListState(list);
-	};
-
-	var clear = () => {
-		if (list != null) setList(null);
-	};
-
-	var tick = () => {
-	
-		if (newList != null) {
-			setList(newList);
-			newList = null;
-		}
-	
-		int newIndex = indexFunc();
-		if (index != newIndex) {
-			index = newIndex;
-			clear();
-		}
-	
-		string newText = textFunc();
-		if (text != newText) {
-			text = newText;
-			searchFor = $findSearchFor(text, typingState.cursorIndex);
-			(cursorX, cursorY) = $cursorPos(typingState, text);
-			Task.Run(() => {
-				try {
-					$predict(searchFor, text, typingState.cursorIndex).ContinueWith((task) => {
-						if (text == newText) newList = task.Result;
-					});
-				} catch (Exception e) {
-					//Logger.log(e.StackTrace);
-					//Logger.log(e.Message);
-					clear();
-				}
-			});			
-		}
-	};
-
-	return (
-		<pseudo onTick={tick}>
-			{(list == null || list.Count == 0) ? <p/> :
-				<div left={cursorX} top={cursorY} class='CodePredictionBox'>
-					{list.map(str => {
-						int searchIndex = str.IndexOf(searchFor);
-						return (
-							<span>
-								<h6 class='CodePrediction'>{str[..searchIndex]}</h6>
-								<h6 class='CodePrediction' color='orange'>{searchFor}</h6>
-								<h6 class='CodePrediction'>{str[(searchIndex+searchFor.Length)..]}</h6>
-							</span>
-						);
-					})}
-				</div>
-			}
-		</pseudo>
-	);
-}
-
-const TextRender = (Func<string> textFunc) => {
-	
-	string [text, setText] = useState('');
-
-	List<List<(Color, int)>> colorData = null;
-
-	int i = 0;
-
-	List<List<(Color, int)>> FindColorData() {
-		i = 0;
-
-		if (colorData != null) {
-			int len = colorData.Select(line => line.Select(data => data.Item2).Sum()).Sum();
-			if (len <= text.Length) return colorData;
-		}
-
-		/*
-		if (colorData != null) {
-			int len = colorData.Select(data => data.Item2).Sum();
-			if (len == text.Length) return colorData;
-			
-			if (len < text.Length) {
-				return colorData.Concat(arr[(Color.White, text.Length - len)]);
-			}
-		}*/
-
-		
-		return null;
-	}
-
-	return (
-		<pseudo class='ReplaceText' 
-			onTick={()=>{
-				string newText = textFunc();
-				if (text != newText) {
-					colorData = null;
-					setText(newText);
-					Task.Run(()=>{
-						try {
-							$colorHtml(text).ContinueWith(task => {
-								if (newText == text) {
-									colorData = task.Result;
-									setText(newText);
-								}
-							});
-						} catch (Exception e) {
-							//Logger.log(e.StackTrace);
-							//Logger.log(e.Message);
-						}
-					});
-				}
-			}}
-		>
-			{FindColorData()?.map(line => 
-				<span>
-					{line.map(data => {
-						int currI = i;
-						var node = <p class='Text' color={data.Item1}>{text.Replace('\n', ' ').Substring(currI, data.Item2)}</p>;
-						i += data.Item2;
-						return node;
-					})}
-				</span>
-			)}	
-		</pseudo>
-	);
-}
-
-const App = () => {
-		
-	int [screen, setScreen] = useState(0);
-	string activeFilePath = null;
-	
-	var useFileAtPath = (string path) => {
-		activeFilePath = path;
-		setScreen(0);
-	};
-	
-	return (
-		<body>
-			{<dynamic/>} 
-			<If (screen == 0) @fill>
-				<Main openFileScreen={()=>setScreen(1)} activeFilePath={activeFilePath}/>
-			</If>
-			<Else @fill position='fixed' top={0} left={0}>
-				<FileScreen useFileAtPath={useFileAtPath}/>
-			</Else>
-		</body>
-	);
-}
-
-const FileScreen = (Action<string> useFileAtPath) => {
-
-	string[] paths = $getMonoHtmlFilePaths();
-
-	return (
-		<body props={props} class='FileTabContainer'>
-			{paths.map(path =>
-				<FileTab onPress={()=>useFileAtPath(path)} path={path}/>
-			)}
-		</body>
-	);
-}
-
-const FileTab = (string path) => {
-	return (
-		<div props={props} class='FileTab'>
-			<h3>{path.Substring(path.LastIndexOf(@'\') + 1)}</h3>
-			<div class='Divide'/>
-			<p>{path}</p>
-		</div>
-	);
-}
-
-const Main = (Action openFileScreen, string activeFilePath) => {
-
-	List<string> predictions = null;
-	var setPredictions = (List<string> list) => predictions = list;
-
-	HtmlNode [node, setNode] = useState(null);
-
-	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
-	
-	if (activeFilePath != null) {
-		try {
-			text = File.ReadAllText(activeFilePath);
-		} catch (Exception) {
-			Logger.log('IDE FAILED TO READ FROM FILE PATH');
-		}
-	}
-	
-	Action<string> setText = (string str) => text=str;
-	int updateCount = 0, currUpdateCount = 0;
-	bool updating = false;
-	Exception [exception, setException] = useState(null);
-	
-	TypingState typingState = null;
-	
-	string correctText() {
-		return text.Replace('\t', TextInputUtil.spacesPerTab);
-	}
-
-    return (
-        <body flexDirection='row' props={props}>
-        
-        	<FrameCounter/>
-						
-        	<div flex={1} backgroundColor='#34353D'>
-				<TextBox 
-				class='HtmlBox'
-				-borderWidth={int: 0}
-				multiline={true}
-				useTypingState={@set(TypingState, typingState)}
-				text={string: text} setText={setText}
-				diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
-					updateCount++;
-					return $htmlDiff(oldStr, newStr, typingState, predictions);
-				})}
-				onTick={()=>{
-					if (!updating && currUpdateCount != updateCount) {
-
-						Logger.log(text);
-					
-						updating = true;
-						Task.Run(()=>{
-							try {
-						    $updateHtml(updateCount, text).ContinueWith(task => {
-						    	int thisUpdateCount = task.Result.Item3;
-						    	if (thisUpdateCount > currUpdateCount) {
-						    		updating = false;
-									currUpdateCount = thisUpdateCount;
-						    		
-									setException(task.Result.Item2);
-									setNode(task.Result.Item1);
-						    	}
-							});
-							} catch (Exception e) {Logger.log('????', e.StackTrace);}
-						});
-						
-					}
-				}}
-				/>
-				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
-				<pseudo class='ReplaceText' 
-				renderAdd={(SpriteBatch spriteBatch)=>{ 
-					$renderTabs(spriteBatch, text, typingState);
-				}}
-				/>
-				<TextRender textFunc={string: correctText()}/>
-				<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
-				setPredictions={setPredictions} typingState={typingState}/>
-				<div backgroundColor='red' onPress={openFileScreen}>
-        			files...
-				</div>
-			</div>
-			<div flex={1} backgroundColor='white'>
-				<html/>
-				{node ??  
-					(
-						(exception == null || text == '') ? 
-							<p>Nothing to display...</p> : 
-							<p color='red'>{exception == null ? 'NULL?' : (exception.GetType().Name + '\n' + exception.Message)}</p>
-					)
-				}
-			</div>
-		</body>
-    );
-}
-";
-
-            const string html = "<App/>";
+	        const string html = "<App/>";
             StatePack pack = null;
 
             Func<string, Task<List<List<(Color, int)>>>> colorHtml = async (code) => await Parser.ColorSyntaxHighlightedCSharpHtml(code);
@@ -327,7 +27,11 @@ const Main = (Action openFileScreen, string activeFilePath) => {
 			            macros: Macros.create(
 			            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
 			            "none", "<span/>"),
-			            components: HtmlComponents.Create(HtmlComponents.AllControlFlow, text));
+			            components: HtmlComponents.Create(text), new HtmlIntermediateUser{
+							useCS = (code) => {
+								pack.UpdateVar("code", code);
+							}
+			            });
 	            } catch (Exception err) {
 		            e = err;
 		            Logger.log(e.StackTrace);
@@ -403,31 +107,42 @@ const Main = (Action openFileScreen, string activeFilePath) => {
 			            typingState.cursorIndex = tagStart + tag.Length + 2 + (autoParens ? 1 : 0);
 
 		            } else if (newStr.CountOf("\n") > oldStr.CountOf("\n")) { // maintain tabs between lines
-			            int enterIndex = typingState.cursorIndex - 1;
-			            bool openUpTags = (typingState.cursorIndex > 1 && typingState.cursorIndex < newStr.Length - 1) && 
-			                              (newStr[enterIndex - 1] == '>' && newStr.Substring(typingState.cursorIndex, 2) == "</");
-			            if (newStr[enterIndex] != '\n') return str;
-			            int lastLineStart = 0;
-			            for (int i = enterIndex - 1; i >= 0; i--) {
-				            if (newStr[i] == '\n') {
-					            lastLineStart = i;
+			            if (newStr[..(typingState.cursorIndex - 1)].EndsWith("cmp")) {
+				            str = newStr[..(typingState.cursorIndex - 4)] + @"const  = () => {
+	return (
+		
+	);
+}" + newStr[typingState.cursorIndex..];
+
+				            typingState.cursorIndex += 2;
+			            } else { 
+				            int enterIndex = typingState.cursorIndex - 1;
+				            bool openUpTags = (typingState.cursorIndex > 1 && typingState.cursorIndex < newStr.Length - 1) && 
+				                              (newStr[enterIndex - 1] == '>' && newStr.Substring(typingState.cursorIndex, 2) == "</");
+				            if (newStr[enterIndex] != '\n') return str;
+				            int lastLineStart = 0;
+				            for (int i = enterIndex - 1; i >= 0; i--) {
+					            if (newStr[i] == '\n') {
+						            lastLineStart = i;
+						            break;
+					            }
+				            }
+
+				            string tabs = "";
+				            for (int i = lastLineStart + 1; i < newStr.Length; i++) {
+					            if (newStr[i] == '\t') {
+						            tabs += '\t';
+						            continue;
+					            }
 					            break;
 				            }
+
+				            str = newStr[..typingState.cursorIndex] + tabs + (openUpTags ? $"\t\n{tabs}" : "") + newStr[typingState.cursorIndex..];
+				            typingState.cursorIndex += tabs.Length;
+
+				            if (openUpTags) typingState.cursorIndex++;
+
 			            }
-
-			            string tabs = "";
-			            for (int i = lastLineStart + 1; i < newStr.Length; i++) {
-				            if (newStr[i] == '\t') {
-					            tabs += '\t';
-					            continue;
-				            }
-				            break;
-			            }
-
-			            str = newStr[..typingState.cursorIndex] + tabs + (openUpTags ? $"\t\n{tabs}" : "") + newStr[typingState.cursorIndex..];
-			            typingState.cursorIndex += tabs.Length;
-
-			            if (openUpTags) typingState.cursorIndex++;
 		            }
 	            } else if (newStr.Length == oldStr.Length - 1) { // on delete
 		            
@@ -501,9 +216,7 @@ const Main = (Action openFileScreen, string activeFilePath) => {
 
             Func<string[]> getMonoHtmlFilePaths = () => {
 	            try {
-		            string[] filePaths = Directory.GetFiles(@"C:\Users\Toby\Documents\GitHub\MonoGameHtml",
-			            "*.monohtml", SearchOption.AllDirectories);
-		            return filePaths;
+		            return HtmlComponents.AllScriptFilePaths(GameMain.scriptPath);
 	            }
 	            catch (Exception e) {
 		            Logger.log("TEST FAILED");
@@ -522,11 +235,14 @@ const Main = (Action openFileScreen, string activeFilePath) => {
                 "predict",  predict,
                 "cursorPos", cursorPos,
                 "findSearchFor", (Func<string, int, string>) CodePredictor.FindSearchFor,
-                "getMonoHtmlFilePaths", getMonoHtmlFilePaths
+                "getMonoHtmlFilePaths", getMonoHtmlFilePaths,
+                "scriptPath", GameMain.scriptPath,
+                "code", ""
             );
 
             gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
-                components: HtmlComponents.Create(componentDefs, HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
+                components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(GameMain.scriptPath, "HtmlWriter")), 
+	                HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
 
             HtmlSettings.generateCache = false;
         }

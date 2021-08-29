@@ -1,4 +1,5 @@
 ﻿﻿using System.Collections.Generic;
+ using System.IO;
  using System.Linq;
 
  namespace MonoGameHtml {
@@ -17,6 +18,17 @@
 				}
 			}
 			return componentStrings.ToArray();
+		}
+
+		public static string[] AllScriptFilePaths(string folderAbsolutePath, bool subfolders = true) { 
+			return Directory.GetFiles(folderAbsolutePath, 
+				"*.monohtml", subfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+		}
+
+		public static string ReadFrom(string folderAbsolutePath, bool subfolders = true) {
+			string[] filePaths = AllScriptFilePaths(folderAbsolutePath, subfolders);
+			var contents = filePaths.Select(File.ReadAllText);
+			return string.Join("\n", contents);
 		}
 
 		public const string Slider = @"
@@ -105,7 +117,7 @@ const TextInput = (
 			TextBox = @"
 const TextBox = (
 	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false, bool cursorVisible = true,
-	Action<TypingState> useTypingState
+	Action<TypingState> useTypingState, Action onEnter, string label
 ) => {
 
 	if (text == null && setText == null) {
@@ -118,13 +130,19 @@ const TextBox = (
 	HtmlNode node = null;
 	TypingState typingState = null;
 
+	var trueDiff = (string oldStr, string newStr):string => {
+		if (oldStr.Length + 1 == newStr.Length && oldStr.CountOf('\n') < newStr.CountOf('\n')) onEnter.Invoke();
+		return diff == null ? newStr : diff(oldStr, newStr);
+	};
+	if (onEnter == null) trueDiff = diff;
+
 	return (
 		<div ref={(HtmlNode el)=>{
 			node = el;
 			typingState.node = el;
 		}} class='TextBox' props={props}
 			onMouseDown={()=>active=node.clicked}
-			-borderWidth={int: (active) ? 1 : 0} -textContent={string: text().Replace('\t', TextInputUtil.spacesPerTab)}
+			-borderWidth={int: (active) ? 1 : 0} -textContent={string: ((label != null && text().Length == 0) ? label : text()).Replace('\t', TextInputUtil.spacesPerTab)}
 			renderAdd={(SpriteBatch spriteBatch)=>{
 				if (!cursorVisible || !active || ((@t - typingState.lastEditOrMove > 1) && ((@t % 1F) < 0.5F))) return;
 				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
@@ -136,7 +154,7 @@ const TextBox = (
 				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
 			}}
 		>
-			<TextInput text={text} setText={setText} diff={diff} active={bool: active} multiline={multiline}
+			<TextInput text={text} setText={setText} diff={trueDiff} active={bool: active} multiline={multiline}
 				useTypingState={(TypingState state)=>{
 					typingState = state;
 					useTypingState?.Invoke(typingState);
@@ -206,17 +224,20 @@ const Switch = (object __parens__) => {
 		);
 	};
 	
-	foreach (HtmlNode node in @contents) {
-		if (node.props.ContainsKey('default') && node.prop<bool>('default') == true) {
-			def = (node.tag == 'default') ? extractContent(node) : node;
-			continue;
-		}
-		if (!node.props.ContainsKey('case')) continue;
-		string thisCase = node.prop<string>('case');
-		nodeDict[thisCase] = (node.tag == 'case') ? extractContent(node) : node;
-	};
+	HtmlNode[] contents = @contents;
 
-	
+	if (contents != null && contents.Length > 0) {
+		foreach (HtmlNode node in contents) {
+			if (node.props.ContainsKey('default') && node.prop<bool>('default') == true) {
+				def = (node.tag == 'default') ? extractContent(node) : node;
+				continue;
+			}
+			if (!node.props.ContainsKey('case')) continue;
+			string thisCase = node.prop<string>('case');
+			nodeDict[thisCase] = (node.tag == 'case') ? extractContent(node) : node;
+		};
+	}
+
 	return (nodeDict.ContainsKey(currCase) ? nodeDict[currCase] : def);
 }
 ", Case = @"
@@ -226,8 +247,7 @@ const Case = (object __parens__) => {
 
 	return (
 		<case case={__parens__.ToString()} propsUnder={props}>
-			<html/>
-			{@contents}
+			{@inner}
 		</case>
 	);
 }
@@ -235,8 +255,7 @@ const Case = (object __parens__) => {
 const Default = () => {
 	return (
 		<case default={true} propsUnder={props}>
-			<html/>
-			{@contents}
+			{@inner}
 		</case>
 	);
 }
@@ -418,6 +437,12 @@ const Catch = (Action<Exception> __parens__) => {
 {Switch}
 {Case}
 {Default}
+", All = $@"
+{AllInput}
+{AllControlFlow}
+{Slider}
+{Toggle}
+{FrameCounter}
 ";
 	}
  }

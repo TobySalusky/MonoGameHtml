@@ -1,0 +1,66 @@
+﻿const TextRender = (Func<string> textFunc) => {
+	
+	string [text, setText] = useState('');
+
+	List<List<(Color, int)>> colorData = null;
+
+	int i = 0;
+
+	List<List<(Color, int)>> FindColorData() {
+		i = 0;
+
+		if (colorData != null) {
+			int len = colorData.Select(line => line.Select(data => data.Item2).Sum()).Sum();
+			if (len <= text.Length) return colorData;
+		}
+
+		/*
+		if (colorData != null) {
+			int len = colorData.Select(data => data.Item2).Sum();
+			if (len == text.Length) return colorData;
+			
+			if (len < text.Length) {
+				return colorData.Concat(arr[(Color.White, text.Length - len)]);
+			}
+		}*/
+
+		
+		return null;
+	}
+
+	return (
+		<pseudo class='ReplaceText' 
+			onTick={()=>{
+				string newText = textFunc();
+				if (text != newText) {
+					colorData = null;
+					setText(newText);
+					Task.Run(()=>{
+						try {
+							$colorHtml(text).ContinueWith(task => {
+								if (newText == text) {
+									colorData = task.Result;
+									setText(newText);
+								}
+							});
+						} catch (Exception e) {
+							//Logger.log(e.StackTrace);
+							//Logger.log(e.Message);
+						}
+					});
+				}
+			}}
+		>
+			{FindColorData()?.map(line => 
+				<span>
+					{line.map(data => {
+						int currI = i;
+						var node = <p class='Text' color={data.Item1}>{text.Replace('\n', ' ').Substring(currI, data.Item2)}</p>;
+						i += data.Item2;
+						return node;
+					})}
+				</span>
+			)}	
+		</pseudo>
+	);
+}

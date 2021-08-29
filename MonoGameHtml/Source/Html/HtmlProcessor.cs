@@ -355,6 +355,8 @@ namespace MonoGameHtml {
 			DelimPair pair = DelimPair.genPairDict(afterReturn, "(", ")")[0];
 			string returnContents = pair.contents(afterReturn).Trim();
 
+			if (returnContents == "") throw new Exception($"{tag}'s main return statement is empty.");
+			
 			string stateStr = "";
 			state: {
 				string stateDefinitions = componentContents[..mainReturnIndex];
@@ -606,7 +608,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 		}
 
 		public static async Task<HtmlNode> GenHtml(string code, StatePack pack,
-			Dictionary<string, string> macros = null, string[] components = null) {
+			Dictionary<string, string> macros = null, string[] components = null, HtmlIntermediateUser intermediateUser = null) {
 			
 			//Logger.log("fixed\n",Parser.ExpandSelfClosedHtmlTags(code));
 			//Parser.CheckCarrotType(code);
@@ -710,7 +712,9 @@ using System.IO;
 				Logger.log(code);
 				Logger.logColor(ConsoleColor.Red, HtmlOutput.NEW_OUTPUT_END);
 			}
-			
+
+			intermediateUser?.useCS?.Invoke(code);
+
 			object htmlObj = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports("System", "System.Collections.Generic").AddReferences(
 				typeof(HtmlNode).Assembly
 				), pack);

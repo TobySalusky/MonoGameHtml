@@ -1,0 +1,76 @@
+﻿
+const Predictor = (
+	Func<string> textFunc, 
+	Func<int> indexFunc, 
+	Action<List<string>> setPredictions, 
+	TypingState typingState
+) => {
+
+	string text = '';
+	int index = 0;
+	
+	int cursorX = 0, cursorY = 0;
+	
+	string searchFor = '';
+	List<string> newList = null;
+	List<string> [list, setListState] = useState(null);
+	var setList = (List<string> list) => {
+		setPredictions(list);
+		setListState(list);
+	};
+
+	var clear = () => {
+		if (list != null) setList(null);
+	};
+
+	var tick = () => {
+	
+		if (newList != null) {
+			setList(newList);
+			newList = null;
+		}
+	
+		int newIndex = indexFunc();
+		if (index != newIndex) {
+			index = newIndex;
+			clear();
+		}
+	
+		string newText = textFunc();
+		if (text != newText) {
+			text = newText;
+			searchFor = $findSearchFor(text, typingState.cursorIndex);
+			(cursorX, cursorY) = $cursorPos(typingState, text);
+			Task.Run(() => {
+				try {
+					$predict(searchFor, text, typingState.cursorIndex).ContinueWith((task) => {
+						if (text == newText) newList = task.Result;
+					});
+				} catch (Exception e) {
+					//Logger.log(e.StackTrace);
+					//Logger.log(e.Message);
+					clear();
+				}
+			});			
+		}
+	};
+
+	return (
+		<pseudo onTick={tick}>
+			{(list == null || list.Count == 0) ? <p/> :
+				<div left={cursorX} top={cursorY} class='CodePredictionBox'>
+					{list.map(str => {
+						int searchIndex = str.IndexOf(searchFor);
+						return (
+							<span>
+								<h6 class='CodePrediction'>{str[..searchIndex]}</h6>
+								<h6 class='CodePrediction' color='orange'>{searchFor}</h6>
+								<h6 class='CodePrediction'>{str[(searchIndex+searchFor.Length)..]}</h6>
+							</span>
+						);
+					})}
+				</div>
+			}
+		</pseudo>
+	);
+}

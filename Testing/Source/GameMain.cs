@@ -17,7 +17,7 @@ namespace Testing
 
         public HtmlRunner htmlInstance;
 
-        public string cssPath;
+        public static string cssPath, scriptPath;
         
         // test objects
         public Texture2D bush;
@@ -45,6 +45,8 @@ namespace Testing
 
             string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName,
                 "Assets");
+
+            scriptPath = Path.Join(assetPath, "Scripts");
 
             cssPath = Path.Join(assetPath, "CSS");
             

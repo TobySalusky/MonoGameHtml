@@ -138,9 +138,14 @@ namespace MonoGameHtml {
 					case Func<string> strFunc:
 
 						Action generateText = () => {
-							string initText = this.textContent;
-							this.textContent = strFunc();
-							if (initText != this.textContent) onFontChange();
+							try {
+								string initText = this.textContent;
+								this.textContent = strFunc();
+								if (initText != this.textContent) onFontChange();
+
+							} catch (Exception e) { 
+								Logger.logColor(ConsoleColor.Cyan, "NO!!", e, e.Message, e.StackTrace);
+							}
 						};
 
 						generateText();
