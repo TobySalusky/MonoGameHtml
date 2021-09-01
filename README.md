@@ -7,7 +7,7 @@ Note: Although it may look like it, no Javascript is used. MonoGameHtml is inten
 Essentially, this package serves as an extension to the C# language in which Html UI-nodes can be created much like with JSX.
 
 UI-components are defined in a functional manner (borrowing some JS syntax):
-```html
+```cs
 const App = () => {
     
     var fruitList = new List<string> {'apple', 'banana', 'orange'};
