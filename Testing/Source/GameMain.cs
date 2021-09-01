@@ -44,7 +44,6 @@ namespace Testing
             _graphics.ApplyChanges();
 
             string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName, "Assets");
-
             scriptPath = Path.Join(assetPath, "Scripts");
 
             cssPath = Path.Join(assetPath, "CSS");

@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MonoGameHtml", "MonogameHtm
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing", "Testing\Testing.csproj", "{42B1BA98-509C-42CD-94B4-E5C507F57F8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{5C9C9475-1481-4D2F-87F3-830059E63076}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{42B1BA98-509C-42CD-94B4-E5C507F57F8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42B1BA98-509C-42CD-94B4-E5C507F57F8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42B1BA98-509C-42CD-94B4-E5C507F57F8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C9C9475-1481-4D2F-87F3-830059E63076}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C9C9475-1481-4D2F-87F3-830059E63076}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C9C9475-1481-4D2F-87F3-830059E63076}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C9C9475-1481-4D2F-87F3-830059E63076}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
