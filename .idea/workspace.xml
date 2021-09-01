@@ -2,21 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d12e7f86-b7cc-4062-bed2-7bb0d02986e6" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/MonoGameHtml.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Example/Assets/Fonts/JetBrainsMono.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Example/Content/Content.mgcb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Example/Example.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Example/Game1.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Example/Icon.bmp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Example/Icon.ico" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Example/Program.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Example/app.manifest" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MonoGameHtml.sln" beforeDir="false" afterPath="$PROJECT_DIR$/MonoGameHtml.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Testing/Source/GameMain.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Testing/Source/GameMain.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,11 +32,22 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1630535038821</updated>
-      <workItem from="1630535040144" duration="3452000" />
+      <workItem from="1630535040144" duration="3706000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

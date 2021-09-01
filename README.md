@@ -22,7 +22,7 @@ const App = () => {
     );
 }
 ```
-![fruit list example component](https://github.com/TobySalusky/MonoGameHtml/tree/main/MonoGameHtml/images/FruitListExample?raw=true)
+![fruit list example component](https://github.com/TobySalusky/MonoGameHtml/tree/main/MonoGameHtml/images/FruitListExample.PNG?raw=true)
 
 ---
 ###Features:
