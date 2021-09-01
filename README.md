@@ -1,4 +1,4 @@
-#HTML UI for Monogame Applications
+# HTML UI for Monogame Applications
 
 MonoGameHtml is a library that seeks to bring ReactJS-like UI development to C# and the MonoGame environment.
 
@@ -25,7 +25,7 @@ const App = () => {
 ![fruit list example component](https://github.com/TobySalusky/MonoGameHtml/blob/main/MonoGameHtml/docs/images/FruitListExample.PNG?raw=true)
 
 ---
-###Features:
+### Features:
 * Functional Components
 * State Hooks (cause node-rebuild/rerender)
 * Default and custom macros
@@ -36,7 +36,7 @@ const App = () => {
 * Loading components and CSS from files (.monohtml and .css, respectively)
 * Caching
 ---
-####Simple Example Program:
+#### Simple Example Program:
 ```cs
 using System;
 using System.IO;
