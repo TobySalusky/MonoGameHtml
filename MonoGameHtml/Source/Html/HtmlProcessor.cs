@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
@@ -388,7 +389,6 @@ Action<{type}> {varNames[1]} = (___val) => {{
 						if (line.StartsWith("var")) {
 							int afterEquals = line.indexOf("=") + 1;
 							string initialization = line[afterEquals..].Trim();
-							Logger.log("DOING LINE",line, initialization);
 
 							if (initialization.StartsWith("(")) {
 								DelimPair parenPair = initialization.searchPairs(DelimPair.Parens, 0);
@@ -430,7 +430,6 @@ Action<{type}> {varNames[1]} = (___val) => {{
 											}
 										}
 
-										Logger.log("TEST?", initialization);
 										// do stuff
 
 										var decs = parenPair.contents(initialization).SplitUnNestedCommas().
@@ -462,7 +461,6 @@ Action<{type}> {varNames[1]} = (___val) => {{
 										string resultStr = $"({fType}{possibleGenerics})(({varNames})=>{body});";
 
 										initialization = initialization[..parenPair.openIndex] + resultStr;
-										//Logger.log("TEST", initialization);
 										line = $"{line[..afterEquals]} {initialization}";
 										
 									}
@@ -607,14 +605,14 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			return code;
 		}
 
-		public static async Task<HtmlNode> GenHtml(string code, StatePack pack,
+		public static async Task<HtmlNode> GenHtml(string code, StatePack pack, Assembly[] assemblies = null, string[] imports = null,
 			Dictionary<string, string> macros = null, string[] components = null, HtmlIntermediateUser intermediateUser = null) {
 			
-			//Logger.log("fixed\n",Parser.ExpandSelfClosedHtmlTags(code));
 			//Parser.CheckCarrotType(code);
 			
 			macros ??= Macros.create();
 			components ??= HtmlComponents.Create();
+			imports ??= new string[0];
 			
 			// preprocess
 			code = preprocess(code, macros);
@@ -639,17 +637,23 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			Logger.log(code);
 			Logger.logColor(ConsoleColor.Yellow, HtmlOutput.OUTPUT_END);
 
-
+			if (assemblies != null) {
+				imports = imports.Concat(assemblies.Select(assembly => assembly.GetName().Name)).ToArray();
+			}
+			
 			string preHTML = @"
 using System.Linq;
-using System.Threading.Tasks;
 using MonoGameHtml;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.IO;
-
-/*IMPORTS_DONE*/
 ";
+			foreach (string importName in imports) {
+				preHTML += $"\nusing {importName};";
+			}
+			preHTML += "/*IMPORTS_DONE*/";
+			
+			
 			if (components.Length != 0) {
 				foreach (string component in components) {
 					AddComponentPropNames(component);
@@ -715,28 +719,29 @@ using System.IO;
 
 			intermediateUser?.useCS?.Invoke(code);
 
-			object htmlObj = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports("System", "System.Collections.Generic").AddReferences(
-				typeof(HtmlNode).Assembly
-				), pack);
+			var allAssemblies = new []{typeof(HtmlNode).Assembly}.Concat(assemblies ?? new Assembly[0]).ToArray();
+			
+			object htmlObj = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports("System", "System.Collections.Generic").AddReferences(allAssemblies), pack);
 			
 			HtmlNode returnNode = (HtmlNode) htmlObj;
 			
 			// Caching
 			if (HtmlSettings.generateCache) { // Only caches when node generation is successful
-				string toCache = code.Substring(code.indexOf("/*IMPORTS_DONE*/"));
-				HtmlCache.CacheHtml(inputArr, toCache, pack);
+				HtmlCache.CacheHtml(inputArr, code, pack);
 			}
 			
 			return returnNode;
 		}
 
 		
-		public static async Task<HtmlRunner> GenerateRunner(string code, StatePack pack, Dictionary<string, string> macros = null, string[] components = null) {
+		public static async Task<HtmlRunner> GenerateRunner(string code, StatePack pack = null, Assembly[] assemblies = null, string[] imports = null, Dictionary<string, string> macros = null, string[] components = null) {
 
 			var watch = new System.Diagnostics.Stopwatch();
 			watch.Start();
 			
-			HtmlNode node = await GenHtml(code, pack, macros, components);
+			pack ??= StatePack.Create();
+			
+			HtmlNode node = await GenHtml(code, pack, assemblies, imports, macros, components);
 
 			watch.Stop();
 			Logger.log($"generating HTML took: {watch.Elapsed.TotalSeconds} seconds");

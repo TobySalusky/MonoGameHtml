@@ -131,9 +131,25 @@ namespace MonoGameHtml {
 	            } else if (symbolTable.ContainsKey(key)) { // symbols
 		            insert(shift ? symbolTable[key].Item1 : symbolTable[key].Item2);
 	            } else if (key == Keys.Left) {
-		            typingState.cursorIndex = Math.Max(0, typingState.cursorIndex - 1);
+		            if (control) {
+			            const string deleteUntilRegex = "[\n\\s]\\S";
+			            var matches = Regex.Matches(beforeCursor(), deleteUntilRegex);
+			            int index = matches.Any() ? matches.Max(match => match.Index + 1) : 0;
+			            typingState.cursorIndex = index;
+		            }
+		            else {
+			            typingState.cursorIndex = Math.Max(0, typingState.cursorIndex - 1);
+		            }
 	            } else if (key == Keys.Right) {
-		            typingState.cursorIndex = Math.Min(text.Length, typingState.cursorIndex + 1);
+		            if (control) {
+			            const string deleteUntilRegex = "[\n\\s]\\S";
+			            var matches = Regex.Matches(afterCursor(), deleteUntilRegex);
+			            int index = matches.Any() ? matches.Min(match => match.Index + 1) : 0;
+			            typingState.cursorIndex = index + beforeCursor().Length;
+		            }
+		            else {
+			            typingState.cursorIndex = Math.Min(text.Length, typingState.cursorIndex + 1);
+		            }
 	            } else if (key == Keys.Up) {
 		            setCursorFromPos(
 			            cursorPositionAtIndex(typingState.node, typingState, text, typingState.cursorIndex) 

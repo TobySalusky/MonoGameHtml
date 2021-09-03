@@ -7,33 +7,35 @@ using SpriteFontPlus;
 
 namespace MonoGameHtml {
     internal static class Fonts {
-        public static SpriteFont Arial;
 
         public static Dictionary<string, Dictionary<int, SpriteFont>> fontDict =
             new Dictionary<string, Dictionary<int, SpriteFont>>();
-        
-        public static void loadFonts(ContentManager Content) {
-            Arial = Content.Load<SpriteFont>("Arial");
-        }
 
         public static SpriteFont getFontSafe(string fontName, int size) {
             size = Math.Max(size, 1);
             if (fontDict.ContainsKey(fontName) && fontDict[fontName].ContainsKey(size)) {
                 return fontDict[fontName][size];
             }
-            addFont(fontName, size);
-            
-            return fontDict[fontName][size];
+
+            try {
+                addFont(fontName, size);
+                return fontDict[fontName][size];
+            }
+            catch (Exception e) {
+                Logger.log(e, e.StackTrace, e.Message);
+                Logger.log($"Failed to load font {fontName} size {size}");
+                return getFontSafe("___fallback", size);
+            }
         }
         
-        public static SpriteFont getFontRaw(string fontName, int size) {
-            return fontDict[fontName][size];
-        }
+        // public static SpriteFont getFontRaw(string fontName, int size) {
+        //     return fontDict[fontName][size];
+        // }
 
         public static void addFont(string fontName, int size) {
 
             if (fontDict.ContainsKey(fontName) && fontDict[fontName].ContainsKey(size)) return;
-            string fullPath = $"{HtmlMain.fontPath}{fontName}.ttf";
+            string fullPath = fontName == "___fallback" ? HtmlMain.defaultFontPath : Path.Join(HtmlMain.fontPath, $"{fontName}.ttf");
             var fontBakeResult = TtfFontBaker.Bake(File.ReadAllBytes(fullPath),
                 size,
                 1024,

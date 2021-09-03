@@ -57,7 +57,7 @@ namespace MonoGameHtml {
 
 		
 		// Text
-		public string fontFamily = "JetbrainsMono";
+		public string fontFamily = "___fallback";
 		public int fontSize = 18;
 		public SpriteFont font;
 		public Vector2 textDimens = Vector2.Zero;

@@ -127,7 +127,7 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
 				setPredictions={setPredictions} typingState={typingState}/>
 				
 				<span>
-					<div class="FileOptionButton" onPress={()=>showCode = !showCode}>
+					<div class="FileOptionButton" onPress={()=>setShowCode(!showCode)}>
 						view code
 					</div>
 					<div class="FileOptionButton" onPress={openFileScreen}>

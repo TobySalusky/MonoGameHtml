@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using System.IO;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -9,9 +10,15 @@ namespace MonoGameHtml {
 		internal static Vector2 screenDimen, screenCenter;
 		internal static int screenWidth, screenHeight;
 
-		internal static string fontPath, cachePath;
+		internal static string fontPath, defaultFontPath, cachePath;
 
 		internal static LoggerSettings loggerSettings;
+
+		static HtmlMain() {
+			defaultFontPath = FileUtil.TraceFilePath();
+			defaultFontPath = defaultFontPath.Substring(0, defaultFontPath.indexOf("Source"));
+			defaultFontPath = Path.Join(defaultFontPath, "Assets", "Fonts", "JetBrainsMono.ttf");
+		}
 
 		public static void Initialize(Game game, string fontPath = null, 
 			bool cache = true, string cachePath = null, LoggerSettings loggerSettings = null) {

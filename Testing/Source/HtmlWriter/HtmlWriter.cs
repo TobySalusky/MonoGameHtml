@@ -18,19 +18,20 @@ namespace Testing {
 
             Func<string, Task<List<List<(Color, int)>>>> colorHtml = async (code) => await Parser.ColorSyntaxHighlightedCSharpHtml(code);
             
-            Func<int, string, Task<(HtmlNode, Exception, int)>> updateHtml = async (int updateCount, string text) => {
+            Func<int, string, Task<(HtmlNode, Exception, int)>> updateHtml = async (updateCount, text) => {
 	            HtmlNode node = null;
 	            Exception e = null;
 	            
 	            try {
-		            node = await HtmlProcessor.GenHtml("<App/>", pack, 
+		            node = await HtmlProcessor.GenHtml("<App/>", pack,
 			            macros: Macros.create(
-			            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
-			            "none", "<span/>"),
-			            components: HtmlComponents.Create(text), new HtmlIntermediateUser{
-							useCS = (code) => {
-								pack.UpdateVar("code", code);
-							}
+				            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
+				            "none", "<span/>"),
+			            components: HtmlComponents.Create(text), 
+			            intermediateUser: new HtmlIntermediateUser {
+				            useCS = (code) => {
+					            pack.UpdateVar("code", code);
+				            }
 			            });
 	            } catch (Exception err) {
 		            e = err;
@@ -239,8 +240,10 @@ namespace Testing {
                 "scriptPath", GameMain.scriptPath,
                 "code", ""
             );
-
+            
             gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
+	            assemblies: new []{typeof(HtmlWriter).Assembly},
+	            imports: new []{"System.Threading.Tasks"},
                 components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(GameMain.scriptPath, "HtmlWriter")), 
 	                HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
 

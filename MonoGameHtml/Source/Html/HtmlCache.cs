@@ -1,9 +1,9 @@
 ﻿﻿using System;
  using System.IO;
- using System.Reflection;
+ using System.Linq;
 
  namespace MonoGameHtml {
-	internal static class HtmlCache {
+	internal static class HtmlCache { // TODO: hash input
 
 		public static bool IsCached(string[] input, StatePack pack) { 
 			if (input == null || input.Length == 0) return false;
@@ -48,53 +48,40 @@
 			}
 		}
 
-		public static async void UpdateCache(string[] input, string outputCode) {
-			string path = Path.Join(HtmlMain.cachePath, "MonoGameHtmlCache.cs");
-			const string startComment =  "/*CACHE_START*/", endComment = "/*CACHE_END*/";
+		public static async void UpdateCache(string[] input, string fullCode) {
 			
-			if (!File.Exists(path)) {
+			string imports = fullCode.Substring(0, fullCode.indexOf("/*IMPORTS_DONE*/"));
+			string outputCode = fullCode.Substring(fullCode.indexOf("/*IMPORTS_DONE*/"));
 
-				string initFileText = @$"
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System.IO;
-using MonoGameHtml;
+			string path = Path.Join(HtmlMain.cachePath, "MonoGameHtmlCache.cs");
 
-namespace MonoGameHtmlGeneratedCode {{
-	public class Cache : StatePack {{
-	public Cache(params object[] initialVariableNamesAndObjects) : base(initialVariableNamesAndObjects) {{}}
-	{startComment}
-	{endComment}
-	}}
-}}
-";
-				await File.WriteAllTextAsync(path, initFileText);
-			}
-
-			string text = await File.ReadAllTextAsync(path);
-
+			var allInput = input.Concat(new []{imports}).ToArray();
 			string inputArrString = "";
-			for (int i = 0; i < input.Length; i++) {
+			for (int i = 0; i < allInput.Length; i++) {
 				inputArrString += ((i != 0) ? ", " : "") + $"@\"{input[i]}\"";
 			}
 
 			inputArrString = $"return new string[]{{ {inputArrString} }};";
-			
-			text = text.Substring(0, text.indexOf(startComment) + startComment.Length) + @$"
-protected override string[] cachedInput() {{
-	{inputArrString}
-}}
 
-protected override HtmlNode cachedNode() {{
-	{outputCode}
-}}" + text.Substring(text.indexOf(endComment));
+			string fileText = @$"
+{imports}
+
+namespace MonoGameHtmlGeneratedCode {{
+	public class Cache : StatePack {{
+	public Cache(params object[] initialVariableNamesAndObjects) : base(initialVariableNamesAndObjects) {{}}
+		protected override string[] cachedInput() {{
+			{inputArrString}
+		}}
+
+		protected override HtmlNode cachedNode() {{
+			{outputCode}
+		}}
+	}}
+}}
+";
 
 			try { 
-				await File.WriteAllTextAsync(path, text.Trim());
+				await File.WriteAllTextAsync(path, fileText);
 			} catch (Exception e) {
 				Warnings.log("FAILED TO WRITE CACHE FILE --skipping...");
 				Console.WriteLine(e);
