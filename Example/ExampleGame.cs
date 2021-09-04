@@ -35,9 +35,11 @@ const App = () => {
     return (
         <div backgroundColor='white' @fill>
             <h4 color='blue'>Comprehensive List of Fruit:</h4>
-            {fruitList.map(fruit => 
-                <p>{fruit}</p>
-            )}
+            <div marginLeft={20}>
+                {fruitList.map(fruit => 
+                    <p>{fruit}</p>
+                )}
+            </div>
         </div>
     );
 }

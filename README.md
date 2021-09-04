@@ -1,23 +1,26 @@
-# HTML UI for Monogame Applications
 
-MonoGameHtml is a library that seeks to bring ReactJS-like UI development to C# and the MonoGame environment.
+# MonoGameHtml
 
-Note: Although it may look like it, no Javascript is used. MonoGameHtml is intended for use with the C# language.
+**MonoGameHtml** is a library that brings *React-like* **HTML-based UI** development to the MonoGame environment using C#.
 
-Essentially, this package serves as an extension to the C# language in which Html UI-nodes can be created much like with JSX.
+> **Note:** Although it may look like it, **no Javascript is used**. MonoGameHtml is intended for use with **C#**.
 
-UI-components are defined in a functional manner (borrowing some JS syntax):
+Essentially, this package serves as an extension to the C# language in which Html UI-nodes can be easily created with *embedded C# fragments*.
+
+**UI-components** are defined in a functional manner *(borrowing some JS syntax)*:
 ```cs
 const App = () => {
     
-    var fruitList = new List<string> {'apple', 'banana', 'orange'};
+    var fruitList = new List<string> {'apple', 'orange', 'banana'};
     
     return (
-        <div>
-            <h1 color='#ff0044'>Comprehensive List of Fruit:</h1>
-            {fruitList.map(fruit => 
-                <p>{fruit}</p>
-            )}
+        <div backgroundColor='white' @fill>
+            <h4 color='blue'>Comprehensive List of Fruit:</h4>
+            <div marginLeft={20}>
+                {fruitList.map(fruit => 
+                    <p>{fruit}</p>
+                )}
+            </div>
         </div>
     );
 }
