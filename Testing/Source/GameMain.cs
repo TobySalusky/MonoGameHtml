@@ -163,7 +163,7 @@ const Test = (string str) => {
             
             var list = new List<string> {"Task 1", "Task 2", "Task 3"};
 
-            var pack = StatePack.Create(
+            var statePack = StatePack.Create(
                 "strs", list,
                 "h", 59,
                 "bush", bush,
@@ -172,7 +172,7 @@ const Test = (string str) => {
                 "path", "a"
                 );
             
-            htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
+            htmlInstance = await HtmlProcessor.GenerateRunner(html, statePack, 
                 components: HtmlComponents.Create(
                     components, HtmlComponents.Slider, HtmlComponents.Toggle, 
                     HtmlComponents.FrameCounter, HtmlComponents.AllInput, HtmlComponents.Switch

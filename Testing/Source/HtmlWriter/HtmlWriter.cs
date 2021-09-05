@@ -14,7 +14,7 @@ namespace Testing {
         public static async void Init(GameMain gameMain) {
 
 	        const string html = "<App/>";
-            StatePack pack = null;
+            StatePack statePack = null;
 
             Func<string, Task<List<List<(Color, int)>>>> colorHtml = async (code) => await Parser.ColorSyntaxHighlightedCSharpHtml(code);
             
@@ -23,14 +23,14 @@ namespace Testing {
 	            Exception e = null;
 	            
 	            try {
-		            node = await HtmlProcessor.GenHtml("<App/>", pack,
+		            node = await HtmlProcessor.GenHtml("<App/>", statePack,
 			            macros: Macros.create(
 				            "div(color, size)", "<div backgroundColor='$$color' dimens={$$size}/>",
 				            "none", "<span/>"),
 			            components: HtmlComponents.Create(text), 
 			            intermediateUser: new HtmlIntermediateUser {
 				            useCS = (code) => {
-					            pack.UpdateVar("code", code);
+					            statePack.UpdateVar("code", code);
 				            }
 			            });
 	            } catch (Exception err) {
@@ -226,7 +226,7 @@ namespace Testing {
 	            }
             };
 
-            pack = StatePack.Create(
+            statePack = StatePack.Create(
                 "updateHtml", updateHtml,
                 "loadingText", (Func<float, string>) loadingText,
                 "htmlDiff", htmlDiff,
@@ -241,9 +241,9 @@ namespace Testing {
                 "code", ""
             );
             
-            gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
+            gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, statePack: statePack, 
 	            assemblies: new []{typeof(HtmlWriter).Assembly},
-	            imports: new []{"System.Threading.Tasks"},
+	            imports: new []{"System.Threading.Tasks", "System.IO"},
                 components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(GameMain.scriptPath, "HtmlWriter")), 
 	                HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
 

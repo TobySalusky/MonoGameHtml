@@ -605,7 +605,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			return code;
 		}
 
-		public static async Task<HtmlNode> GenHtml(string code, StatePack pack, Assembly[] assemblies = null, string[] imports = null,
+		public static async Task<HtmlNode> GenHtml(string code, StatePack statePack, Assembly[] assemblies = null, string[] imports = null,
 			Dictionary<string, string> macros = null, string[] components = null, HtmlIntermediateUser intermediateUser = null) {
 			
 			//Parser.CheckCarrotType(code);
@@ -621,9 +621,9 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			// cache ====
 			string[] inputArr = new List<string> {code}.Concat(components).ToArray();
 
-			if (HtmlSettings.useCache && HtmlCache.IsCached(inputArr, pack)) {
+			if (HtmlSettings.useCache && HtmlCache.IsCached(inputArr, statePack)) {
 				Logger.log("Using Cached HTML");
-				return pack.cachedNode();
+				return statePack.cachedNode();
 			}
 
 			// code generation
@@ -646,7 +646,6 @@ using System.Linq;
 using MonoGameHtml;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.IO;
 ";
 			foreach (string importName in imports) {
 				preHTML += $"\nusing {importName};";
@@ -669,8 +668,8 @@ using System.IO;
 			code += "\nreturn node;";
 
 
-			foreach (string key in pack.___vars.Keys) {
-				code = code.Replace($"${key}", $"(({pack.___types[key]})___vars[\"{key}\"])");
+			foreach (string key in statePack.___vars.Keys) {
+				code = code.Replace($"${key}", $"(({statePack.___types[key]})___vars[\"{key}\"])");
 			}
 
 			mapToSelect:
@@ -721,33 +720,33 @@ using System.IO;
 
 			var allAssemblies = new []{typeof(HtmlNode).Assembly}.Concat(assemblies ?? new Assembly[0]).ToArray();
 			
-			object htmlObj = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports("System", "System.Collections.Generic").AddReferences(allAssemblies), pack);
+			object htmlObj = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports("System", "System.Collections.Generic").AddReferences(allAssemblies), statePack);
 			
 			HtmlNode returnNode = (HtmlNode) htmlObj;
 			
 			// Caching
 			if (HtmlSettings.generateCache) { // Only caches when node generation is successful
-				HtmlCache.CacheHtml(inputArr, code, pack);
+				HtmlCache.CacheHtml(inputArr, code, statePack);
 			}
 			
 			return returnNode;
 		}
 
 		
-		public static async Task<HtmlRunner> GenerateRunner(string code, StatePack pack = null, Assembly[] assemblies = null, string[] imports = null, Dictionary<string, string> macros = null, string[] components = null) {
+		public static async Task<HtmlRunner> GenerateRunner(string code, StatePack statePack = null, Assembly[] assemblies = null, string[] imports = null, Dictionary<string, string> macros = null, string[] components = null) {
 
 			var watch = new System.Diagnostics.Stopwatch();
 			watch.Start();
 			
-			pack ??= StatePack.Create();
+			statePack ??= StatePack.Create();
 			
-			HtmlNode node = await GenHtml(code, pack, assemblies, imports, macros, components);
+			HtmlNode node = await GenHtml(code, statePack, assemblies, imports, macros, components);
 
 			watch.Stop();
 			Logger.log($"generating HTML took: {watch.Elapsed.TotalSeconds} seconds");
 
 			
-			return new HtmlRunner { node=node, statePack=pack};
+			return new HtmlRunner { node=node, statePack=statePack};
 		}
 	}
 	

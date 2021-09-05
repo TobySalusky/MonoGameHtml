@@ -14,9 +14,18 @@ namespace MonoGameHtml {
 		internal Vector2 lastMousePos;
 
 		private float delta(GameTime gameTime) {
+			int? a = 4;
 			return (float) gameTime.ElapsedGameTime.TotalSeconds;
 		}
-		
+
+		public T GetVar<T>(string varName) {
+			return (T) statePack.___vars[varName];
+		}
+
+		public void UpdateVar(string varName, object value) {
+			statePack.___vars[varName] = value;
+		}
+
 		public void Update(GameTime gameTime, MouseState mouseState, KeyboardState keyState) { 
 			MouseInfo mouse = new MouseInfo(mouseState, lastMouseState);
 			KeyInfo keys = new KeyInfo(keyState, lastKeyState);

@@ -11,7 +11,7 @@ namespace Testing {
         public static List<(Color, string[])> data = new List<(Color, string[])>();
         public static int update = 0;
 
-        public static StatePack pack;
+        public static StatePack statePack;
         
         public static Func<string, string[], (Color, string[])> func = (str, synonyms) => {
             var arr = new string[4];
@@ -82,12 +82,13 @@ const App = () => {
 </body>
 ";
             
-            pack = StatePack.Create(
+            
+            statePack = StatePack.Create(
                 "list", data,
                 "update", 0
             );
 
-            gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, pack, 
+            gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, statePack, 
                 components: HtmlComponents.Create(components));
             
             Speech.Init();

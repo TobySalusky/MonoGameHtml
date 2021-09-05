@@ -35,7 +35,7 @@ namespace Testing {
 
 				Thesaurus.data.Add(Thesaurus.func(word, Scraper.GetSynonyms(word)));
 				if (Thesaurus.data.Count > 7) Thesaurus.data.RemoveAt(0);
-				Thesaurus.pack.SetVar("update", ++Thesaurus.update);
+				Thesaurus.statePack.SetVar("update", ++Thesaurus.update);
 			}
 		}
 	}

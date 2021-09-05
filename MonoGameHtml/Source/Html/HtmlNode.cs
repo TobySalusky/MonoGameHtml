@@ -418,7 +418,8 @@ namespace MonoGameHtml {
 					marginRight = NodeUtil.widthFromProp(val, parent);
 				}
 				
-				tryWidthProp(ref marginLeft, "marginLeft");
+				tryWidthProp(ref marginLeft, 
+					"marginLeft");
 				tryWidthProp(ref marginRight, "marginRight");
 				tryHeightProp(ref marginTop, "marginTop");
 				tryHeightProp(ref marginBottom, "marginBottom");

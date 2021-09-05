@@ -29,18 +29,16 @@ namespace Example {
             // components can be defined either in strings or .monohtml files
             const string components = @"
 const App = () => {
-    
-    var fruitList = new List<string> {'apple', 'orange', 'banana'};
+    int [childCount, setChildCount] = useState(1);
     
     return (
-        <div backgroundColor='white' @fill>
-            <h4 color='blue'>Comprehensive List of Fruit:</h4>
-            <div marginLeft={20}>
-                {fruitList.map(fruit => 
-                    <p>{fruit}</p>
-                )}
-            </div>
-        </div>
+        <span onPress={()=>{
+            setChildCount(childCount + 1);
+        }}>
+            {nStream(childCount).map(i => 
+                <h4 borderWidth={1} borderColor='black' backgroundColor='lightgray'>{i}</h4>
+            )}
+        </span>
     );
 }
 ";

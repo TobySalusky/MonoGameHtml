@@ -22,7 +22,7 @@ namespace MonoGameHtml {
 
 		public static void Initialize(Game game, string fontPath = null, 
 			bool cache = true, string cachePath = null, LoggerSettings loggerSettings = null) {
-
+			
 			HtmlMain.game = game;
 
 			HtmlMain.loggerSettings = loggerSettings ?? new LoggerSettings();
