@@ -1,0 +1,9 @@
+﻿const App = () => {
+    int count = 99;
+
+    return (
+        <body>
+            <h3 class="Counter" onPress={()=>count++}>{count}</h3>
+        </body>
+    );
+}

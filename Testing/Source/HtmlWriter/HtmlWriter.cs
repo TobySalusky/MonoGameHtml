@@ -240,12 +240,27 @@ namespace Testing {
                 "scriptPath", GameMain.scriptPath,
                 "code", ""
             );
+
+            gameMain.htmlInstance = await HtmlLiveEdit.Create(async () => {
+	            
+	            CSSHandler.SetCSS(Path.Join(GameMain.cssPath, "Styles.css"),
+		            Path.Join(GameMain.cssPath, "IDE.css"));
+
+	            return await HtmlProcessor.GenerateRunner(html,
+		            statePack: statePack,
+		            assemblies: new[] {typeof(HtmlWriter).Assembly},
+		            imports: new[] {"System.Threading.Tasks", "System.IO"},
+		            components: HtmlComponents.Create(
+			            HtmlComponents.ReadFrom(Path.Join(GameMain.scriptPath, "HtmlWriter")),
+			            HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
+            }, GameMain.assetPath);
             
-            gameMain.htmlInstance = await HtmlProcessor.GenerateRunner(html, statePack: statePack, 
-	            assemblies: new []{typeof(HtmlWriter).Assembly},
-	            imports: new []{"System.Threading.Tasks", "System.IO"},
-                components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(GameMain.scriptPath, "HtmlWriter")), 
-	                HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
+            /*await HtmlLiveEdit.Create(async () => await HtmlProcessor.GenerateRunner(html,
+	            statePack: statePack,
+	            assemblies: new[] {typeof(HtmlWriter).Assembly},
+	            imports: new[] {"System.Threading.Tasks", "System.IO"},
+	            components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(GameMain.scriptPath, "HtmlWriter")),
+		            HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow)));*/
 
             HtmlSettings.generateCache = false;
         }

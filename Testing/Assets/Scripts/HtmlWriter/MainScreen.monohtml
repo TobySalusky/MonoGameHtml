@@ -76,9 +76,9 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
 
     return (
         <body flexDirection='row' props={props}>
-        
+        	
         	<FrameCounter/>
-						
+			
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'

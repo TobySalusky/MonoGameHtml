@@ -17,7 +17,7 @@ namespace Testing
 
         public HtmlRunner htmlInstance;
 
-        public static string cssPath, scriptPath;
+        public static string assetPath, cssPath, scriptPath;
         
         // test objects
         public Texture2D bush;
@@ -43,7 +43,7 @@ namespace Testing
             Window.AllowUserResizing = true;
             _graphics.ApplyChanges();
 
-            string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName, "Assets");
+            assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName, "Assets");
             scriptPath = Path.Join(assetPath, "Scripts");
 
             cssPath = Path.Join(assetPath, "CSS");

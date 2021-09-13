@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.IO;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGameHtml;
@@ -42,9 +44,21 @@ const App = () => {
     );
 }
 ";
+            string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName, "Assets");
+            string cssPath = Path.Join(assetPath, "CSS");
+            string scriptPath = Path.Join(assetPath, "Scripts");
+
+            
             // this compiles the components provided and creates a runnable HTML Instance.
-            htmlInstance = await HtmlProcessor.GenerateRunner("<App/>", 
-                components: HtmlComponents.Create(components));
+            htmlInstance = await HtmlLiveEdit.Create(async () => { 
+                
+                CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
+                
+                Console.WriteLine("Compiling...");
+                
+                return await HtmlProcessor.GenerateRunner("<App/>", 
+                    components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(scriptPath))));
+            }, assetPath);
         }
 
         protected override void LoadContent() {

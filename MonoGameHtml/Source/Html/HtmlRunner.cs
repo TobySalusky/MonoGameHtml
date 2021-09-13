@@ -14,7 +14,6 @@ namespace MonoGameHtml {
 		internal Vector2 lastMousePos;
 
 		private float delta(GameTime gameTime) {
-			int? a = 4;
 			return (float) gameTime.ElapsedGameTime.TotalSeconds;
 		}
 
@@ -26,7 +25,7 @@ namespace MonoGameHtml {
 			statePack.___vars[varName] = value;
 		}
 
-		public void Update(GameTime gameTime, MouseState mouseState, KeyboardState keyState) { 
+		public virtual void Update(GameTime gameTime, MouseState mouseState, KeyboardState keyState) {
 			MouseInfo mouse = new MouseInfo(mouseState, lastMouseState);
 			KeyInfo keys = new KeyInfo(keyState, lastKeyState);
 			float deltaTime = delta(gameTime);
@@ -58,7 +57,7 @@ namespace MonoGameHtml {
 			lastMousePos = mouse.pos;
 		}
 
-		public void Render(SpriteBatch spriteBatch) { 
+		public virtual void Render(SpriteBatch spriteBatch) { 
 			
 			spriteBatch.Begin(SpriteSortMode.Deferred,
 				BlendState.NonPremultiplied,

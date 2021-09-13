@@ -1,0 +1,10 @@
+﻿.Counter {
+    background-color: #2c2c32;
+    color: white;
+    padding: 15px;
+    margin: 10px;
+    
+    border-color: white;
+    border-radius: 5px;
+    border-width: 1px;
+}
