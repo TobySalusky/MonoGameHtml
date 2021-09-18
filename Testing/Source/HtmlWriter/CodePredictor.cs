@@ -23,25 +23,26 @@ namespace Testing {
                 
                 var compilationOptions = new CSharpCompilationOptions(
                     OutputKind.DynamicallyLinkedLibrary,
-                    usings: new[] { "System" });
+                    usings: new[] { "System", "MonoGameHtml"});
                    
                 var scriptProjectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(), "Script", "Script", LanguageNames.CSharp, isSubmission: true)
                     .WithMetadataReferences(new[] 
                     { 
-                        MetadataReference.CreateFromFile(typeof(object).Assembly.Location) 
+                        MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                        MetadataReference.CreateFromFile(typeof(HtmlNode).Assembly.Location),
                     })
                     .WithCompilationOptions(compilationOptions);
 
                 scriptProject = workspace.AddProject(scriptProjectInfo);
-
+                
                 var scriptDocumentInfo = DocumentInfo.Create(
                     DocumentId.CreateNewId(scriptProject.Id), "Script",
                     sourceCodeKind: SourceCodeKind.Script,
                     loader: TextLoader.From(TextAndVersion.Create(SourceText.From(code), VersionStamp.Create())));
-                var scriptDocument = workspace.AddDocument(scriptDocumentInfo);
-                
-                var completionService = CompletionService.GetService(scriptDocument);
-                var results = await completionService.GetCompletionsAsync(scriptDocument, index);
+                Document scriptDocument = workspace.AddDocument(scriptDocumentInfo);
+
+                CompletionService completionService = CompletionService.GetService(scriptDocument);
+                CompletionList results = await completionService.GetCompletionsAsync(scriptDocument, index);
 
                 return results.Items.Select(item => item.DisplayText).FilterOrderBy(searchFor);
 
