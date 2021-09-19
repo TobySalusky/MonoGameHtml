@@ -3,7 +3,12 @@
 	<img src="/MonoGameHtml/docs/images/MonoGameHtmlLogo.png" width="50%" height="auto"/>
 </p>
 
+
+<p align="center">
+
 # MonoGameHtml
+
+</p>
 
 **MonoGameHtml** is a library that brings *React-like* **HTML-based UI** development to the MonoGame environment using C#.
 
