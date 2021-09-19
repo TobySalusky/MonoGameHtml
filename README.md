@@ -5,9 +5,7 @@
 
 
 <p align="center">
-
 	<h1>MonoGameHtml</h1>
-
 </p>
 
 **MonoGameHtml** is a library that brings *React-like* **HTML-based UI** development to the MonoGame environment using C#.
