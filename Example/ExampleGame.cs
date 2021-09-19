@@ -23,7 +23,7 @@ namespace Example {
             
             InitializeHtml();
         }
-
+        
         private async void InitializeHtml() {
             // HtmlMain MUST be initialized with the Game instance.
             HtmlMain.Initialize(this);
@@ -44,6 +44,7 @@ const App = () => {
     );
 }
 ";
+            
             string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName, "Assets");
             string cssPath = Path.Join(assetPath, "CSS");
             string scriptPath = Path.Join(assetPath, "Scripts");
@@ -53,7 +54,7 @@ const App = () => {
             htmlInstance = await HtmlLiveEdit.Create(async () => { 
                 
                 CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
-                
+
                 Console.WriteLine("Compiling...");
                 
                 return await HtmlProcessor.GenerateRunner("<App/>", 

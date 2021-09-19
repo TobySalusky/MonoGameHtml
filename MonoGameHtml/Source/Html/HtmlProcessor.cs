@@ -357,8 +357,9 @@ namespace MonoGameHtml {
 			string returnContents = pair.contents(afterReturn).Trim();
 
 			if (returnContents == "") throw new Exception($"{tag}'s main return statement is empty.");
-			
+
 			string stateStr = "";
+			string contextHookDeclarations = "";
 			state: {
 				string stateDefinitions = componentContents[..mainReturnIndex];
 
@@ -375,7 +376,11 @@ namespace MonoGameHtml {
 						string varNameContents = afterType.searchPairs("[", "]", afterType.indexOf("[")).contents(afterType);
 						string[] varNames = varNameContents.Split(",").Select(s => s.Trim()).ToArray();
 						
-						string initValue = DelimPair.searchPairs(line, "(", ")", line.indexOf("(")).contents(line);
+						string initValue = DelimPair.searchPairs(line, "(", ")", line.indexOf("(")).contents(line).Trim();
+
+						if (initValue == "") { // use type's default when no param is passed to useState
+							initValue = "default";
+						}
 
 						// TODO: use comparison in state action to check if there was a change
 						stateStr += $@"
@@ -468,24 +473,6 @@ Action<{type}> {varNames[1]} = (___val) => {{
 								}
 								
 							}
-
-
-
-
-							// multi-inline var declarations
-							// Multiple 'var'-s per line (I have mixed feelings)
-							/*var splitOnCommas = line.SplitUnNestedCommas();
-							
-							if (splitOnCommas.Count > 1) {
-								var declarations = splitOnCommas;
-								line = "";
-								foreach (string declaration in declarations) {
-									string varDeclaration = declaration.Trim();
-									if (!varDeclaration.StartsWith("var ")) varDeclaration = "var " + varDeclaration;
-									if (!varDeclaration.EndsWith(";")) varDeclaration += ";";
-									line += varDeclaration + "\n";
-								}
-							}*/
 						}
 
 						stateStr += $"\n{line}";
@@ -683,30 +670,6 @@ using Microsoft.Xna.Framework.Graphics;
 				}
 			}
 			code = code.Replace("'", "\"");
-
-
-			inlineArray:
-			{
-
-				int minIndex() => code.minValidIndex("arr(", "arr[");
-
-				while (minIndex() != -1) {
-					int index = minIndex();
-
-					string type = "";
-					int bracketIndex = index + 3;
-					if (code.Substring(bracketIndex, 1) == "(") {
-						DelimPair pair = code.searchPairs("(", ")", bracketIndex);
-						bracketIndex = pair.closeIndex + 1;
-						type = pair.contents(code);
-					}
-
-					DelimPair contentPair = code.searchPairs("[", "]", bracketIndex);
-					string arrContents = contentPair.contents(code);
-					code = code.Substring(0, index) + $"(new {type}[]{{{arrContents}}})" +
-					       code.Substring(contentPair.closeIndex + 1);
-				}
-			}
 
 			if (HtmlMain.loggerSettings.colorOutputCS) {
 				Task.Run(() => ConsoleMain.AsyncPrintCS(code)); // (runs in background)
