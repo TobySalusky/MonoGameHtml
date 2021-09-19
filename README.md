@@ -6,7 +6,7 @@
 
 <p align="center">
 
-# MonoGameHtml
+	<h1>MonoGameHtml</h1>
 
 </p>
 
