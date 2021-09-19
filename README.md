@@ -1,5 +1,5 @@
 
-<p margin="center">
+<p margin="center" width="100%">
 	<img src="/MonoGameHtml/docs/images/MonoGameHtmlLogo.png" width="50%"/>
 </p>
 
