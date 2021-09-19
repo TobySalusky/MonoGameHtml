@@ -1,6 +1,6 @@
 
-<p style="display: flex; flex-direction: row; justify-content: center; width: 100%;">
-	<img src="/MonoGameHtml/docs/images/MonoGameHtmlLogo.png" width="50%"/>
+<p align="center">
+	<img src="/MonoGameHtml/docs/images/MonoGameHtmlLogo.png" width="50%" height="auto"/>
 </p>
 
 # MonoGameHtml
