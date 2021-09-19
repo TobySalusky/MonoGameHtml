@@ -20,7 +20,7 @@
 			if (len == text.Length) return colorData;
 			
 			if (len < text.Length) {
-				return colorData.Concat(arr[(Color.White, text.Length - len)]);
+				return colorData.Concat(new []{(Color.White, text.Length - len)});
 			}
 		}*/
 
