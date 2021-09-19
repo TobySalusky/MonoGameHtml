@@ -1,6 +1,6 @@
 
 <p margin="center">
-	<img src="/MonoGameHtml/MonoGameHtml/docs/images/MonoGameHtmlLogo.png"/>
+	<img src="/MonoGameHtml/docs/images/MonoGameHtmlLogo.png"/>
 </p>
 
 # MonoGameHtml
