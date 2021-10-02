@@ -50,13 +50,14 @@ const App = () => {
             string scriptPath = Path.Join(assetPath, "Scripts");
 
             
-            // this compiles the components provided and creates a runnable HTML Instance.
+            // This is an example of how to use the **experimental** Live-Edit feature
             htmlInstance = await HtmlLiveEdit.Create(async () => { 
                 
                 CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
 
                 Console.WriteLine("Compiling...");
                 
+                // this compiles the components provided and creates a runnable HTML Instance.
                 return await HtmlProcessor.GenerateRunner("<App/>", 
                     components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(scriptPath))));
             }, assetPath);
