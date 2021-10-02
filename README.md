@@ -11,7 +11,7 @@
 
 > **Note:** Although it may look like it, **no Javascript is used**. MonoGameHtml is intended for use with **C#**.
 
-Essentially, this package serves as an extension to the C# language in which Html UI-nodes can be easily created with *embedded C# fragments*.
+Essentially, this package serves as an extension to the C# language in which Html UI-nodes can be easily created with *embedded C# fragments* within MonoGame projects.
 
 **UI-components** are defined in a functional manner *(borrowing some JS syntax)*:
 ```cs
@@ -44,6 +44,7 @@ const App = () => {
 * Pre-written set of common components (Text box, Slider, FPS counter, control-flow, etc.)
 * Loading components and CSS from files (.monohtml and .css, respectively)
 * Caching
+* Live-Edit (Experimental)
 ---
 #### Simple Example Program:
 ```cs
