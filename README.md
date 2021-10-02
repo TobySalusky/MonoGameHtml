@@ -74,15 +74,12 @@ namespace Example {
         }
 
         private async void InitializeHtml() {
+                        
+            // HtmlMain MUST be initialized with the Game instance.
+            HtmlMain.Initialize(this);
             
-            // this line gets the absolute path to the asset folder
-            string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName, "Assets");
-            
-            // HtmlMain MUST be initialized with the Game instance, as well as a path to the fonts.
-            HtmlMain.Initialize(this, 
-                fontPath: Path.Join(assetPath, "Fonts"));
-            
-            // this is how you pass in outside variables (without simply using static access)
+            // this is how you pass in outside variables (without using static access)
+	    // note: the name provided must be prefaced by a dollar sign when used in UI-code (ex. $exampleVariable)
             StatePack pack = StatePack.Create(
                 "exampleVariable", 10
             );
@@ -119,7 +116,7 @@ const App = () => {
             
             base.Update(gameTime);
             
-            // updates html
+            // updates html (uses a GameTime, MouseState, and KeyState)
             htmlInstance?.Update(gameTime, Mouse.GetState(), Keyboard.GetState());
         }
 
@@ -128,7 +125,7 @@ const App = () => {
 
             base.Draw(gameTime);
             
-            // renders html
+            // renders html (uses a Spritebatch)
             htmlInstance?.Render(_spriteBatch);
         }
     }
