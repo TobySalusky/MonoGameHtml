@@ -1,8 +1,9 @@
 ﻿﻿﻿using System.Collections.Generic;
   using System.IO;
   using System.Linq;
+  using StbImageSharp;
 
-namespace MonoGameHtml {
+  namespace MonoGameHtml {
 	public static class CSSHandler {
 
 		public static Dictionary<string, CSSDefinition> classes = new Dictionary<string, CSSDefinition>();
@@ -83,6 +84,8 @@ namespace MonoGameHtml {
 	public class CSSDefinition {
 		public Dictionary<string, object> styleProps = new Dictionary<string, object>();
 
+		private CSSDefinition() { }
+
 		public CSSDefinition(string css) {
 			var statements = css.Split(";").Where(str => str.Contains(":"));
 			foreach (string statement in statements) {
@@ -91,6 +94,17 @@ namespace MonoGameHtml {
 				object value = parseValue(statement.Substring(colon + 1).Trim());
 				styleProps[camelID] = value;
 			}
+		}
+
+		protected static (string, CSSDefinition) Combine(params (string, CSSDefinition)[] namedDefinitions) {
+			CSSDefinition newDef = new CSSDefinition();
+			
+			foreach (var (name, def) in namedDefinitions) {
+				foreach (var (key, value) in def.styleProps) {
+					newDef.styleProps[key] = value;
+				}
+			}
+			return (namedDefinitions.Select(namedDef => namedDef.Item1).Aggregate((a, b) => a + "&&" + b), newDef);
 		}
 
 		private string camelCase(string identifier) {

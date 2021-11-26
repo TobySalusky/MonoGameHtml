@@ -21,7 +21,7 @@ namespace MonoGameHtml {
 			"contents", "(childrenFunc != null ? childrenFunc() : children)",
 			"1", "(childrenFunc != null ? childrenFunc() : children) != null ? (childrenFunc != null ? childrenFunc() : children) : (new HtmlNode[]{<p>{textContent}</p>})",
 			"inner", "((childrenFunc != null ? childrenFunc() : children) ?? (new HtmlNode[]{<p>{textContent}</p>}))",
-			
+			"Rerender()", "___node?.stateChangeDown()"
 		};
 		
 		public static Dictionary<string, string> create(params string[] macroList) {

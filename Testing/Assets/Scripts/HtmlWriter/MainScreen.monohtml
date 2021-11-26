@@ -82,6 +82,7 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
         	<div flex={1} backgroundColor='#34353D'>
 				<TextBox 
 				class='HtmlBox'
+				selectionColor={new Color(1F, 1F, 1F, 0.2F)} 
 				-borderWidth={int: 0}
 				multiline={true}
 				useTypingState={@set(TypingState, typingState)}

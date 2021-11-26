@@ -4,6 +4,7 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <PublishReadyToRun>false</PublishReadyToRun>
         <TieredCompilation>false</TieredCompilation>
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
     <PropertyGroup>
         <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -29,5 +30,11 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\MonogameHtml\MonoGameHtml.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Examples\ExamplePicker\Assets\Cache" />
+      <Folder Include="Examples\Inventory\Assets\Cache" />
+      <Folder Include="Examples\LiveEdit\Assets\Cache" />
+      <Folder Include="Examples\TextInput\Assets\Cache" />
     </ItemGroup>
 </Project>

@@ -6,13 +6,15 @@ using Microsoft.Xna.Framework.Input;
 using MonoGameHtml;
 
 namespace Example {
-    public class ExampleGame : Game {
+    public class LiveEditGame : Game {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
         public HtmlRunner htmlInstance;
 
-        public ExampleGame() {
+        private string scriptPath;
+
+        public LiveEditGame() {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
@@ -23,31 +25,29 @@ namespace Example {
             
             InitializeHtml();
         }
-        
-        private async void InitializeHtml() {
-            // HtmlMain MUST be initialized with the Game instance.
-            HtmlMain.Initialize(this);
 
-            // components can be defined either in strings or .monohtml files
-            const string components = @"
-const App = () => {
-    int [childCount, setChildCount] = useState(1);
-    
-    return (
-        <span onPress={()=>{
-            setChildCount(childCount + 1);
-        }}>
-            {nStream(childCount).map(i => 
-                <h4 borderWidth={1} borderColor='black' backgroundColor='lightgray'>{i}</h4>
-            )}
-        </span>
-    );
-}
-";
+        protected override void OnExiting(object sender, EventArgs args) {
+
+            HtmlSettings.generateCache = true;
+            HtmlProcessor.GenerateRunner("<App/>", 
+                components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(scriptPath))));
             
-            string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName, "Assets");
+            base.OnExiting(sender, args);
+        }
+
+        private async void InitializeHtml() {
+
+            string assetPath = Path.Join(Directory.GetParent(Environment.CurrentDirectory).Parent!.Parent!.FullName, "Examples/LiveEdit/Assets");
             string cssPath = Path.Join(assetPath, "CSS");
-            string scriptPath = Path.Join(assetPath, "Scripts");
+            scriptPath = Path.Join(assetPath, "Scripts");
+            string cachePath = Path.Join(assetPath, "Cache");
+            
+            // Initialize HtmlMain
+            HtmlMain.Initialize(this,
+                cachePath: cachePath,
+                cacheIdentifier: "LiveEdit"
+            );
+            HtmlSettings.generateCache = false;
 
             
             // This is an example of how to use the **experimental** Live-Edit feature
@@ -56,7 +56,7 @@ const App = () => {
                 CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
 
                 Console.WriteLine("Compiling...");
-                
+
                 // this compiles the components provided and creates a runnable HTML Instance.
                 return await HtmlProcessor.GenerateRunner("<App/>", 
                     components: HtmlComponents.Create(HtmlComponents.ReadFrom(Path.Join(scriptPath))));
@@ -74,6 +74,8 @@ const App = () => {
             
             base.Update(gameTime);
             
+            Program.GoBackIfPressedCtrlB(Keyboard.GetState());
+
             // updates html
             htmlInstance?.Update(gameTime, Mouse.GetState(), Keyboard.GetState());
         }

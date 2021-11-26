@@ -1,0 +1,16 @@
+﻿* {
+    font-size: 28px;
+    width: 500px;
+}
+
+.StylishTextBox {
+    font-size: 24px;
+    background-color: #FFFFC1;
+    border-radius: 10px;
+    font-family: Corleone;
+    padding: 10px;
+}
+
+body {
+    justify-content: space-around;
+}

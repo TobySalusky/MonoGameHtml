@@ -1,0 +1,79 @@
+﻿const App = () => {
+
+    RerenderDiff(() => $inventory.Open);
+    
+    return (
+        <body>
+            {$inventory.Open ?
+                <div>
+                    <SlotSet slots={$inventory.Slots} />
+                    <KeyHint key="i">to close inventory</KeyHint>
+                </div> :
+                <div class="BottomBar">
+                    <div>
+                        <KeyHint key="i">to open inventory</KeyHint>
+                        <SlotSet slots={new []{$inventory.Slots[0]}} interactive={false} />
+                    </div>
+                </div>
+            }
+
+            {$inventory.Open ? null : <h2>[Insert game here]</h2>}
+        </body>
+    );
+}
+
+const SlotSet = (InventorySlot[][] slots, bool interactive = true) => {
+
+    Vector2 offsetOnClick = Vector2.Zero;
+
+    var handSlot = new InventorySlot(null, 0);
+
+    var clickSlot = (InventorySlot slot, Vector2 slotPos) => {
+        offsetOnClick = @mp - slotPos;
+        handSlot.SwapWith(slot);
+        @Rerender();
+    };
+
+    return (
+        <div props={props}>
+            <div class="Inventory">
+                {slots.map(slotRow =>
+                    <span>
+                        {slotRow.map(slot =>
+                            <Slot slot={slot} clicked={interactive ? clickSlot : null}/>
+                        )}
+                    </span>
+                )}
+            </div>
+            {
+                <Slot slot={handSlot} bg={false} position="fixed"  -pos={Vector2: @mp - offsetOnClick} />
+            }
+        </div>
+    );
+}
+
+const Slot = (InventorySlot slot, Action<InventorySlot,Vector2> clicked = null, bool bg = true) => {
+
+    HtmlNode node = null;
+    node = (
+        <div class={new[] {"Slot", bg ? "SlotBackground" : null}} props={props} onPress={()=>clicked?.Invoke(slot, new Vector2(node.x, node.y))}>
+            { slot.ItemName == null ? null :
+                <div @fill>
+                    <img @fill src={$textures[slot.ItemName]}/>
+                    <h6 class="ItemNum">{(slot.ItemCount != 1) ? slot.ItemCount : ""}</h6>
+                </div>
+            }
+        </div>
+    );
+
+    return (node);
+}
+
+const KeyHint = (string key) => {
+    return (
+        <span alignY="center">
+            <p class="Key" -fontSize={int~: 24 + 3 * sin(@t * 5F)}>{key}</p>
+            <h6 class="KeyMargin">{textContent}</h6>
+        </span>
+    );
+}

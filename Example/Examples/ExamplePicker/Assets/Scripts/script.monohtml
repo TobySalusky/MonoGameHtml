@@ -1,0 +1,52 @@
+﻿const App = () => {
+
+    string[] gameList;
+
+    {
+        Assembly assembly = typeof(Example.Program).Assembly;
+        gameList = assembly.GetTypes().map(type => type.Name).Where(name => name.EndsWith("Game") && name != "ExamplePickerGame")
+            .map(name => name.Substring(0, name.IndexOf("Game")));
+    };
+    
+    return (
+        <body>
+            {gameList.map(name => <Choice name={name} />)}
+        </body>
+    );
+}
+
+const Choice = (string name) => {
+
+    float hoverTime = 0F;
+    const float maxHoverTime = 0.175F;
+
+    var onHover = () => {
+        hoverTime += 2 * @dt;
+    }; 
+
+    var onTick = () => {
+        hoverTime -= @dt;
+        hoverTime = Math.Clamp(hoverTime, 0, maxHoverTime);
+    };
+
+    var onPress = () => {
+        Assembly assembly = typeof(Example.Program).Assembly;
+        Game newGame = (Game) assembly.CreateInstance($"Example.{name}Game");
+
+        if (newGame == null) {
+            Logger.log("No such game exists!");
+            return;
+        }
+
+        Program.ChangeGame(newGame);
+    };
+
+    return (
+        <span onHover={onHover} onTick={onTick} onPress={onPress} class="GameRow">
+            <div -width={int~: sin(hoverTime / maxHoverTime) * 20 + 30} />
+            <h5 class="GameChoice">
+                {name}
+            </h5>
+        </span>
+    );
+}

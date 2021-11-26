@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.Xna.Framework;
+  using FontStashSharp;
+  using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteBatch = Microsoft.Xna.Framework.Graphics.SpriteBatch;
 // ReSharper disable MemberCanBePrivate.Global
@@ -59,7 +60,7 @@ namespace MonoGameHtml {
 		// Text
 		public string fontFamily = "___fallback";
 		public int fontSize = 18;
-		public SpriteFont font;
+		public SpriteFontBase font;
 		public Vector2 textDimens = Vector2.Zero;
 		// TODO: font weight
 
@@ -243,8 +244,8 @@ namespace MonoGameHtml {
 		}
 		
 		public void onFontChange() {
-			font = Fonts.getFontSafe(fontFamily, fontSize);
-			textDimens = font.MeasureString(textContent);
+			font = Fonts.MonoGameHtmlFonts.getFontSafe(fontFamily, fontSize);
+			textDimens = font.MeasureStringCorrectly(textContent);
 			if (DynamicWidth) width = (int) textDimens.X;
 			if (DynamicHeight) height = (int) textDimens.Y;
 
@@ -280,12 +281,12 @@ namespace MonoGameHtml {
 
 			if (children != null && textContent == null) { 
 				if (DynamicWidth) {
-					width = flexDirection == DirectionType.row ? children.Select(child => child.FullWidth).Sum() : 
+					width = flexDirection == DirectionType.row ? children.Where(child => child.contributesParentSize()).Select(child => child.FullWidth).Sum() : 
 						children.Select(child => child.FullWidth).Max();
 					onWidthChange();
 				}
 				if (DynamicHeight) {
-					height = flexDirection == DirectionType.column ? children.Select(child => child.FullHeight).Sum() : 
+					height = flexDirection == DirectionType.column ? children.Where(child => child.contributesParentSize()).Select(child => child.FullHeight).Sum() : 
 						children.Select(child => child.FullHeight).Max();
 					onHeightChange();
 				}
@@ -320,9 +321,24 @@ namespace MonoGameHtml {
 			if (props.ContainsKey("propsUnder")) addPropsUnder(prop<Dictionary<string, object>>("propsUnder"));
 			
 			// Load tag/class CSS (class has precedence over tags)
-			if (props.ContainsKey("class") && CSSHandler.classes.ContainsKey(prop<string>("class"))) { // currently no support for dynamic class // TODO: ADD THIS
-				CSSDefinition classDefinition = CSSHandler.classes[prop<string>("class")];
-				addCSSUnder(classDefinition);
+			if (props.ContainsKey("class")) {
+				// currently no support for dynamic class // TODO: ADD THIS
+				object classObj = props["class"];
+				switch (classObj) {
+					case string className:
+						if (CSSHandler.classes.ContainsKey(className)) {
+							addCSSUnder(CSSHandler.classes[className]);
+						}
+						break;
+					case IEnumerable<string> classNames: { // classes later in list are given higher precedence
+						foreach (var className in classNames.Reverse()) {
+							if (className != null && CSSHandler.classes.ContainsKey(className)) {
+								addCSSUnder(CSSHandler.classes[className]);
+							}
+						}
+						break;
+					}
+				}
 			}
 
 			if (CSSHandler.tags.ContainsKey(tag)) {
@@ -330,6 +346,28 @@ namespace MonoGameHtml {
 				addCSSUnder(tagDefinition);
 			}
 
+			if (CSSHandler.tags.ContainsKey("*")) addCSSUnder(CSSHandler.tags["*"]);
+			
+
+			void BindDiffFunc<T>(Func<T> get, Action<T> set, Func<T> newFunc, Action onDiff) {
+				bindAction(() => {
+					T newVal = newFunc();
+					if (!Equals(get(), newVal)) {
+						set(newVal);
+						onDiff();
+					}
+				});
+			}
+
+			bool TryBindDiffFunc<T>(Func<T> get, Action<T> set, object obj, Action onDiff) {
+				if (obj is Func<T> newFunc) {
+					BindDiffFunc(get, set, newFunc, onDiff);
+					return true;
+				}
+
+				return false;
+			}
+			
 			processProps: {
 				if (textContent == "") textContent = null;
 
@@ -342,7 +380,7 @@ namespace MonoGameHtml {
 					if (textContent == "") textContent = null;
 				}
 				
-				if (textContent != null) font = Fonts.getFontSafe(fontFamily, fontSize); // default
+				if (textContent != null) font = Fonts.MonoGameHtmlFonts.getFontSafe(fontFamily, fontSize); // default
 
 				if (props.Keys.Count == 0) {
 					if (textContent != null) onFontChange();
@@ -353,7 +391,50 @@ namespace MonoGameHtml {
 				if (props.ContainsKey("right")) right = prop<int>("right");
 				if (props.ContainsKey("top")) top = prop<int>("top");
 				if (props.ContainsKey("bottom")) bottom = prop<int>("bottom");
+
+				void DynPosition (string propName, Action<int> set, Func<int?> get) {
+					if (props.ContainsKey(propName)) {
+						object funcProp = props[propName];
+						if (funcProp is Func<int> intFunc) {
+							set(intFunc()); // removes jitter on initialization
+							bindAction(() => {
+								int? init = get();
+								set(intFunc());
+								if (get() != init) layoutDown(); 
+							});
+						}
+					}
+				}
+
+				if (props.ContainsKey("pos")) {
+					var (startLeft, startTop) = prop<Vector2>("pos");
+					left = (int) startLeft;
+					top = (int) startTop;
+				}
+
+				if (props.ContainsKey("-pos")) {
+					object funcProp = props["-pos"];
+					if (funcProp is Func<Vector2> vecFunc) {
+						// removes jitter on initialization
+						var (startLeft, startTop) = vecFunc();
+						left = (int) startLeft;
+						top = (int) startTop;
+						bindAction(() => {
+							var (newLeft, newTop) = vecFunc();
+							if ((int) newLeft != left || (int) newTop != top) {
+								left = (int) newLeft;
+								top = (int) newTop;
+								layoutDown();
+							} 
+						});
+					}
+				}
 				
+				DynPosition("-left", val => left = val, () => left);
+				DynPosition("-right", val => right = val, () => right);
+				DynPosition("-top", val => top = val, () => top);
+				DynPosition("-right", val => right = val, () => right);
+
 				if (props.ContainsKey("x")) x = prop<int>("x");
 				if (props.ContainsKey("y")) y = prop<int>("y");
 
@@ -444,24 +525,10 @@ namespace MonoGameHtml {
 				if (textContent != null) onFontChange();
 
 				if (props.ContainsKey("-fontSize")) {
-					object funcProp = props["-fontSize"];
-					if (funcProp is Func<int> intFunc) { 
-						bindAction(() => {
-							int initFontSize = fontSize;
-							fontSize = intFunc();
-							if (initFontSize != fontSize) onFontChange();
-						});
-					}
+					TryBindDiffFunc(() => fontSize, val => fontSize = val, props["-fontSize"], onFontChange);
 				}
 				if (props.ContainsKey("-fontFamily")) {
-					object funcProp = props["-fontFamily"];
-					if (funcProp is Func<string> strFunc) { 
-						bindAction(() => {
-							string initFontFamily = fontFamily;
-							fontFamily = strFunc();
-							if (initFontFamily != fontFamily) onFontChange();
-						});
-					}
+					TryBindDiffFunc(() => fontFamily, val => fontFamily = val, props["-fontFamily"], onFontChange);
 				}
 
 				if (props.ContainsKey("-dimens")) { 
@@ -491,32 +558,25 @@ namespace MonoGameHtml {
 				}
 
 				if (props.ContainsKey("-flex")) {
-					object flexFuncProp = props["-flex"];
-					if (flexFuncProp is Func<float> floatFunc) { 
-						bindAction(() => {
-							float initFlex = flex;
-							flex = floatFunc();
-							if (initFlex != flex) {
-								if (parent.flexDirection == DirectionType.column) {
-									if (!propHasAny("width") && !propHasAny("dimens")) {
-										width = NodeUtil.widthFromProp("100%", parent);
-									}
-								} else if (parent.flexDirection == DirectionType.row) {
-									if (!propHasAny("height") && !propHasAny("dimens")) {
-										height = NodeUtil.heightFromProp("100%", parent);
-									}
-								}
-								triggerOnResize();
+					TryBindDiffFunc(() => flex, val => flex = val, props["-flex"], () => {
+						if (parent.flexDirection == DirectionType.column) {
+							if (!propHasAny("width") && !propHasAny("dimens")) {
+								width = NodeUtil.widthFromProp("100%", parent);
 							}
-						});
-					}
+						} else if (parent.flexDirection == DirectionType.row) {
+							if (!propHasAny("height") && !propHasAny("dimens")) {
+								height = NodeUtil.heightFromProp("100%", parent);
+							}
+						}
+						triggerOnResize();
+					});
 				}
 
-				
-				
 				// dynamic width/heights
 				if (props.ContainsKey("-width")) {
 					object widthFuncProp = props["-width"];
+					
+
 					if (widthFuncProp is Func<string> strFunc) {
 						bindAction(() => {
 							int initWidth = width;
@@ -535,7 +595,7 @@ namespace MonoGameHtml {
 				
 				if (props.ContainsKey("-height")) {
 					object funcProp = props["-height"];
-					Func<int> func = funcProp switch {
+					var func = funcProp switch {
 						Func<int> intFunc => intFunc,
 						Func<string> strFunc => () => NodeUtil.heightFromProp(strFunc(), parent),
 						Func<object> objFunc => () => NodeUtil.heightFromProp(objFunc(), parent),
@@ -586,6 +646,10 @@ namespace MonoGameHtml {
 				TrySet(nameof(onMouseExit), ref onMouseExit);
 				TrySet(nameof(onHover), ref onHover);
 				TrySet(nameof(onTick), ref onTick);
+				// if (props.ContainsKey("onTick")) {
+				// 	bindActionAsInitial(prop<Action>("onTick"));
+				// }
+
 				TrySet(nameof(onMouseDown), ref onMouseDown);
 				TrySet(nameof(onMouseUp), ref onMouseUp);
 
@@ -715,6 +779,10 @@ namespace MonoGameHtml {
 			}
 		}
 
+		public bool contributesParentSize() {
+			return positionType == PositionType.STATIC || positionType == PositionType.RELATIVE;
+		}
+
 		public void layoutDown() {
 
 			if (positionType != PositionType.STATIC) {
@@ -724,7 +792,7 @@ namespace MonoGameHtml {
 			if (this.children == null) return;
 
 			// TODO: rename variable
-			var children = this.children.Where(node => (node.positionType == PositionType.STATIC || node.positionType == PositionType.RELATIVE)).ToArray();
+			var children = this.children.Where(node => node.contributesParentSize()).ToArray();
 
 			if (children.Length != 0) {
 				int sumWidth = 0, sumHeight = 0;
@@ -960,7 +1028,7 @@ namespace MonoGameHtml {
 			}
 
 			foreach (HtmlNode child in this.children) {
-				child.layoutDown();
+				child?.layoutDown();
 			}
 		}
 
@@ -975,7 +1043,9 @@ namespace MonoGameHtml {
 			} if (left.HasValue) {
 				x = left.Value;
 			} else if (right.HasValue) {
-				// TODO:
+				if (parent != null) { // TODO: FIXME
+					x = (parent.x + parent.FullWidth) - FullWidth - right.Value;
+				}
 			}
 			
 			// y-axis
@@ -984,7 +1054,9 @@ namespace MonoGameHtml {
 			} if (top.HasValue) {
 				y = top.Value;
 			} else if (bottom.HasValue) {
-				// TODO:
+				if (parent != null) { // TODO: FIXME
+					y = (parent.y + parent.FullHeight) - FullHeight - bottom.Value;
+				}
 			}
 
 			if (positionType == PositionType.RELATIVE) {
@@ -1010,6 +1082,12 @@ namespace MonoGameHtml {
 			if (actionList == null) actionList = new List<Action>();
 			
 			actionList.Add(action);
+		}
+		
+		public void bindActionAsInitial(Action action) {
+			if (actionList == null) actionList = new List<Action>();
+			
+			actionList.Insert(0, action);
 		}
 
 		internal void update(float deltaTime, MouseInfo mouse) {

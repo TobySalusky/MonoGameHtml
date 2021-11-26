@@ -1,0 +1,45 @@
+﻿const App = () => {
+
+    HtmlNode basicTextBox = (
+        <TextBox>
+            Some starting text
+        </TextBox>
+    );
+
+    var diff = (string oldText, string newText) : string => {
+        if (newText.Contains(" ")) return oldText;
+        return newText;
+    };
+
+    HtmlNode noSpacesTextBox = (
+        <TextBox diff={diff}>NoSpacesAllowed!</TextBox>
+    );
+
+    string textForSecondBox = "This one is\nmultiline!\n(and it prints to the console)";
+    var callBack = (string text) => {
+        textForSecondBox = text;
+        Console.WriteLine($"The textbox now contains {text.Length} characters!");
+    };
+    HtmlNode mutllineTextBoxWithCallbacks = (
+        <TextBox multiline={true}
+                text={string: textForSecondBox} setText={callBack}
+        />
+    );
+
+    HtmlNode fancyTextBox = (
+        <TextBox class="StylishTextBox" multiline={true} selectionColor={new Color(1F, 0.3F, 0F, 0.3F)}>
+            Fancy...
+        </TextBox>
+    );
+
+
+    return (
+        <body>
+            <html/>
+            {basicTextBox}
+            {noSpacesTextBox}
+            {mutllineTextBoxWithCallbacks}
+            {fancyTextBox}
+        </body>
+    );
+}

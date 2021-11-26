@@ -21,16 +21,17 @@ namespace MonoGameHtml {
 		}
 
 		private static string EditJsx(string jsx) {
-			const string funcTypeRegex = @"^[a-zA-Z0-9\[\]<>()\.@_]+~?:";
 			string withoutSpaces = Util.noSpaces(jsx);
 							
-			if (Regex.IsMatch(withoutSpaces, funcTypeRegex)) { // dynamic value (auto generate Func)
+			if (new Regex(@"^[a-zA-Z0-9\[\]<>()\.@_]+~?:").IsMatch(withoutSpaces)) { // dynamic value (auto generate Func)
 				int sep = jsx.indexOf(":");
 				bool typeless = false;
 				if (sep != -1) {
 					string returnType = jsx.Substring(0, sep).Trim();
 
-					if (new Regex("^[a-zA-z<>~]+$").IsMatch(returnType)) { 
+					Logger.logColor(ConsoleColor.Red, returnType);
+					
+					if (new Regex(@"^[@_a-zA-z][\sa-zA-Z0-9\[\]<>()\.@_]*~?$").IsMatch(returnType)) { 
 						jsx = jsx.Substring(sep + 1).Trim();
 						if (returnType.EndsWith("~")) {
 							returnType = returnType.Substring(0, returnType.Length - 1);
@@ -515,12 +516,39 @@ Action<{type}> {varNames[1]} = (___val) => {{
 				}
 			}
 
+			bool rerenderDiffPossible = code.Contains("RerenderDiff(");
+
+			const string rerenderDiffInit = @"
+var ___rerenderDiffs = new List<Action>();
+void RerenderDiff<T>(Func<T> func) {{
+	T init = func();
+	___rerenderDiffs.Add(() => {{
+		T newVal = func();
+		if (!Equals(newVal, init)) {{
+			init = newVal;
+			___node.stateChangeDown();
+		}}
+	}});
+}};
+";
+			const string rerenderDiffEnd = @"
+if (___node != null) {
+	foreach (Action ___rerenderDiff in ___rerenderDiffs) {
+		___node.bindAction(___rerenderDiff);
+	}
+}
+";
+
+			
 			string output = @$"
 HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null{extraPropsString}) {{
 	{innerPropDefaults}
 	HtmlNode ___node = null;
+	{(rerenderDiffPossible ? rerenderDiffInit : "")}	
+
 	{stateStr}
 	___node = {returnContents};
+	{(rerenderDiffPossible ? rerenderDiffEnd : "")}
 	return ___node;
 }}
 ";
@@ -629,6 +657,8 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			}
 			
 			string preHTML = @"
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using MonoGameHtml;
 using Microsoft.Xna.Framework;

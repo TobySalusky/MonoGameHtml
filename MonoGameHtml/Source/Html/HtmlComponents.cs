@@ -117,7 +117,7 @@ const TextInput = (
 			TextBox = @"
 const TextBox = (
 	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false, bool cursorVisible = true,
-	Action<TypingState> useTypingState, Action onEnter, string label
+	Action<TypingState> useTypingState, Action onEnter, string label, bool scrollable = false, Color selectionColor: new Color(0F, 0F, 1F, 0.3F)
 ) => {
 
 	if (text == null && setText == null) {
@@ -144,13 +144,15 @@ const TextBox = (
 			onMouseDown={()=>active=node.clicked}
 			-borderWidth={int: (active) ? 1 : 0} -textContent={string: ((label != null && text().Length == 0) ? label : text()).Replace('\t', TextInputUtil.spacesPerTab)}
 			renderAdd={(SpriteBatch spriteBatch)=>{
+				if (typingState.HasRealSelection()) TextInputUtil.drawSelection(spriteBatch, node, typingState, text(), selectionColor);
 				if (!cursorVisible || !active || ((@t - typingState.lastEditOrMove > 1) && ((@t % 1F) < 0.5F))) return;
 				TextInputUtil.drawCursor(spriteBatch, node, typingState, text());
 			}}
 			onPress={()=>{
-				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
+				TextInputUtil.Click(@mp, node, typingState, text());
 			}}
 			onMouseDrag={()=>{
+				if (!active) return;
 				TextInputUtil.setCursorFromPos(@mp, node, typingState, text());
 			}}
 		>
@@ -159,7 +161,6 @@ const TextBox = (
 					typingState = state;
 					useTypingState?.Invoke(typingState);
 				}}
-				
 			/>
 		</div>
 	);

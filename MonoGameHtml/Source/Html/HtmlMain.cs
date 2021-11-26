@@ -10,6 +10,7 @@ namespace MonoGameHtml {
 		internal static Vector2 screenDimen, screenCenter;
 		internal static int screenWidth, screenHeight;
 
+		internal static string cacheIdentifier;
 		internal static string fontPath, defaultFontPath, cachePath;
 
 		internal static LoggerSettings loggerSettings;
@@ -21,19 +22,21 @@ namespace MonoGameHtml {
 		}
 
 		public static void Initialize(Game game, string fontPath = null, 
-			bool cache = true, string cachePath = null, LoggerSettings loggerSettings = null) {
+			bool cache = true, string cachePath = null, string cacheIdentifier = null, LoggerSettings loggerSettings = null) {
 			
 			HtmlMain.game = game;
 
 			HtmlMain.loggerSettings = loggerSettings ?? new LoggerSettings();
 			graphicsDevice = game.GraphicsDevice;
-
+			//graphicsDevice.RasterizerState = new RasterizerState {ScissorTestEnable = true};
+			//graphicsDevice.ScissorRectangle = new Rectangle(10, 10, 500, 500);
 			HtmlMain.fontPath = FileUtil.correctDirPath(fontPath);
 			HtmlMain.cachePath = FileUtil.correctDirPath(cachePath);
+			HtmlMain.cacheIdentifier = cacheIdentifier;
 
 			if (cachePath == null) cache = false;
-			HtmlSettings.generateCache = false;
-			HtmlSettings.useCache = false;
+			HtmlSettings.generateCache = cache;
+			HtmlSettings.useCache = cache;
 
 			// TODO: handle fullscreen
 			screenDimen = new Vector2(game.GraphicsDevice.PresentationParameters.Bounds.Width, game.GraphicsDevice.PresentationParameters.Bounds.Height);

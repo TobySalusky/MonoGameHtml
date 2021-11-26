@@ -48,16 +48,27 @@
 			}
 		}
 
+		internal static string CacheNamespace() {
+			return
+				$"MonoGameHtmlGeneratedCode{(HtmlMain.cacheIdentifier != null ? $".{HtmlMain.cacheIdentifier}" : "")}";
+		}
+		
+		internal static string CacheClassName() {
+			return
+				$"Cache{(HtmlMain.cacheIdentifier != null ? $"_{HtmlMain.cacheIdentifier}" : "")}";
+		}
+
 		public static async void UpdateCache(string[] input, string fullCode) {
 			
 			string imports = fullCode.Substring(0, fullCode.indexOf("/*IMPORTS_DONE*/"));
 			string outputCode = fullCode.Substring(fullCode.indexOf("/*IMPORTS_DONE*/"));
 
-			string path = Path.Join(HtmlMain.cachePath, "MonoGameHtmlCache.cs");
+			string path = Path.Join(HtmlMain.cachePath, $"MonoGame{CacheClassName()}.cs");
 
-			var allInput = input.Concat(new []{imports}).ToArray();
+			// var allInput = input.Concat(new []{imports}).ToArray(); TODO: CACHE IMPORTS
+
 			string inputArrString = "";
-			for (int i = 0; i < allInput.Length; i++) {
+			for (int i = 0; i < input.Length; i++) {
 				inputArrString += ((i != 0) ? ", " : "") + $"@\"{input[i]}\"";
 			}
 
@@ -66,9 +77,9 @@
 			string fileText = @$"
 {imports}
 
-namespace MonoGameHtmlGeneratedCode {{
-	public class Cache : StatePack {{
-	public Cache(params object[] initialVariableNamesAndObjects) : base(initialVariableNamesAndObjects) {{}}
+namespace {CacheNamespace()} {{
+	public class {CacheClassName()} : StatePack {{
+	public {CacheClassName()}(params object[] initialVariableNamesAndObjects) : base(initialVariableNamesAndObjects) {{}}
 		protected override string[] cachedInput() {{
 			{inputArrString}
 		}}

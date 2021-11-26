@@ -1,0 +1,54 @@
+﻿body {
+    align: center;
+}
+
+.BottomBar {
+    width: 100%;
+    position: fixed;
+    bottom: 10px;
+    align: center;
+}
+
+.SlotBackground {
+    background-color: #977962;
+    border-color: #4A322C;
+    border-width: 1px;
+    border-radius: 3px;
+}
+
+.Slot {
+    padding: 3px;
+    margin: 3px;
+    dimens: 64px;
+}
+
+.Inventory {
+    background-color: #E4AA7D;
+    padding: 3px;
+    border-color: #4A322C;
+    border-width: 2px;
+    border-radius: 5px;
+}
+
+.Key {
+    background-color: #2c2c32;
+    border-width: 1px;
+    border-color: white;
+    color: white;
+    padding-inline: 5px;
+    border-radius: 5px;
+}
+
+.KeyMargin {
+    margin-block: 6px;
+}
+
+img {
+    object-fit: fill;
+}
+
+.ItemNum {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}

@@ -4,10 +4,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
+using MonoGameHtml.MainMethod;
 
 namespace MonoGameHtml {
 	public class StatePack {
-
+		
 		public Dictionary<string, object> ___vars;
 		public Dictionary<string, string> ___types; // types aren't really necessary after compilation TODO: do something about this?
 
@@ -25,7 +26,7 @@ namespace MonoGameHtml {
 		public static int ScreenHeight => HtmlMain.screenHeight;
 
 		public static Game game => HtmlMain.game;
-		
+
 		// ReSharper disable once UnusedMember.Global
 		public static float random(float max = 1F) {
 			return Util.random(max);
@@ -39,7 +40,7 @@ namespace MonoGameHtml {
 		/* Basically an override for the constructor that makes use of the cache */
 		public static StatePack Create(params object[] initialVariableNamesAndObjects) {
 			// uses cached StatePack-type if it exists
-			Type type = Assembly.GetEntryAssembly()!.GetType("MonoGameHtmlGeneratedCode.Cache");
+			Type type = Assembly.GetEntryAssembly()!.GetType($"{HtmlCache.CacheNamespace()}.{HtmlCache.CacheClassName()}");
 			if (type == null) type = typeof(StatePack);
 
 			return (StatePack) Activator.CreateInstance(type, initialVariableNamesAndObjects);

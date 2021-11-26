@@ -1,0 +1,12 @@
+﻿.GameChoice {
+    background-color: #454752;
+    border-color: white;
+    border-width: 1px;
+    color: white;
+    padding: 20px;
+}
+
+.GameRow {
+    width: 100%;
+    margin-top: 10px;
+}

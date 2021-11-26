@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
+   using FontStashSharp;
+   using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace MonoGameHtml {
@@ -11,8 +12,13 @@ namespace MonoGameHtml {
 
         private static readonly Random rand = new Random();
 
-        public static float FindHeight(this SpriteFont font) {
-            return font.MeasureString("TEST").Y;
+        public static IEnumerable<(T value, int index)> Enumerate<T>(this IEnumerable<T> coll)
+            => coll.Select((val, i) => (val, i));
+
+        public static Vector2 MeasureStringCorrectly(this SpriteFontBase font, string text) {
+            Vector2 dimens = font.MeasureString(text);
+            dimens.Y = Math.Max(dimens.Y, (text.CountOf("\n") + 1) * font.LineHeight);
+            return dimens;
         }
 
         public static int minValidIndex(this string str, string a, string b) {

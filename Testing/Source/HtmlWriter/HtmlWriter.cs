@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoGameHtml;
 
 namespace Testing {
@@ -54,8 +55,62 @@ namespace Testing {
             Func<string, string, TypingState, List<string>, string> htmlDiff = (oldStr, newStr, typingState, predictions) => {
 	            string str = newStr;
 
+	            if (oldStr == newStr) return newStr;
+
 	            static bool valid(char c) {
 		            return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+	            }
+
+	            if (!typingState.HadRealPrevSelection() && typingState.latestKeyInfo.down(Keys.Tab) && typingState.latestKeyInfo.shift && typingState.cursorIndex > 0) {
+		            int lineIndex = TextInputUtil.IndexToLineIndex(oldStr, typingState.cursorIndex - 1);
+		            string line = oldStr.SplitLines()[lineIndex];
+		            if (line.StartsWith("\t")) {
+			            typingState.cursorIndex = Math.Max(typingState.cursorIndex - 2, 0);
+			            return string.Join("\n", oldStr.SplitLines().Select((line, i) => (i == lineIndex) ? line[1..] : line));
+		            }
+		            else {
+			            typingState.cursorIndex -= 1;
+			            return oldStr;
+		            }
+	            }
+
+	            if (typingState.HadRealPrevSelection() && typingState.latestKeyInfo.down(Keys.Tab)) {
+		            int minLine = TextInputUtil.IndexToLineIndex(oldStr, Math.Min(typingState.prevSelection.start, typingState.prevSelection.end));
+		            int maxLine = TextInputUtil.IndexToLineIndex(oldStr, Math.Max(typingState.prevSelection.start, typingState.prevSelection.end));
+		            
+		            if (typingState.latestKeyInfo.shift) {
+			            int subInit = 0;
+			            int totalTabsRemoved = 0;
+			            string TryRemoveTab(string line, int lineIndex) {
+				            if (line.StartsWith("\t")) {
+					            if (lineIndex == minLine) subInit++;
+					            totalTabsRemoved++;
+					            return line[1..];
+				            }
+				            return line;
+			            }
+			            
+			            
+			            str = string.Join("\n", oldStr.SplitLines().Select((line, i) => (i >= minLine && i <= maxLine) ? TryRemoveTab(line, i) : line));
+			            
+			            typingState.hasSelection = true;
+			            typingState.selectStartIndex = Math.Min(typingState.prevSelection.start, typingState.prevSelection.end) - subInit;
+			            typingState.cursorIndex = Math.Max(typingState.prevSelection.start, typingState.prevSelection.end) - totalTabsRemoved;
+			            if (typingState.prevSelection.start > typingState.prevSelection.end) {
+				            (typingState.selectStartIndex, typingState.cursorIndex) = (typingState.cursorIndex, typingState.selectStartIndex);
+			            }
+			            
+			            return str;
+		            }
+
+		            typingState.hasSelection = true;
+		            typingState.selectStartIndex = Math.Min(typingState.prevSelection.start, typingState.prevSelection.end) + 1;
+		            typingState.cursorIndex = Math.Max(typingState.prevSelection.start, typingState.prevSelection.end) + 1 + (maxLine - minLine);
+		            if (typingState.prevSelection.start > typingState.prevSelection.end) {
+			            (typingState.selectStartIndex, typingState.cursorIndex) = (typingState.cursorIndex, typingState.selectStartIndex);
+		            }
+
+		            return string.Join("\n", oldStr.SplitLines().Select((line, i) => (i >= minLine && i <= maxLine) ? $"\t{line}" : line));
 	            }
 
 	            if (newStr.Length == oldStr.Length + 1) {
@@ -63,7 +118,7 @@ namespace Testing {
 		            char? onChar = null;
 		            if (typingState.cursorIndex < newStr.Length) onChar = newStr[typingState.cursorIndex - 1];
 
-		            var closeInto = new[] { ')','}','\''};
+		            var closeInto = new[] { ')','}','\'', '"'};
 		            if (typingState.cursorIndex > 0 && typingState.cursorIndex < newStr.Length && onChar.HasValue && closeInto.Contains(onChar.Value) && newStr[typingState.cursorIndex] == onChar.Value) {
 			            str = str[..(typingState.cursorIndex-1)] + str[typingState.cursorIndex..];
 		            } else if (typingState.cursorIndex > 0 && newStr[typingState.cursorIndex - 1] == '{') {
@@ -72,6 +127,8 @@ namespace Testing {
 			            str = str[..typingState.cursorIndex] + ')' + str[typingState.cursorIndex..];
 		            } else if (typingState.cursorIndex > 0 && newStr[typingState.cursorIndex - 1] == '\'') {
 			            str = str[..typingState.cursorIndex] + '\'' + str[typingState.cursorIndex..];
+		            } else if (typingState.cursorIndex > 0 && newStr[typingState.cursorIndex - 1] == '"') {
+			            str = str[..typingState.cursorIndex] + '"' + str[typingState.cursorIndex..];
 		            } else if ((predictions != null && predictions.Any()) && ((newStr.CountOf("\t") > oldStr.CountOf("\t")) || (newStr.CountOf("\n") > oldStr.CountOf("\n")))) {
 			            // use completion
 			            string prediction = predictions[0];
@@ -173,7 +230,7 @@ namespace Testing {
             };
 
             Action<SpriteBatch, string, TypingState> renderTabs = (spriteBatch, text, typingState) => {
-	            float height = typingState.node.font.FindHeight();
+	            float height = typingState.node.font.LineHeight;
 	            bool render = true;
 	            for (int i = 0; i < text.Length; i++) {
 		            if (text[i] == '\n') {
@@ -209,7 +266,7 @@ namespace Testing {
 
             Func<TypingState, string, (int, int)> cursorPos = (typingState, realText) => {
 	            Vector2 pos = TextInputUtil.cursorPositionAtIndex(typingState.node, typingState, realText, typingState.cursorIndex);
-	            pos.Y += typingState.node.font.FindHeight();
+	            pos.Y += typingState.node.font.LineHeight;
 	            return ((int)pos.X, (int)pos.Y);
             };
 
