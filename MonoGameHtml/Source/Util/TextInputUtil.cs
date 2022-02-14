@@ -7,6 +7,7 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using TextCopy;
 
 namespace MonoGameHtml {
 	public static class TextInputUtil {
@@ -113,14 +114,29 @@ namespace MonoGameHtml {
 	            }
 
 	            if (single) { // capital/lowercase alphabet
-		            if (control && key == Keys.Z) {
-			            if (typingState.undos.Count > 0) {
-				            var typingUndo = typingState.undos.Pop();
-				            text = typingUndo.text;
-				            typingState.cursorIndex = typingUndo.cursorIndex;
-				            undo = true;
+		            if (control) { // SPECIAL KEYS ======
+			            if (key == Keys.Z) {
+				            if (typingState.undos.Count > 0) {
+					            var typingUndo = typingState.undos.Pop();
+					            text = typingUndo.text;
+					            typingState.cursorIndex = typingUndo.cursorIndex;
+					            undo = true;
+				            }
+				            break;
 			            }
-			            break;
+			            if (key == Keys.C) {
+				            // TODO:
+				            if (typingState.HasRealSelection()) {
+					            int minIndex = Math.Min(typingState.cursorIndex, typingState.selectStartIndex);
+					            int maxIndex = Math.Max(typingState.cursorIndex, typingState.selectStartIndex);
+					            ClipboardService.SetText(text[minIndex..maxIndex]);
+				            }
+				            break;
+			            }
+			            if (key == Keys.V) {
+				            insert(ClipboardService.GetText());
+				            break;
+			            }
 		            }
 		            
 		            if (shift || capsLock) insertChar(c);
