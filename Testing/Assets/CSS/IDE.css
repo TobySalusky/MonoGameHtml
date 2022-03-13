@@ -1,7 +1,7 @@
 .HtmlBox {
     padding: 10px;
-    width: 800px;
-    height: 90%;
+    flex: 1;
+    width: 100%;
     color: white;
     background-color: #454752;
     border-color: #FFFFC1;

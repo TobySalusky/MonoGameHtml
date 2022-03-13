@@ -51,6 +51,28 @@ namespace MonoGameHtml {
 			if (mouse.leftPressed) node.recurse(htmlNode => { htmlNode.onMouseDown?.Invoke(); });
 			if (mouse.leftUnpressed) node.recurse(htmlNode => { htmlNode.onMouseUp?.Invoke(); });
 
+			if (HtmlMain.ScreenDimensChanged()) {
+				bool resizeFlag = false;
+					
+				if (node.props.ContainsKey("dimens") && node.props["dimens"] is string percentDimensStr) {
+					node.width = NodeUtil.widthFromProp(percentDimensStr, null);
+					node.height = NodeUtil.heightFromProp(percentDimensStr, null);
+					resizeFlag = true;
+				}
+					
+				if (node.props.ContainsKey("width") && node.props["width"] is string percentWidthStr) {
+					node.width = NodeUtil.widthFromProp(percentWidthStr, null);
+					resizeFlag = true;
+				}
+				
+				if (node.props.ContainsKey("height") && node.props["height"] is string percentHeightStr) {
+					node.height = NodeUtil.heightFromProp(percentHeightStr, null);
+					resizeFlag = true;
+				}
+				
+				if (resizeFlag) node.triggerOnResize();
+
+			}
 
 			lastKeyState = keyState;
 			lastMouseState = mouseState;

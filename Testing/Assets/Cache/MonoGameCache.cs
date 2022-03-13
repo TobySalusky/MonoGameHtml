@@ -60,6 +60,25 @@ const FileScreen = (Action<string> useFileAtPath) => {
 		</body>
 	);
 }", @"
+const RightPanel = (Func<string> getCode, Func<bool> getShowCode, Func<Exception> getException, Func<HtmlNode> getNode, Func<bool> hasText) => {
+	RerenderDiff(() => hasText());
+	RerenderDiff(() => getShowCode());
+	RerenderDiff(() => getNode());
+	
+	return (
+		<Panel initFlex={1F} backgroundColor='white'>
+			{getShowCode() ? <p>{getCode()}</p> : (getNode() ??
+					(
+						(!hasText()) ?
+							<p>Nothing to display...</p> :
+							<p color='red'>{getException() == null ? $'NULL?' : (getException().GetType().Name + '\n' + getException().Message)}</p>
+					)
+				)
+			}
+		</Panel>
+	);
+}", @"
+
 const SaveBox = (Func<bool> open, Action<string,string> save, Func<string> contents, Func<string> activePath, Action close) => {
 
 	bool [saveBoxOpen, setSaveBoxOpen] = useState(false);
@@ -106,13 +125,13 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
 		}
 	};
 	
-	bool [showCode, setShowCode] = useState(false);
+	bool showCode = false;
 	string [code, setCode] = useState('');
 	
 	List<string> predictions = null;
 	var setPredictions = (List<string> list) => predictions = list;
 
-	HtmlNode [node, setNode] = useState(null);
+	HtmlNode node = null;
 	bool saveBoxOpen = false;
 
 	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
@@ -128,7 +147,7 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
 	Action<string> setText = (string str) => text=str;
 	int updateCount = 1, currUpdateCount = 0;
 	bool updating = false;
-	Exception [exception, setException] = useState(null);
+	Exception exception = null;
 	
 	TypingState typingState = null;
 	
@@ -172,8 +191,8 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
 											updating = false;
 											currUpdateCount = thisUpdateCount;
 											
-											setException(task.Result.Item2);
-											setNode(task.Result.Item1);
+											exception = task.Result.Item2;
+											node = task.Result.Item1;
 										}
 									});
 									} catch (Exception e) {Logger.log('????', e.StackTrace);}
@@ -182,53 +201,51 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
 							}
 						}}
 						></TextBox>
-						<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(timePassed) : ''}</h6>
-						<pseudo class='ReplaceText' 
-						renderAdd={(SpriteBatch spriteBatch)=>{ 
-							$renderTabs(spriteBatch, text, typingState);
-						}}
-						></pseudo>
-						<TextRender textFunc={string: correctText()}></TextRender>
-						<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
-						setPredictions={setPredictions} typingState={typingState} ></Predictor>
-						
-						<span>
-							<div class='FileOptionButton' onPress={()=>setShowCode(!showCode)}>
-								view code
-							</div>
-							<div class='FileOptionButton' onPress={openFileScreen}>
-								files...
-							</div>
-							<div class='FileOptionButton' onPress={()=>{
-									if (activeFilePath != null) {
-										trySaveFile(activeFilePath, text);
-									} else {
-										saveBoxOpen = true;
-									}
-								}}>
-								save...
-							</div>
-							<div class='FileOptionButton' onPress={()=>saveBoxOpen = true}>
-								save as...
-							</div>
-						</span>
+						<div>
+							<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(timePassed) : ''}</h6>
+							<pseudo class='ReplaceText' 
+								renderAdd={(SpriteBatch spriteBatch)=>{ 
+									$renderTabs(spriteBatch, text, typingState);
+								}}
+							></pseudo>
+							<TextRender textFunc={string: correctText()}></TextRender>
+							<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
+								setPredictions={setPredictions} typingState={typingState} 
+							></Predictor>
+							
+							<span>
+								<div class='FileOptionButton' onPress={()=>showCode=!showCode}>
+									view code
+								</div>
+								<div class='FileOptionButton' onPress={openFileScreen}>
+									files...
+								</div>
+								<div class='FileOptionButton' onPress={()=>{
+										if (activeFilePath != null) {
+											trySaveFile(activeFilePath, text);
+										} else {
+											saveBoxOpen = true;
+										}
+									}}>
+									save...
+								</div>
+								<div class='FileOptionButton' onPress={()=>saveBoxOpen = true}>
+									save as...
+								</div>
+							</span>
+						</div>
 					</div>
 				</Panel>
 				
 				<Splitter></Splitter>
-	
-				<Panel initFlex={1F} backgroundColor='white'>
-					{<div dimens='100%'>
-						<html></html>
-						{showCode ? <p>{code}</p> : (node ??  
-							(
-								(text == '') ? 
-									<p>Nothing to display...</p> : 
-									<p color='red'>{exception == null ? $'NULL? {node == null}' : (exception.GetType().Name + '\n' + exception.Message)}</p>
-							)
-						)}
-					</div>}
-				</Panel>
+
+				<RightPanel
+					getException={Exception: exception}
+					getShowCode={bool: showCode}
+					getCode={string: code}
+					getNode={HtmlNode: node}
+					hasText={bool: text != ''}
+				></RightPanel>
 			</PanelView>
 			
 			<SaveBox open={bool: saveBoxOpen} close={()=>saveBoxOpen=false} save={trySaveFile} contents={string: text} activePath={string: activeFilePath}></SaveBox>
@@ -853,6 +870,46 @@ string[] paths = ((System.Func<System.String[]>)___vars["getMonoHtmlFilePaths"])
 	return ___node;
 }
 
+HtmlNode CreateRightPanel(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Func<string>? getCode = null, Func<bool>? getShowCode = null, Func<Exception>? getException = null, Func<HtmlNode>? getNode = null, Func<bool>? hasText = null) {
+	
+	HtmlNode ___node = null;
+	
+var ___rerenderDiffs = new List<Action>();
+void RerenderDiff<T>(Func<T> func) {{
+	T init = func();
+	___rerenderDiffs.Add(() => {{
+		T newVal = func();
+		if (!Equals(newVal, init)) {{
+			init = newVal;
+			___node.stateChangeDown();
+		}}
+	}});
+}};
+	
+
+	
+RerenderDiff(() => hasText());
+RerenderDiff(() => getShowCode());
+RerenderDiff(() => getNode());
+;
+	___node = CreatePanel("Panel", props: new Dictionary<string, object> {["initFlex"]=1F, ["backgroundColor"]="white"}, children: null, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((getShowCode() ? newNode("p", props: new Dictionary<string, object> {}, textContent: (Func<string>)(()=> ""+(getCode())+"")) : (getNode() ??
+					(
+						(!hasText()) ?
+							newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing to display...") :
+							newNode("p", props: new Dictionary<string, object> {["color"]="red"}, textContent: (Func<string>)(()=> ""+(getException() == null ? $"NULL?" : (getException().GetType().Name + "\n" + getException().Message))+""))
+					)
+				)
+			))), textContent: null, initFlex: 1F);
+	
+if (___node != null) {
+	foreach (Action ___rerenderDiff in ___rerenderDiffs) {
+		___node.bindAction(___rerenderDiff);
+	}
+}
+
+	return ___node;
+}
+
 HtmlNode CreateSaveBox(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, Func<bool>? open = null, Action<string,string>? save = null, Func<string>? contents = null, Func<string>? activePath = null, Action? close = null) {
 	
 	HtmlNode ___node = null;
@@ -904,11 +961,6 @@ var trySaveFile = (Action<string, string>)((path, contents)=>{
 		}
 	});
 bool showCode = false;
-Action<bool> setShowCode = (___val) => {
-	showCode = ___val;
-	___node?.stateChangeDown();
-};
-
 string code = "";
 Action<string> setCode = (___val) => {
 	code = ___val;
@@ -918,11 +970,6 @@ Action<string> setCode = (___val) => {
 List<string> predictions = null;
 var setPredictions = (Action<List<string>>)((list)=>predictions = list);
 HtmlNode node = null;
-Action<HtmlNode> setNode = (___val) => {
-	node = ___val;
-	___node?.stateChangeDown();
-};
-
 bool saveBoxOpen = false;
 string text = $"const App = () => {{{"\n"}{"\t"}return ({"\n"}{"\t"}{"\t"}{"\n"}{"\t"});{"\n"}}}";
 if (activeFilePath != null) {
@@ -937,11 +984,6 @@ if (activeFilePath != null) {
 int updateCount = 1, currUpdateCount = 0;
 bool updating = false;
 Exception exception = null;
-Action<Exception> setException = (___val) => {
-	exception = ___val;
-	___node?.stateChangeDown();
-};
-
 TypingState typingState = null;
 string correctText() {
 		return text.Replace("\t", TextInputUtil.spacesPerTab);
@@ -967,8 +1009,8 @@ string correctText() {
 											updating = false;
 											currUpdateCount = thisUpdateCount;
 											
-											setException(task.Result.Item2);
-											setNode(task.Result.Item1);
+											exception = task.Result.Item2;
+											node = task.Result.Item1;
 										}
 									});
 									} catch (Exception e) {Logger.log("????", e.StackTrace);}
@@ -978,21 +1020,15 @@ string correctText() {
 						})}, children: null, childrenFunc: null, textContent: "", ____selectionColor: new Color(1F, 1F, 1F, 0.2F), multiline: true, useTypingState: (Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp), text: (Func<string>)(() => text), setText: setText, diff: (Func<string,string,string>)((string oldStr, string newStr)=>{
 							updateCount++;
 							return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
-						})), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["renderAdd"]=(Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
-							((System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch,System.String,MonoGameHtml.TypingState>)___vars["renderTabs"])(spriteBatch, text, typingState);
-						})}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => correctText())}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => correctText())), CreatePredictor("Predictor", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => text), ["indexFunc"]=(Func<int>)(() => typingState.cursorIndex), ["setPredictions"]=setPredictions, ["typingState"]=typingState}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => text), indexFunc: (Func<int>)(() => typingState.cursorIndex), setPredictions: setPredictions, typingState: typingState), newNode("span", props: new Dictionary<string, object> {}, children: nodeArr(newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>setShowCode(!showCode))}, textContent: "view code"), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=openFileScreen}, textContent: "files..."), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>{
-									if (activeFilePath != null) {
-										trySaveFile(activeFilePath, text);
-									} else {
-										saveBoxOpen = true;
-									}
-								})}, textContent: "save..."), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>saveBoxOpen = true)}, textContent: "save as...")))))), childrenFunc: null, textContent: null, initFlex: 1F), CreateSplitter("Splitter", props: new Dictionary<string, object> {}, children: null, childrenFunc: null, textContent: ""), CreatePanel("Panel", props: new Dictionary<string, object> {["initFlex"]=1F, ["backgroundColor"]="white"}, children: null, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((newNode("div", props: new Dictionary<string, object> {["dimens"]="100%"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (showCode ? newNode("p", props: new Dictionary<string, object> {}, textContent: (Func<string>)(()=> ""+(code)+"")) : (node ??  
-							(
-								(text == "") ? 
-									newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing to display...") : 
-									newNode("p", props: new Dictionary<string, object> {["color"]="red"}, textContent: (Func<string>)(()=> ""+(exception == null ? $"NULL? {node == null}" : (exception.GetType().Name + "\n" + exception.Message))+""))
-							)
-						)))))))), textContent: null, initFlex: 1F)), childrenFunc: null, textContent: null), CreateSaveBox("SaveBox", props: new Dictionary<string, object> {["open"]=(Func<bool>)(() => saveBoxOpen), ["close"]=(Action)(()=>saveBoxOpen=false), ["save"]=trySaveFile, ["contents"]=(Func<string>)(() => text), ["activePath"]=(Func<string>)(() => activeFilePath)}, children: null, childrenFunc: null, textContent: "", open: (Func<bool>)(() => saveBoxOpen), close: (Action)(()=>saveBoxOpen=false), save: trySaveFile, contents: (Func<string>)(() => text), activePath: (Func<string>)(() => activeFilePath))));
+						})), newNode("div", props: new Dictionary<string, object> {}, children: nodeArr(newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["renderAdd"]=(Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
+									((System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch,System.String,MonoGameHtml.TypingState>)___vars["renderTabs"])(spriteBatch, text, typingState);
+								})}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => correctText())}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => correctText())), CreatePredictor("Predictor", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => text), ["indexFunc"]=(Func<int>)(() => typingState.cursorIndex), ["setPredictions"]=setPredictions, ["typingState"]=typingState}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => text), indexFunc: (Func<int>)(() => typingState.cursorIndex), setPredictions: setPredictions, typingState: typingState), newNode("span", props: new Dictionary<string, object> {}, children: nodeArr(newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>showCode=!showCode)}, textContent: "view code"), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=openFileScreen}, textContent: "files..."), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>{
+										if (activeFilePath != null) {
+											trySaveFile(activeFilePath, text);
+										} else {
+											saveBoxOpen = true;
+										}
+									})}, textContent: "save..."), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>saveBoxOpen = true)}, textContent: "save as...")))))))), childrenFunc: null, textContent: null, initFlex: 1F), CreateSplitter("Splitter", props: new Dictionary<string, object> {}, children: null, childrenFunc: null, textContent: ""), CreateRightPanel("RightPanel", props: new Dictionary<string, object> {["getException"]=(Func<Exception>)(() => exception), ["getShowCode"]=(Func<bool>)(() => showCode), ["getCode"]=(Func<string>)(() => code), ["getNode"]=(Func<HtmlNode>)(() => node), ["hasText"]=(Func<bool>)(() => text != "")}, children: null, childrenFunc: null, textContent: "", getException: (Func<Exception>)(() => exception), getShowCode: (Func<bool>)(() => showCode), getCode: (Func<string>)(() => code), getNode: (Func<HtmlNode>)(() => node), hasText: (Func<bool>)(() => text != ""))), childrenFunc: null, textContent: null), CreateSaveBox("SaveBox", props: new Dictionary<string, object> {["open"]=(Func<bool>)(() => saveBoxOpen), ["close"]=(Action)(()=>saveBoxOpen=false), ["save"]=trySaveFile, ["contents"]=(Func<string>)(() => text), ["activePath"]=(Func<string>)(() => activeFilePath)}, children: null, childrenFunc: null, textContent: "", open: (Func<bool>)(() => saveBoxOpen), close: (Action)(()=>saveBoxOpen=false), save: trySaveFile, contents: (Func<string>)(() => text), activePath: (Func<string>)(() => activeFilePath))));
 	
 	return ___node;
 }
