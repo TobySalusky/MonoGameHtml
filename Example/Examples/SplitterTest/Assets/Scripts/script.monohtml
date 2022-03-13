@@ -1,0 +1,19 @@
+﻿const App = () => {
+    return (
+        <body>
+            <PanelView>
+                <Panel class="SidePanel">
+                    <p>hi</p>
+                </Panel>
+                <Splitter class="Splitter"/>
+                <Panel class="MainPanel" initFlex={3F}>
+                    <h3>yo</h3>
+                </Panel>
+                <Splitter class="Splitter"/>
+                <Panel class="SidePanel">
+                    <h3>yo</h3>
+                </Panel>
+            </PanelView>
+        </body>
+    );
+}

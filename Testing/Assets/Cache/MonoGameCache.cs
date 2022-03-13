@@ -141,85 +141,96 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
         	
         	<FrameCounter></FrameCounter>
 			
-        	<div flex={1} backgroundColor='#34353D'>
-				<TextBox 
-				class='HtmlBox'
-				selectionColor={new Color(1F, 1F, 1F, 0.2F)} 
-				-borderWidth={int: 0}
-				multiline={true}
-				useTypingState={(TypingState ___setTemp)=>typingState=___setTemp}
-				text={string: text} setText={setText}
-				diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
-					updateCount++;
-					return $htmlDiff(oldStr, newStr, typingState, predictions);
-				})}
-				onTick={()=>{
-					if (code != $code) setCode($code);
-					
-					if (!updating && currUpdateCount != updateCount) {
-
-						Logger.log(text);
-					
-						updating = true;
-						Task.Run(()=>{
-							try {
-						    $updateHtml(updateCount, text).ContinueWith(task => {
-						    	int thisUpdateCount = task.Result.Item3;
-						    	if (thisUpdateCount > currUpdateCount) {
-						    		updating = false;
-									currUpdateCount = thisUpdateCount;
-						    		
-									setException(task.Result.Item2);
-									setNode(task.Result.Item1);
-						    	}
-							});
-							} catch (Exception e) {Logger.log('????', e.StackTrace);}
-						});
-						
-					}
-				}}
-				></TextBox>
-				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(timePassed) : ''}</h6>
-				<pseudo class='ReplaceText' 
-				renderAdd={(SpriteBatch spriteBatch)=>{ 
-					$renderTabs(spriteBatch, text, typingState);
-				}}
-				></pseudo>
-				<TextRender textFunc={string: correctText()}></TextRender>
-				<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
-				setPredictions={setPredictions} typingState={typingState}></Predictor>
-				
-				<span>
-					<div class='FileOptionButton' onPress={()=>setShowCode(!showCode)}>
-						view code
-					</div>
-					<div class='FileOptionButton' onPress={openFileScreen}>
-						files...
-					</div>
-					<div class='FileOptionButton' onPress={()=>{
-							if (activeFilePath != null) {
-								trySaveFile(activeFilePath, text);
-							} else {
-								saveBoxOpen = true;
+			<PanelView>
+				<Panel initFlex={1F} backgroundColor='#34353D'>
+					<div dimens='100%'>
+	
+						<TextBox 
+						class='HtmlBox'
+						selectionColor={new Color(1F, 1F, 1F, 0.2F)} 
+						-borderWidth={int: 0}
+						multiline={true}
+						useTypingState={(TypingState ___setTemp)=>typingState=___setTemp}
+						text={string: text} setText={setText}
+						diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
+							updateCount++;
+							return $htmlDiff(oldStr, newStr, typingState, predictions);
+						})}
+						onTick={()=>{
+							if (code != $code) setCode($code);
+							
+							if (!updating && currUpdateCount != updateCount) {
+		
+								Logger.log(text);
+							
+								updating = true;
+								Task.Run(()=>{
+									try {
+									$updateHtml(updateCount, text).ContinueWith(task => {
+										int thisUpdateCount = task.Result.Item3;
+										if (thisUpdateCount > currUpdateCount) {
+											updating = false;
+											currUpdateCount = thisUpdateCount;
+											
+											setException(task.Result.Item2);
+											setNode(task.Result.Item1);
+										}
+									});
+									} catch (Exception e) {Logger.log('????', e.StackTrace);}
+								});
+								
 							}
-						}}>
-						save...
+						}}
+						></TextBox>
+						<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(timePassed) : ''}</h6>
+						<pseudo class='ReplaceText' 
+						renderAdd={(SpriteBatch spriteBatch)=>{ 
+							$renderTabs(spriteBatch, text, typingState);
+						}}
+						></pseudo>
+						<TextRender textFunc={string: correctText()}></TextRender>
+						<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
+						setPredictions={setPredictions} typingState={typingState} ></Predictor>
+						
+						<span>
+							<div class='FileOptionButton' onPress={()=>setShowCode(!showCode)}>
+								view code
+							</div>
+							<div class='FileOptionButton' onPress={openFileScreen}>
+								files...
+							</div>
+							<div class='FileOptionButton' onPress={()=>{
+									if (activeFilePath != null) {
+										trySaveFile(activeFilePath, text);
+									} else {
+										saveBoxOpen = true;
+									}
+								}}>
+								save...
+							</div>
+							<div class='FileOptionButton' onPress={()=>saveBoxOpen = true}>
+								save as...
+							</div>
+						</span>
 					</div>
-					<div class='FileOptionButton' onPress={()=>saveBoxOpen = true}>
-						save as...
-					</div>
-				</span>
-			</div>
-			<div flex={1} backgroundColor='white'>
-				<html></html>
-				{showCode ? <p>{code}</p> : (node ??  
-					(
-						(exception == null || text == '') ? 
-							<p>Nothing to display...</p> : 
-							<p color='red'>{exception == null ? 'NULL?' : (exception.GetType().Name + '\n' + exception.Message)}</p>
-					)
-				)}
-			</div>
+				</Panel>
+				
+				<Splitter></Splitter>
+	
+				<Panel initFlex={1F} backgroundColor='white'>
+					{<div dimens='100%'>
+						<html></html>
+						{showCode ? <p>{code}</p> : (node ??  
+							(
+								(text == '') ? 
+									<p>Nothing to display...</p> : 
+									<p color='red'>{exception == null ? $'NULL? {node == null}' : (exception.GetType().Name + '\n' + exception.Message)}</p>
+							)
+						)}
+					</div>}
+				</Panel>
+			</PanelView>
+			
 			<SaveBox open={bool: saveBoxOpen} close={()=>saveBoxOpen=false} save={trySaveFile} contents={string: text} activePath={string: activeFilePath}></SaveBox>
 		</body>
     );
@@ -466,6 +477,138 @@ const TextBox = (
 
 const KeyInput = () => {
     return (<todo></todo>);
+}", @"
+
+const PanelView = () => {
+
+	HtmlNode[] contents = (childrenFunc != null ? childrenFunc() : children);
+	float totalFlex = 0F;
+	
+	Func<HtmlNode, int, int> adjustDiff = (panel, diff) => {
+		if (diff >= 0) return diff;
+		if (panel.prop<Func<int>>('getWidth').Invoke() + diff < panel.prop<int>('minWidth')) {
+			return panel.prop<int>('minWidth') - panel.prop<Func<int>>('getWidth').Invoke();
+		}
+		return diff;
+	};
+	
+	Action<HtmlNode, int> diffPanelWidth = (panel, diff) => {
+		panel.prop<Action<int>>('setWidth').Invoke(panel.prop<Func<int>>('getWidth').Invoke() + diff);
+	};
+	
+	for (int i = 0; i < contents.Length; i++) {
+		HtmlNode node = contents[i];
+		if (i % 2 == 0) {
+			if (node.tag != 'panel') {
+				throw new Exception($'element {i} of PanelView must be a panel');
+			}
+			totalFlex += node.prop<float>('initFlex');
+			
+		} else {
+		
+			if (node.tag != 'splitter') {
+				throw new Exception($'element {i} of PanelView must be a splitter');
+			}
+						
+			int thisI = i;
+			Func<int, int> shiftFunc = (int diff) => {
+				diff = adjustDiff(contents[thisI - 1], diff);
+				diff = adjustDiff(contents[thisI + 1], -diff) * -1;
+				
+				diffPanelWidth(contents[thisI - 1], diff);
+				diffPanelWidth(contents[thisI + 1], -diff);
+								
+				___node.triggerOnResize();
+				return diff;
+			};
+			
+			node.prop<Action<Func<int, int>>>('setShiftFunc')(shiftFunc);
+		}
+	}
+
+	return (
+		<span dimens='100%' props={props}
+			ref={(HtmlNode thisNode) => {
+				int splitterWidthUsed = 0;
+				
+				for (int i = 0; i < contents.Length; i++) {
+					if (i % 2 == 1) {
+						HtmlNode splitter = contents[i];
+						splitterWidthUsed += splitter.FullWidth;
+					}
+				}
+				
+				Logger.log(splitterWidthUsed);
+				
+				int availSpace = thisNode.width - splitterWidthUsed;
+				int spaceUsed = 0;
+				
+				Logger.log(availSpace, thisNode.width, splitterWidthUsed);
+				
+				for (int i = 0; i < contents.Length; i++) {
+					if (i % 2 == 0) {
+						HtmlNode panel = contents[i];
+						if (i == contents.Length - 1) {
+							panel.props['width'] = availSpace - spaceUsed;
+						} else {
+							int thisPanelWidth = (int) ((float) availSpace * (panel.prop<float>('initFlex') / totalFlex));
+							panel.props['width'] = thisPanelWidth;
+							spaceUsed += thisPanelWidth;
+						}
+					}
+				}
+				thisNode.triggerOnResize();
+			}}
+		>
+			{contents}
+			<html></html>
+		</span>
+	);
+}", @"
+
+
+const Panel = (int minWidth = 20, float initFlex = 1F) => {
+
+	return (
+		<panel minWidth={minWidth} props={props} initFlex={initFlex} height='100%' class='BasePanel' getWidth={int: ___node.width} setWidth={(int newWidth) => ___node.width=newWidth}>
+			<html></html>
+			{(childrenFunc != null ? childrenFunc() : children)}
+		</panel>
+	);
+}", @"
+
+
+const Splitter = () => {
+
+	Func<int, int> shiftFunc = null;
+	bool mouseOver = false;
+	bool dragging = false;
+	float dragStartX = 0f;
+	
+	return (
+		<splitter height='100%' class='BaseSplitter' props={props}
+			setShiftFunc={(Func<int,int> newShiftFunc) => shiftFunc = newShiftFunc}
+			onMouseEnter={() => mouseOver=true}
+			onMouseExit={() => mouseOver=false}
+			onMouseDown={() => {
+				if (!mouseOver) return;
+				dragging = true;
+				dragStartX = mousePos.X;
+			}}
+			onMouseUp={() => dragging=false}
+			
+			onTick={()=> {
+				if (!dragging) return;
+				
+				int fullDragX = (int) (mousePos.X - dragStartX);
+				if (fullDragX != 0) {
+					if (shiftFunc != null) {
+						dragStartX += shiftFunc.Invoke(fullDragX);
+					}
+				}
+			}}
+		></splitter>
+	);
 }", @"
 const FrameCounter = (float updateTime = 1F) => {
 
@@ -805,51 +948,51 @@ string correctText() {
 	}
 
     ;
-	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row", ["props"]=props}, children: nodeArr(CreateFrameCounter("FrameCounter", props: new Dictionary<string, object> {}, children: null, childrenFunc: null, textContent: ""), newNode("div", props: new Dictionary<string, object> {["flex"]=1, ["backgroundColor"]="#34353D"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["selectionColor"]=new Color(1F, 1F, 1F, 0.2F), ["-borderWidth"]=(Func<int>)(() => 0), ["multiline"]=true, ["useTypingState"]=(Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp), ["text"]=(Func<string>)(() => text), ["setText"]=setText, ["diff"]=(Func<string,string,string>)((string oldStr, string newStr)=>{
-					updateCount++;
-					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
-				}), ["onTick"]=(Action)(()=>{
-					if (code != ((System.String)___vars["code"])) setCode(((System.String)___vars["code"]));
-					
-					if (!updating && currUpdateCount != updateCount) {
-
-						Logger.log(text);
-					
-						updating = true;
-						Task.Run(()=>{
-							try {
-						    ((System.Func<System.Int32,System.String,System.Threading.Tasks.Task<System.ValueTuple<MonoGameHtml.HtmlNode,System.Exception,System.Int32>>>)___vars["updateHtml"])(updateCount, text).ContinueWith(task => {
-						    	int thisUpdateCount = task.Result.Item3;
-						    	if (thisUpdateCount > currUpdateCount) {
-						    		updating = false;
-									currUpdateCount = thisUpdateCount;
-						    		
-									setException(task.Result.Item2);
-									setNode(task.Result.Item1);
-						    	}
-							});
-							} catch (Exception e) {Logger.log("????", e.StackTrace);}
-						});
-						
-					}
-				})}, children: null, childrenFunc: null, textContent: "", ____selectionColor: new Color(1F, 1F, 1F, 0.2F), multiline: true, useTypingState: (Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp), text: (Func<string>)(() => text), setText: setText, diff: (Func<string,string,string>)((string oldStr, string newStr)=>{
-					updateCount++;
-					return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
-				})), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["renderAdd"]=(Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
-					((System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch,System.String,MonoGameHtml.TypingState>)___vars["renderTabs"])(spriteBatch, text, typingState);
-				})}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => correctText())}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => correctText())), CreatePredictor("Predictor", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => text), ["indexFunc"]=(Func<int>)(() => typingState.cursorIndex), ["setPredictions"]=setPredictions, ["typingState"]=typingState}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => text), indexFunc: (Func<int>)(() => typingState.cursorIndex), setPredictions: setPredictions, typingState: typingState), newNode("span", props: new Dictionary<string, object> {}, children: nodeArr(newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>setShowCode(!showCode))}, textContent: "view code"), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=openFileScreen}, textContent: "files..."), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>{
-							if (activeFilePath != null) {
-								trySaveFile(activeFilePath, text);
-							} else {
-								saveBoxOpen = true;
+	___node = newNode("body", props: new Dictionary<string, object> {["flexDirection"]="row", ["props"]=props}, children: nodeArr(CreateFrameCounter("FrameCounter", props: new Dictionary<string, object> {}, children: null, childrenFunc: null, textContent: ""), CreatePanelView("PanelView", props: new Dictionary<string, object> {}, children: nodeArr(CreatePanel("Panel", props: new Dictionary<string, object> {["initFlex"]=1F, ["backgroundColor"]="#34353D"}, children: nodeArr(newNode("div", props: new Dictionary<string, object> {["dimens"]="100%"}, children: nodeArr(CreateTextBox("TextBox", props: new Dictionary<string, object> {["class"]="HtmlBox", ["selectionColor"]=new Color(1F, 1F, 1F, 0.2F), ["-borderWidth"]=(Func<int>)(() => 0), ["multiline"]=true, ["useTypingState"]=(Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp), ["text"]=(Func<string>)(() => text), ["setText"]=setText, ["diff"]=(Func<string,string,string>)((string oldStr, string newStr)=>{
+							updateCount++;
+							return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
+						}), ["onTick"]=(Action)(()=>{
+							if (code != ((System.String)___vars["code"])) setCode(((System.String)___vars["code"]));
+							
+							if (!updating && currUpdateCount != updateCount) {
+		
+								Logger.log(text);
+							
+								updating = true;
+								Task.Run(()=>{
+									try {
+									((System.Func<System.Int32,System.String,System.Threading.Tasks.Task<System.ValueTuple<MonoGameHtml.HtmlNode,System.Exception,System.Int32>>>)___vars["updateHtml"])(updateCount, text).ContinueWith(task => {
+										int thisUpdateCount = task.Result.Item3;
+										if (thisUpdateCount > currUpdateCount) {
+											updating = false;
+											currUpdateCount = thisUpdateCount;
+											
+											setException(task.Result.Item2);
+											setNode(task.Result.Item1);
+										}
+									});
+									} catch (Exception e) {Logger.log("????", e.StackTrace);}
+								});
+								
 							}
-						})}, textContent: "save..."), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>saveBoxOpen = true)}, textContent: "save as..."))))), newNode("div", props: new Dictionary<string, object> {["flex"]=1, ["backgroundColor"]="white"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (showCode ? newNode("p", props: new Dictionary<string, object> {}, textContent: (Func<string>)(()=> ""+(code)+"")) : (node ??  
-					(
-						(exception == null || text == "") ? 
-							newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing to display...") : 
-							newNode("p", props: new Dictionary<string, object> {["color"]="red"}, textContent: (Func<string>)(()=> ""+(exception == null ? "NULL?" : (exception.GetType().Name + "\n" + exception.Message))+""))
-					)
-				))))), CreateSaveBox("SaveBox", props: new Dictionary<string, object> {["open"]=(Func<bool>)(() => saveBoxOpen), ["close"]=(Action)(()=>saveBoxOpen=false), ["save"]=trySaveFile, ["contents"]=(Func<string>)(() => text), ["activePath"]=(Func<string>)(() => activeFilePath)}, children: null, childrenFunc: null, textContent: "", open: (Func<bool>)(() => saveBoxOpen), close: (Action)(()=>saveBoxOpen=false), save: trySaveFile, contents: (Func<string>)(() => text), activePath: (Func<string>)(() => activeFilePath))));
+						})}, children: null, childrenFunc: null, textContent: "", ____selectionColor: new Color(1F, 1F, 1F, 0.2F), multiline: true, useTypingState: (Action<TypingState>)((TypingState ___setTemp)=>typingState=___setTemp), text: (Func<string>)(() => text), setText: setText, diff: (Func<string,string,string>)((string oldStr, string newStr)=>{
+							updateCount++;
+							return ((System.Func<System.String,System.String,MonoGameHtml.TypingState,System.Collections.Generic.List<System.String>,System.String>)___vars["htmlDiff"])(oldStr, newStr, typingState, predictions);
+						})), newNode("h6", props: new Dictionary<string, object> {["color"]="white"}, textContent: (Func<string>)(()=> ""+(currUpdateCount)+"/"+(updateCount)+" "+(updating ? ((System.Func<System.Single,System.String>)___vars["loadingText"])(timePassed) : "")+"")), newNode("pseudo", props: new Dictionary<string, object> {["class"]="ReplaceText", ["renderAdd"]=(Action<SpriteBatch>)((SpriteBatch spriteBatch)=>{ 
+							((System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch,System.String,MonoGameHtml.TypingState>)___vars["renderTabs"])(spriteBatch, text, typingState);
+						})}, textContent: ""), CreateTextRender("TextRender", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => correctText())}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => correctText())), CreatePredictor("Predictor", props: new Dictionary<string, object> {["textFunc"]=(Func<string>)(() => text), ["indexFunc"]=(Func<int>)(() => typingState.cursorIndex), ["setPredictions"]=setPredictions, ["typingState"]=typingState}, children: null, childrenFunc: null, textContent: "", textFunc: (Func<string>)(() => text), indexFunc: (Func<int>)(() => typingState.cursorIndex), setPredictions: setPredictions, typingState: typingState), newNode("span", props: new Dictionary<string, object> {}, children: nodeArr(newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>setShowCode(!showCode))}, textContent: "view code"), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=openFileScreen}, textContent: "files..."), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>{
+									if (activeFilePath != null) {
+										trySaveFile(activeFilePath, text);
+									} else {
+										saveBoxOpen = true;
+									}
+								})}, textContent: "save..."), newNode("div", props: new Dictionary<string, object> {["class"]="FileOptionButton", ["onPress"]=(Action)(()=>saveBoxOpen = true)}, textContent: "save as...")))))), childrenFunc: null, textContent: null, initFlex: 1F), CreateSplitter("Splitter", props: new Dictionary<string, object> {}, children: null, childrenFunc: null, textContent: ""), CreatePanel("Panel", props: new Dictionary<string, object> {["initFlex"]=1F, ["backgroundColor"]="white"}, children: null, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((newNode("div", props: new Dictionary<string, object> {["dimens"]="100%"}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), (showCode ? newNode("p", props: new Dictionary<string, object> {}, textContent: (Func<string>)(()=> ""+(code)+"")) : (node ??  
+							(
+								(text == "") ? 
+									newNode("p", props: new Dictionary<string, object> {}, textContent: "Nothing to display...") : 
+									newNode("p", props: new Dictionary<string, object> {["color"]="red"}, textContent: (Func<string>)(()=> ""+(exception == null ? $"NULL? {node == null}" : (exception.GetType().Name + "\n" + exception.Message))+""))
+							)
+						)))))))), textContent: null, initFlex: 1F)), childrenFunc: null, textContent: null), CreateSaveBox("SaveBox", props: new Dictionary<string, object> {["open"]=(Func<bool>)(() => saveBoxOpen), ["close"]=(Action)(()=>saveBoxOpen=false), ["save"]=trySaveFile, ["contents"]=(Func<string>)(() => text), ["activePath"]=(Func<string>)(() => activeFilePath)}, children: null, childrenFunc: null, textContent: "", open: (Func<bool>)(() => saveBoxOpen), close: (Action)(()=>saveBoxOpen=false), save: trySaveFile, contents: (Func<string>)(() => text), activePath: (Func<string>)(() => activeFilePath))));
 	
 	return ___node;
 }
@@ -1087,6 +1230,132 @@ HtmlNode CreateKeyInput(string tag, Dictionary<string, object> props = null, str
 	
 ;
 	___node = newNode("todo", props: new Dictionary<string, object> {}, textContent: "");
+	
+	return ___node;
+}
+
+HtmlNode CreatePanelView(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
+	
+	HtmlNode ___node = null;
+		
+
+	
+HtmlNode[] contents = (childrenFunc != null ? childrenFunc() : children);
+float totalFlex = 0F;
+Func<HtmlNode, int, int> adjustDiff = (panel, diff) => {
+		if (diff >= 0) return diff;
+		if (panel.prop<Func<int>>("getWidth").Invoke() + diff < panel.prop<int>("minWidth")) {
+			return panel.prop<int>("minWidth") - panel.prop<Func<int>>("getWidth").Invoke();
+		}
+		return diff;
+	};
+	
+	Action<HtmlNode, int> diffPanelWidth = (panel, diff) => {
+		panel.prop<Action<int>>("setWidth").Invoke(panel.prop<Func<int>>("getWidth").Invoke() + diff);
+	};
+for (int i = 0; i < contents.Length; i++) {
+		HtmlNode node = contents[i];
+		if (i % 2 == 0) {
+			if (node.tag != "panel") {
+				throw new Exception($"element {i} of PanelView must be a panel");
+			}
+			totalFlex += node.prop<float>("initFlex");
+			
+		} else {
+		
+			if (node.tag != "splitter") {
+				throw new Exception($"element {i} of PanelView must be a splitter");
+			}
+						
+			int thisI = i;
+			Func<int, int> shiftFunc = (int diff) => {
+				diff = adjustDiff(contents[thisI - 1], diff);
+				diff = adjustDiff(contents[thisI + 1], -diff) * -1;
+				
+				diffPanelWidth(contents[thisI - 1], diff);
+				diffPanelWidth(contents[thisI + 1], -diff);
+								
+				___node.triggerOnResize();
+				return diff;
+			};
+			
+			node.prop<Action<Func<int, int>>>("setShiftFunc")(shiftFunc);
+		}
+	}
+
+	;
+	___node = newNode("span", props: new Dictionary<string, object> {["dimens"]="100%", ["props"]=props, ["ref"]=(Action<HtmlNode>)((HtmlNode thisNode) => {
+				int splitterWidthUsed = 0;
+				
+				for (int i = 0; i < contents.Length; i++) {
+					if (i % 2 == 1) {
+						HtmlNode splitter = contents[i];
+						splitterWidthUsed += splitter.FullWidth;
+					}
+				}
+				
+				Logger.log(splitterWidthUsed);
+				
+				int availSpace = thisNode.width - splitterWidthUsed;
+				int spaceUsed = 0;
+				
+				Logger.log(availSpace, thisNode.width, splitterWidthUsed);
+				
+				for (int i = 0; i < contents.Length; i++) {
+					if (i % 2 == 0) {
+						HtmlNode panel = contents[i];
+						if (i == contents.Length - 1) {
+							panel.props["width"] = availSpace - spaceUsed;
+						} else {
+							int thisPanelWidth = (int) ((float) availSpace * (panel.prop<float>("initFlex") / totalFlex));
+							panel.props["width"] = thisPanelWidth;
+							spaceUsed += thisPanelWidth;
+						}
+					}
+				}
+				thisNode.triggerOnResize();
+			})}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr((contents), newNode("html", props: new Dictionary<string, object> {}, textContent: ""))));
+	
+	return ___node;
+}
+
+HtmlNode CreatePanel(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null, int minWidth = 20, float initFlex = 1F) {
+	
+	HtmlNode ___node = null;
+		
+
+	
+;
+	___node = newNode("panel", props: new Dictionary<string, object> {["minWidth"]=minWidth, ["props"]=props, ["initFlex"]=initFlex, ["height"]="100%", ["class"]="BasePanel", ["getWidth"]=(Func<int>)(() => ___node.width), ["setWidth"]=(Action<int>)((int newWidth) => ___node.width=newWidth)}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), ((childrenFunc != null ? childrenFunc() : children)))));
+	
+	return ___node;
+}
+
+HtmlNode CreateSplitter(string tag, Dictionary<string, object> props = null, string textContent = null, HtmlNode[] children = null, Func<HtmlNode[]> childrenFunc = null) {
+	
+	HtmlNode ___node = null;
+		
+
+	
+Func<int, int> shiftFunc = null;
+bool mouseOver = false;
+bool dragging = false;
+float dragStartX = 0f;
+;
+	___node = newNode("splitter", props: new Dictionary<string, object> {["height"]="100%", ["class"]="BaseSplitter", ["props"]=props, ["setShiftFunc"]=(Action<Func<int,int>>)((Func<int,int> newShiftFunc) => shiftFunc = newShiftFunc), ["onMouseEnter"]=(Action)(()=>mouseOver=true), ["onMouseExit"]=(Action)(()=>mouseOver=false), ["onMouseDown"]=(Action)(()=>{
+				if (!mouseOver) return;
+				dragging = true;
+				dragStartX = mousePos.X;
+			}), ["onMouseUp"]=(Action)(()=>dragging=false), ["onTick"]=(Action)(()=>{
+				if (!dragging) return;
+				
+				int fullDragX = (int) (mousePos.X - dragStartX);
+				if (fullDragX != 0) {
+					if (shiftFunc != null) {
+						dragStartX += shiftFunc.Invoke(fullDragX);
+					}
+				}
+			})}, textContent: "");
 	
 	return ___node;
 }

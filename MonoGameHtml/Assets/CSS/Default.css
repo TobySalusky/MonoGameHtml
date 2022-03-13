@@ -25,3 +25,12 @@ p {font-size: 18px;}
     border-color: black;
     width: 400px;
 }
+
+.BaseSplitter {
+    background-color: black;
+    width: 5px;
+}
+
+.BasePanel {
+    background-color: white;
+}

@@ -1015,9 +1015,8 @@ namespace MonoGameHtml {
 					foreach (HtmlNode child in children) {
 						noneFlexHeight += (child.flex <= 0) ? child.FullHeight : (child.FullHeight - child.height);
 					}
-					
-					float perFlex = (height - noneFlexHeight) / sumFlex;
 
+					float perFlex = (height - noneFlexHeight) / sumFlex;
 					int thisY = x;
 					foreach (HtmlNode child in children) {
 						child.y = thisY;
