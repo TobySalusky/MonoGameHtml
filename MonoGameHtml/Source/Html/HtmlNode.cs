@@ -1052,9 +1052,10 @@ namespace MonoGameHtml {
 				}
 			}
 
-			foreach (HtmlNode child in this.children) {
-				child?.layoutDown();
+			if (this.children != null) {
+				foreach (HtmlNode child in this.children) { child?.layoutDown(); }
 			}
+
 		}
 
 		public void applyPosition() {
