@@ -106,8 +106,8 @@ const Panel = (int minWidth = 20, float initFlex = 1F) => {
 
 	return (
 		<panel minWidth={minWidth} props={props} initFlex={initFlex} height='100%' class='BasePanel' getWidth={int: ___node.width} setWidth={(int newWidth) => ___node.width=newWidth}>
-			{(childrenFunc != null ? childrenFunc() : children)}
 			<html></html>
+			{(childrenFunc != null ? childrenFunc() : children)}
 		</panel>
 	);
 }", @"
@@ -259,7 +259,7 @@ HtmlNode CreatePanel(string tag, Dictionary<string, object> props = null, string
 
 	
 ;
-	___node = newNode("panel", props: new Dictionary<string, object> {["minWidth"]=minWidth, ["props"]=props, ["initFlex"]=initFlex, ["height"]="100%", ["class"]="BasePanel", ["getWidth"]=(Func<int>)(() => ___node.width), ["setWidth"]=(Action<int>)((int newWidth) => ___node.width=newWidth)}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(((childrenFunc != null ? childrenFunc() : children)), newNode("html", props: new Dictionary<string, object> {}, textContent: ""))));
+	___node = newNode("panel", props: new Dictionary<string, object> {["minWidth"]=minWidth, ["props"]=props, ["initFlex"]=initFlex, ["height"]="100%", ["class"]="BasePanel", ["getWidth"]=(Func<int>)(() => ___node.width), ["setWidth"]=(Action<int>)((int newWidth) => ___node.width=newWidth)}, childrenFunc: (Func<HtmlNode[]>) (() => nodeArr(newNode("html", props: new Dictionary<string, object> {}, textContent: ""), ((childrenFunc != null ? childrenFunc() : children)))));
 	
 	return ___node;
 }

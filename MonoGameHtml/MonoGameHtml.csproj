@@ -4,6 +4,17 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>MonoGame HTML</Title>
+    <Authors>Toby Salusky</Authors>
+    <Description>A React JS-like approach to UI for dynamic, realtime applications in MonoGame.</Description>
+    <Copyright>MIT</Copyright>
+    <PackageProjectUrl>https://tobysalusky.github.io/MonoGameHtmlDocs/#/monogamehtml</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TobySalusky/MonoGameHtml</RepositoryUrl>
+    <PackageTags>C# MonoGame UI user-interface React</PackageTags>
+    <PackageVersion>1.0.0-alpha</PackageVersion>
+    <PackageIconUrl>https://raw.githubusercontent.com/TobySalusky/MonoGameHtml/main/MonoGameHtml/docs/images/MonoGameHtmlLogo.png</PackageIconUrl>
+    <PackageReleaseNotes>Initial alpha release</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
