@@ -1,0 +1,16 @@
+const App = () => {
+	return (
+		<div dimens='50%' @bg(red)>
+			<span dimens='50%' @bg(orange)>
+				<span dimens='50%' @bg(yellow)>
+					<span dimens='50%' @bg(green)>
+						<span dimens='50%' @bg(blue)>
+							<span dimens='50%' @bg(purple)/>
+						</span>
+					</span>
+				</span>
+			</span>
+		</div>
+		
+	);
+}

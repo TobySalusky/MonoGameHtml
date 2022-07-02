@@ -308,7 +308,7 @@ namespace Testing {
 	            imports: new[] {"System.Threading.Tasks", "System.IO"},
 	            components: HtmlComponents.Create(
 		            HtmlComponents.ReadFrom(Path.Join(GameMain.scriptPath, "HtmlWriter")),
-		            HtmlComponents.AllInput, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
+		            HtmlComponents.AllInput, HtmlComponents.AllPanel, HtmlComponents.FrameCounter, HtmlComponents.AllControlFlow));
 
             HtmlSettings.generateCache = false;
         }

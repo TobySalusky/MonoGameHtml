@@ -7,7 +7,7 @@ namespace MonoGameHtml {
 	public static class HtmlMain {
 		internal static Game game;
 		internal static GraphicsDevice graphicsDevice;
-		internal static Vector2 screenDimen, screenCenter;
+		internal static Vector2 screenDimen, lastScreenDimen;
 		internal static int screenWidth, screenHeight;
 
 		internal static string cacheIdentifier;
@@ -34,12 +34,19 @@ namespace MonoGameHtml {
 
 			// TODO: handle fullscreen
 			screenDimen = new Vector2(game.GraphicsDevice.PresentationParameters.Bounds.Width, game.GraphicsDevice.PresentationParameters.Bounds.Height);
-			screenCenter = screenDimen / 2;
 			screenWidth = (int) screenDimen.X;
 			screenHeight = (int) screenDimen.Y;
 			
 			Logger.log("Screen Dimensions:", screenDimen);
 			Textures.loadTextures();
+		}
+
+		public static bool ScreenDimensChanged() {
+			lastScreenDimen = screenDimen;
+			screenDimen = new Vector2(game.GraphicsDevice.PresentationParameters.Bounds.Width, game.GraphicsDevice.PresentationParameters.Bounds.Height);
+			screenWidth = (int) screenDimen.X;
+			screenHeight = (int) screenDimen.Y;
+			return lastScreenDimen == screenDimen;
 		}
 	}
 }

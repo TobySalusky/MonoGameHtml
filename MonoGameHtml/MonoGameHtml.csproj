@@ -4,6 +4,19 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>MonoGame HTML</Title>
+    <Authors>Toby Salusky</Authors>
+    <Description>A React JS-like approach to UI for dynamic, realtime applications in MonoGame.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://tobysalusky.github.io/MonoGameHtmlDocs/#/monogamehtml</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TobySalusky/MonoGameHtml</RepositoryUrl>
+    <PackageTags>C# MonoGame UI user-interface React</PackageTags>
+    <PackageVersion>1.0.0-alpha</PackageVersion>
+    <PackageIconUrl>https://raw.githubusercontent.com/TobySalusky/MonoGameHtml/main/MonoGameHtml/docs/images/MonoGameHtmlIcon.png</PackageIconUrl>
+    <PackageIcon>MonoGameHtmlIcon.png</PackageIcon>
+    <PackageReleaseNotes>Initial alpha release</PackageReleaseNotes>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -32,5 +45,9 @@
     <EmbeddedResource Include="Icon.bmp" />
     <EmbeddedResource Include="Icon.ico" />
     <EmbeddedResource Include="JetBrainsMono.ttf" />
+  </ItemGroup>
+  <ItemGroup>    
+    <None Include="docs\images\MonoGameHtmlIcon.png" Pack="true" PackagePath="\"/>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 </Project>

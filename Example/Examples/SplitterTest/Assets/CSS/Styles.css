@@ -1,0 +1,12 @@
+﻿.SidePanel {
+    background-color: #303030;
+}
+
+.MainPanel {
+    background-color: #707070;
+}
+
+.Splitter {
+    background-color: #000000;
+    width: 2px;
+}

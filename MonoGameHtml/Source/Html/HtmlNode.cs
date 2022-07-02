@@ -195,6 +195,8 @@ namespace MonoGameHtml {
 				findBase().bottomUpInit();
 				
 				findBase().layoutDown();
+				
+				triggerOnResize();
 
 				foreach (var child in children) {
 					//Logger.log(tag, child.tag, child.width, child.height);
@@ -227,7 +229,31 @@ namespace MonoGameHtml {
 		public void triggerOnResize() { // TODO: sus? do i need to do a topDownInit()  ??????
 			// TODO:
 			HtmlNode baseNode = findBase();
-			
+
+			if (children != null) {
+				foreach (HtmlNode child in children) {
+					bool resizeFlag = false;
+					
+					if (child.props.ContainsKey("dimens") && child.props["dimens"] is string percentDimensStr) {
+						child.width = NodeUtil.widthFromProp(percentDimensStr, this);
+						child.height = NodeUtil.heightFromProp(percentDimensStr, this);
+						resizeFlag = true;
+					}
+					
+					if (child.props.ContainsKey("width") && child.props["width"] is string percentWidthStr) {
+						child.width = NodeUtil.widthFromProp(percentWidthStr, this);
+						resizeFlag = true;
+					}
+				
+					if (child.props.ContainsKey("height") && child.props["height"] is string percentHeightStr) {
+						child.height = NodeUtil.heightFromProp(percentHeightStr, this);
+						resizeFlag = true;
+					}
+				
+					if (resizeFlag) child.triggerOnResize();
+				}
+			}
+
 			//baseNode.bottomUpInit(); stack overflow D:
 			baseNode.layoutDown();
 			
@@ -1045,9 +1071,8 @@ namespace MonoGameHtml {
 					foreach (HtmlNode child in children) {
 						noneFlexHeight += (child.flex <= 0) ? child.FullHeight : (child.FullHeight - child.height);
 					}
-					
-					float perFlex = (height - noneFlexHeight) / sumFlex;
 
+					float perFlex = (height - noneFlexHeight) / sumFlex;
 					int thisY = x;
 					foreach (HtmlNode child in children) {
 						child.y = thisY;
@@ -1057,9 +1082,10 @@ namespace MonoGameHtml {
 				}
 			}
 
-			foreach (HtmlNode child in this.children) {
-				child?.layoutDown();
+			if (this.children != null) {
+				foreach (HtmlNode child in this.children) { child?.layoutDown(); }
 			}
+
 		}
 
 		public void applyPosition() {

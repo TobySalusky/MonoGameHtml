@@ -1,4 +1,23 @@
-﻿const SaveBox = (Func<bool> open, Action<string,string> save, Func<string> contents, Func<string> activePath, Action close) => {
+﻿const RightPanel = (Func<string> getCode, Func<bool> getShowCode, Func<Exception> getException, Func<HtmlNode> getNode, Func<bool> hasText) => {
+	RerenderDiff(() => hasText());
+	RerenderDiff(() => getShowCode());
+	RerenderDiff(() => getNode());
+	
+	return (
+		<Panel initFlex={1F} backgroundColor='white'>
+			{getShowCode() ? <p>{getCode()}</p> : (getNode() ??
+					(
+						(!hasText()) ?
+							<p>Nothing to display...</p> :
+							<p color='red'>{getException() == null ? $'NULL?' : (getException().GetType().Name + '\n' + getException().Message)}</p>
+					)
+				)
+			}
+		</Panel>
+	);
+}
+
+const SaveBox = (Func<bool> open, Action<string,string> save, Func<string> contents, Func<string> activePath, Action close) => {
 
 	bool [saveBoxOpen, setSaveBoxOpen] = useState(false);
 	string text = '';
@@ -44,13 +63,13 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
 		}
 	};
 	
-	bool [showCode, setShowCode] = useState(false);
+	bool showCode = false;
 	string [code, setCode] = useState('');
 	
 	List<string> predictions = null;
 	var setPredictions = (List<string> list) => predictions = list;
 
-	HtmlNode [node, setNode] = useState(null);
+	HtmlNode node = null;
 	bool saveBoxOpen = false;
 
 	string text = $'const App = () => {{{'\n'}{'\t'}return ({'\n'}{'\t'}{'\t'}{'\n'}{'\t'});{'\n'}}}';
@@ -66,7 +85,7 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
 	Action<string> setText = (string str) => text=str;
 	int updateCount = 1, currUpdateCount = 0;
 	bool updating = false;
-	Exception [exception, setException] = useState(null);
+	Exception exception = null;
 	
 	TypingState typingState = null;
 	
@@ -79,85 +98,94 @@ const MainScreen = (Action openFileScreen, string activeFilePath) => {
         	
         	<FrameCounter/>
 			
-        	<div flex={1} backgroundColor='#34353D'>
-				<TextBox 
-				class='HtmlBox'
-				selectionColor={new Color(1F, 1F, 1F, 0.2F)} 
-				-borderWidth={int: 0}
-				multiline={true}
-				useTypingState={@set(TypingState, typingState)}
-				text={string: text} setText={setText}
-				diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
-					updateCount++;
-					return $htmlDiff(oldStr, newStr, typingState, predictions);
-				})}
-				onTick={()=>{
-					if (code != $code) setCode($code);
-					
-					if (!updating && currUpdateCount != updateCount) {
-
-						Logger.log(text);
-					
-						updating = true;
-						Task.Run(()=>{
-							try {
-						    $updateHtml(updateCount, text).ContinueWith(task => {
-						    	int thisUpdateCount = task.Result.Item3;
-						    	if (thisUpdateCount > currUpdateCount) {
-						    		updating = false;
-									currUpdateCount = thisUpdateCount;
-						    		
-									setException(task.Result.Item2);
-									setNode(task.Result.Item1);
-						    	}
-							});
-							} catch (Exception e) {Logger.log('????', e.StackTrace);}
-						});
-						
-					}
-				}}
-				/>
-				<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
-				<pseudo class='ReplaceText' 
-				renderAdd={(SpriteBatch spriteBatch)=>{ 
-					$renderTabs(spriteBatch, text, typingState);
-				}}
-				/>
-				<TextRender textFunc={string: correctText()}/>
-				<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
-				setPredictions={setPredictions} typingState={typingState}/>
-				
-				<span>
-					<div class="FileOptionButton" onPress={()=>setShowCode(!showCode)}>
-						view code
-					</div>
-					<div class="FileOptionButton" onPress={openFileScreen}>
-						files...
-					</div>
-					<div class="FileOptionButton" onPress={()=>{
-							if (activeFilePath != null) {
-								trySaveFile(activeFilePath, text);
-							} else {
-								saveBoxOpen = true;
+			<PanelView>
+				<Panel initFlex={1F} backgroundColor='#34353D'>
+					<div dimens="100%">
+	
+						<TextBox 
+						class='HtmlBox'
+						selectionColor={new Color(1F, 1F, 1F, 0.2F)} 
+						-borderWidth={int: 0}
+						multiline={true}
+						useTypingState={@set(TypingState, typingState)}
+						text={string: text} setText={setText}
+						diff={(Func<string,string,string>)((string oldStr, string newStr)=>{
+							updateCount++;
+							return $htmlDiff(oldStr, newStr, typingState, predictions);
+						})}
+						onTick={()=>{
+							if (code != $code) setCode($code);
+							
+							if (!updating && currUpdateCount != updateCount) {
+		
+								Logger.log(text);
+							
+								updating = true;
+								Task.Run(()=>{
+									try {
+									$updateHtml(updateCount, text).ContinueWith(task => {
+										int thisUpdateCount = task.Result.Item3;
+										if (thisUpdateCount > currUpdateCount) {
+											updating = false;
+											currUpdateCount = thisUpdateCount;
+											
+											exception = task.Result.Item2;
+											node = task.Result.Item1;
+										}
+									});
+									} catch (Exception e) {Logger.log('????', e.StackTrace);}
+								});
+								
 							}
-						}}>
-						save...
+						}}
+						/>
+						<div>
+							<h6 color='white'>{currUpdateCount}/{updateCount} {updating ? $loadingText(@t) : ''}</h6>
+							<pseudo class='ReplaceText' 
+								renderAdd={(SpriteBatch spriteBatch)=>{ 
+									$renderTabs(spriteBatch, text, typingState);
+								}}
+							/>
+							<TextRender textFunc={string: correctText()}/>
+							<Predictor textFunc={string: text} indexFunc={int: typingState.cursorIndex} 
+								setPredictions={setPredictions} typingState={typingState} 
+							/>
+							
+							<span>
+								<div class="FileOptionButton" onPress={()=>showCode=!showCode}>
+									view code
+								</div>
+								<div class="FileOptionButton" onPress={openFileScreen}>
+									files...
+								</div>
+								<div class="FileOptionButton" onPress={()=>{
+										if (activeFilePath != null) {
+											trySaveFile(activeFilePath, text);
+										} else {
+											saveBoxOpen = true;
+										}
+									}}>
+									save...
+								</div>
+								<div class="FileOptionButton" onPress={()=>saveBoxOpen = true}>
+									save as...
+								</div>
+							</span>
+						</div>
 					</div>
-					<div class="FileOptionButton" onPress={()=>saveBoxOpen = true}>
-						save as...
-					</div>
-				</span>
-			</div>
-			<div flex={1} backgroundColor='white'>
-				<html/>
-				{showCode ? <p>{code}</p> : (node ??  
-					(
-						(exception == null || text == '') ? 
-							<p>Nothing to display...</p> : 
-							<p color='red'>{exception == null ? 'NULL?' : (exception.GetType().Name + '\n' + exception.Message)}</p>
-					)
-				)}
-			</div>
+				</Panel>
+				
+				<Splitter/>
+
+				<RightPanel
+					getException={Exception: exception}
+					getShowCode={bool: showCode}
+					getCode={string: code}
+					getNode={HtmlNode: node}
+					hasText={bool: text != ''}
+				/>
+			</PanelView>
+			
 			<SaveBox open={bool: saveBoxOpen} close={()=>saveBoxOpen=false} save={trySaveFile} contents={string: text} activePath={string: activeFilePath}/>
 		</body>
     );

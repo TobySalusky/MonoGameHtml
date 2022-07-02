@@ -26,6 +26,18 @@ p {font-size: 18px;}
     background-color: white;
     border-color: black;
     width: 400px;
+<<<<<<< HEAD:MonoGameHtml/Source/BakedDefaultAssets.cs
 }";
     }
+=======
+}
+
+.BaseSplitter {
+    background-color: black;
+    width: 5px;
+}
+
+.BasePanel {
+    background-color: white;
+>>>>>>> 0c742b998be5c1360ea5f26dd221647068ffc7ca:MonoGameHtml/Assets/CSS/Default.css
 }
