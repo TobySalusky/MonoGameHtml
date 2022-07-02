@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.Xna.Framework;
@@ -40,7 +41,6 @@ namespace MonoGameHtml {
 
 		private void OnChanged(object sender, FileSystemEventArgs e) {
 			if (!FileIsReady(e.FullPath)) return; //first notification the file is arriving
-			
 			StartGenerateTask();
 		}
 		

@@ -16,7 +16,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="36">
+          <list size="40">
             <item index="0" class="java.lang.String" itemvalue="backgroundcolor" />
             <item index="1" class="java.lang.String" itemvalue="borderradius" />
             <item index="2" class="java.lang.String" itemvalue="bordercolor" />
@@ -53,6 +53,10 @@
             <item index="33" class="java.lang.String" itemvalue="case" />
             <item index="34" class="java.lang.String" itemvalue="color" />
             <item index="35" class="java.lang.String" itemvalue="default" />
+            <item index="36" class="java.lang.String" itemvalue="marginright" />
+            <item index="37" class="java.lang.String" itemvalue="@fill" />
+            <item index="38" class="java.lang.String" itemvalue="padding}" />
+            <item index="39" class="java.lang.String" itemvalue="-padding" />
           </list>
         </value>
       </option>

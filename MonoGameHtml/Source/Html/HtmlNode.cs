@@ -461,7 +461,37 @@ namespace MonoGameHtml {
 					paddingTop = NodeUtil.heightFromProp(val, parent);
 					paddingBottom = NodeUtil.heightFromProp(val, parent);
 				}
+
+				if (props.ContainsKey("-padding")) { // TODO: percentages
+					object funcProp = props["-padding"];
+					if (funcProp is Func<int> intFunc) { 
+						bindAction(() => {
+							int initPadding = paddingLeft;
+							int newPadding = intFunc();
+							paddingLeft = newPadding;
+							paddingRight = newPadding;
+							paddingTop = newPadding;
+							paddingBottom = newPadding;
+							if (initPadding != paddingLeft) triggerOnResize();
+						});
+					}
+				}
 				
+				if (props.ContainsKey("-margin")) { // TODO: percentages
+					object funcProp = props["-margin"];
+					if (funcProp is Func<int> intFunc) { 
+						bindAction(() => {
+							int initMargin = marginLeft;
+							int newMargin = intFunc();
+							marginLeft = newMargin;
+							marginRight = newMargin;
+							marginTop = newMargin;
+							marginBottom = newMargin;
+							if (initMargin != marginLeft) triggerOnResize();
+						});
+					}
+				}
+
 				if (props.ContainsKey("paddingBlock")) {
 					object val = props["paddingBlock"];
 					paddingTop = NodeUtil.heightFromProp(val, parent);
