@@ -12,10 +12,10 @@
     <PackageProjectUrl>https://tobysalusky.github.io/MonoGameHtmlDocs/#/monogamehtml</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TobySalusky/MonoGameHtml</RepositoryUrl>
     <PackageTags>C# MonoGame UI user-interface React</PackageTags>
-    <PackageVersion>1.0.0-alpha</PackageVersion>
+    <PackageVersion>1.0.1-alpha</PackageVersion>
     <PackageIconUrl>https://raw.githubusercontent.com/TobySalusky/MonoGameHtml/main/MonoGameHtml/docs/images/MonoGameHtmlIcon.png</PackageIconUrl>
     <PackageIcon>MonoGameHtmlIcon.png</PackageIcon>
-    <PackageReleaseNotes>Initial alpha release</PackageReleaseNotes>
+    <PackageReleaseNotes>Removed use of hard-coded path for loading default resources; upgraded Microsoft.CodeAnalysis dependencies to 3.11.0; slightly modified API for setting CSS.</PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <PropertyGroup>
