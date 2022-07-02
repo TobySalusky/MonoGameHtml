@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Xna.Framework;
 
@@ -25,7 +26,7 @@ namespace MonoGameHtml.ColorConsole {
             Project project = solution.AddProject("projectName", "assemblyName", LanguageNames.CSharp);
             Document document = project.AddDocument("name.cs", code);
             SourceText text = await document.GetTextAsync();
-
+            
             var classifiedSpans = await Classifier.GetClassifiedSpansAsync(document, TextSpan.FromBounds(0, text.Length));
 
             var ranges = classifiedSpans.Select(classifiedSpan =>

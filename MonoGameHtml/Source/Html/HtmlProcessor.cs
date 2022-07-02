@@ -360,7 +360,6 @@ namespace MonoGameHtml {
 			if (returnContents == "") throw new Exception($"{tag}'s main return statement is empty.");
 
 			string stateStr = "";
-			string contextHookDeclarations = "";
 			state: {
 				string stateDefinitions = componentContents[..mainReturnIndex];
 

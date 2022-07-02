@@ -8,32 +8,26 @@
 
 		public static Dictionary<string, CSSDefinition> classes = new Dictionary<string, CSSDefinition>();
 		public static Dictionary<string, CSSDefinition> tags = new Dictionary<string, CSSDefinition>();
-
-		internal static string defaultCssPath;
 		
 		static CSSHandler() {
-			defaultCssPath = FileUtil.TraceFilePath();
-			defaultCssPath = defaultCssPath.Substring(0, defaultCssPath.indexOf("Source"));
-			defaultCssPath = Path.Join(defaultCssPath, "Assets", "CSS", "Default.css");
 			SetCSS();
 		}
 
-		public static void SetCSS(params string[] filePaths) {
-			SetCSS((IEnumerable<string>)filePaths);
+		public static void SetCSSFiles(params string[] filePaths) { 
+			SetCSS(filePaths.Select(path => (CSSResource) new CSSFile(path)).ToArray());
 		}
 
-		public static void SetCSS(IEnumerable<string> filePathEnumerable) {
+		public static void SetCSS(params CSSResource[] resources) {
 
 			Dictionary<string, string> data = new Dictionary<string, string>();
 
 			classes = new Dictionary<string, CSSDefinition>();
 			tags = new Dictionary<string, CSSDefinition>();
 
+			var allResources = new[]{new CSSString(BakedDefaultAssets.DEFAULT_CSS)}.Concat(resources);
 			
-			var allFilePaths = new[]{defaultCssPath}.Concat(filePathEnumerable);
-			
-			foreach (string filePath in allFilePaths) {
-				readInCSSFile(filePath, data);
+			foreach (CSSResource resource in allResources) {
+				readInCSSFile(resource, data);
 			}
 
 			// use strings to generate definitions
@@ -47,9 +41,9 @@
 			}
 		}
 
-		internal static void readInCSSFile(string filePath, Dictionary<string, string> aggregateCSS) { 
+		internal static void readInCSSFile(CSSResource resource, Dictionary<string, string> aggregateCSS) { 
 			// read lines from CSS file
-			string[] lines = File.ReadAllLines(filePath);
+			string[] lines = resource.AsLines();
 				
 			// condense into one line (remove tabs and empty lines)
 			string fileContents = "";
@@ -138,4 +132,30 @@
 			return value;
 		}
 	}
-}
+
+	public interface CSSResource {
+		string[] AsLines();
+	}
+
+	public class CSSFile : CSSResource {
+		private readonly string _filePath;
+		public CSSFile(string filePath) {
+			_filePath = filePath;
+		}
+
+		public string[] AsLines() {
+			return File.ReadAllLines(_filePath);
+		}
+	}
+
+	public class CSSString : CSSResource {
+		private readonly string _css;
+		public CSSString(string css) {
+			_css = css;
+		}
+
+		public string[] AsLines() {
+			return _css.SplitLines();
+		}
+	}
+  }

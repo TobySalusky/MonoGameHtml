@@ -423,6 +423,33 @@ const Catch = (Action<Exception> __parens__) => {
         </catch>
 	);
 }
+", PanelView = @"
+const PanelView = () => {
+	
+	HtmlNode[] nodeArray = @contents;
+	
+	return (
+		<div>
+			<html/>
+			{nodeArray}
+		</div>
+	);
+}
+", Panel = @"
+const Panel = () => {
+	return (
+		<panel>
+			<html/>
+			{@contents}
+		</panel>
+	);
+}
+", PanelDivider = @"
+const PanelDivider = () => {
+	return (
+		<divider props={props}/>
+	);
+}
 ";
 
 		public static string AllInput = @$"
@@ -438,9 +465,14 @@ const Catch = (Action<Exception> __parens__) => {
 {Switch}
 {Case}
 {Default}
+", AllPanel = $@"
+{PanelView}
+{Panel}
+{PanelDivider}
 ", All = $@"
 {AllInput}
 {AllControlFlow}
+{AllPanel}
 {Slider}
 {Toggle}
 {FrameCounter}

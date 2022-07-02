@@ -11,16 +11,10 @@ namespace MonoGameHtml {
 		internal static int screenWidth, screenHeight;
 
 		internal static string cacheIdentifier;
-		internal static string fontPath, defaultFontPath, cachePath;
+		internal static string fontPath, cachePath;
 
 		internal static LoggerSettings loggerSettings;
-
-		static HtmlMain() {
-			defaultFontPath = FileUtil.TraceFilePath();
-			defaultFontPath = defaultFontPath.Substring(0, defaultFontPath.indexOf("Source"));
-			defaultFontPath = Path.Join(defaultFontPath, "Assets", "Fonts", "JetBrainsMono.ttf");
-		}
-
+		
 		public static void Initialize(Game game, string fontPath = null, 
 			bool cache = true, string cachePath = null, string cacheIdentifier = null, LoggerSettings loggerSettings = null) {
 			

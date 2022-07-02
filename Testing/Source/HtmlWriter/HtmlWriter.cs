@@ -298,7 +298,7 @@ namespace Testing {
                 "code", ""
             );
             
-            CSSHandler.SetCSS(Path.Join(GameMain.cssPath, "Styles.css"),
+            CSSHandler.SetCSSFiles(Path.Join(GameMain.cssPath, "Styles.css"),
 	            Path.Join(GameMain.cssPath, "IDE.css"));
 
 

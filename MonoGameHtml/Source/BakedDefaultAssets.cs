@@ -1,4 +1,6 @@
-﻿body {
+﻿namespace MonoGameHtml {
+    internal static class BakedDefaultAssets {
+        public const string DEFAULT_CSS = @"body {
     width: 100%;
     height: 100%;
 }
@@ -24,4 +26,6 @@ p {font-size: 18px;}
     background-color: white;
     border-color: black;
     width: 400px;
+}";
+    }
 }

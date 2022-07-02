@@ -51,7 +51,7 @@ namespace Example {
                 });
 
             // Initialize CSS
-            CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
+            CSSHandler.SetCSSFiles(Path.Join(cssPath, "Styles.css"));
             
             // create outside variable
             inventory = new Inventory();

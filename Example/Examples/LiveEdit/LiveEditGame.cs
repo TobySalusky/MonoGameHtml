@@ -53,7 +53,7 @@ namespace Example {
             // This is an example of how to use the **experimental** Live-Edit feature
             htmlInstance = await HtmlLiveEdit.Create(async () => { 
                 
-                CSSHandler.SetCSS(Path.Join(cssPath, "Styles.css"));
+                CSSHandler.SetCSSFiles(Path.Join(cssPath, "Styles.css"));
 
                 Console.WriteLine("Compiling...");
 
