@@ -425,29 +425,132 @@ const Catch = (Action<Exception> __parens__) => {
 }
 ", PanelView = @"
 const PanelView = () => {
+
+	HtmlNode[] contents = @contents;
+	float totalFlex = 0F;
 	
-	HtmlNode[] nodeArray = @contents;
+	Func<HtmlNode, int, int> adjustDiff = (panel, diff) => {
+		if (diff >= 0) return diff;
+		if (panel.prop<Func<int>>('getWidth').Invoke() + diff < panel.prop<int>('minWidth')) {
+			return panel.prop<int>('minWidth') - panel.prop<Func<int>>('getWidth').Invoke();
+		}
+		return diff;
+	};
 	
+	Action<HtmlNode, int> diffPanelWidth = (panel, diff) => {
+		panel.prop<Action<int>>('setWidth').Invoke(panel.prop<Func<int>>('getWidth').Invoke() + diff);
+	};
+	
+	for (int i = 0; i < contents.Length; i++) {
+		HtmlNode node = contents[i];
+		if (i % 2 == 0) {
+			if (node.tag != 'panel') {
+				throw new Exception($'element {i} of PanelView must be a panel');
+			}
+			totalFlex += node.prop<float>('initFlex');
+			
+		} else {
+		
+			if (node.tag != 'splitter') {
+				throw new Exception($'element {i} of PanelView must be a splitter');
+			}
+						
+			int thisI = i;
+			Func<int, int> shiftFunc = (int diff) => {
+				diff = adjustDiff(contents[thisI - 1], diff);
+				diff = adjustDiff(contents[thisI + 1], -diff) * -1;
+				
+				diffPanelWidth(contents[thisI - 1], diff);
+				diffPanelWidth(contents[thisI + 1], -diff);
+								
+				___node.triggerOnResize();
+				return diff;
+			};
+			
+			node.prop<Action<Func<int, int>>>('setShiftFunc')(shiftFunc);
+		}
+	}
+
 	return (
-		<div>
+		<span dimens='100%' props={props}
+			ref={(HtmlNode thisNode) => {
+				int splitterWidthUsed = 0;
+				
+				for (int i = 0; i < contents.Length; i++) {
+					if (i % 2 == 1) {
+						HtmlNode splitter = contents[i];
+						splitterWidthUsed += splitter.FullWidth;
+					}
+				}
+				
+				Logger.log(splitterWidthUsed);
+				
+				int availSpace = thisNode.width - splitterWidthUsed;
+				int spaceUsed = 0;
+				
+				Logger.log(availSpace, thisNode.width, splitterWidthUsed);
+				
+				for (int i = 0; i < contents.Length; i++) {
+					if (i % 2 == 0) {
+						HtmlNode panel = contents[i];
+						if (i == contents.Length - 1) {
+							panel.props['width'] = availSpace - spaceUsed;
+						} else {
+							int thisPanelWidth = (int) ((float) availSpace * (panel.prop<float>('initFlex') / totalFlex));
+							panel.props['width'] = thisPanelWidth;
+							spaceUsed += thisPanelWidth;
+						}
+					}
+				}
+				thisNode.triggerOnResize();
+			}}
+		>
+			{contents}
 			<html/>
-			{nodeArray}
-		</div>
+		</span>
 	);
 }
 ", Panel = @"
-const Panel = () => {
+const Panel = (int minWidth = 20, float initFlex = 1F) => {
+
 	return (
-		<panel>
+		<panel minWidth={minWidth} props={props} initFlex={initFlex} height='100%' class='BasePanel' getWidth={int: ___node.width} setWidth={(int newWidth) => ___node.width=newWidth}>
 			<html/>
 			{@contents}
 		</panel>
 	);
 }
-", PanelDivider = @"
-const PanelDivider = () => {
+", Splitter = @"
+const Splitter = () => {
+
+	Func<int, int> shiftFunc = null;
+	bool mouseOver = false;
+	bool dragging = false;
+	float dragStartX = 0f;
+	
 	return (
-		<divider props={props}/>
+		<splitter height='100%' class='BaseSplitter' props={props}
+			setShiftFunc={(Func<int,int> newShiftFunc) => shiftFunc = newShiftFunc}
+			onMouseEnter={() => mouseOver=true}
+			onMouseExit={() => mouseOver=false}
+			onMouseDown={() => {
+				if (!mouseOver) return;
+				dragging = true;
+				dragStartX = @mp.X;
+			}}
+			onMouseUp={() => dragging=false}
+			
+			onTick={()=> {
+				if (!dragging) return;
+				
+				int fullDragX = (int) (@mp.X - dragStartX);
+				if (fullDragX != 0) {
+					if (shiftFunc != null) {
+						dragStartX += shiftFunc.Invoke(fullDragX);
+					}
+				}
+			}}
+		/>
 	);
 }
 ";
@@ -468,14 +571,14 @@ const PanelDivider = () => {
 ", AllPanel = $@"
 {PanelView}
 {Panel}
-{PanelDivider}
+{Splitter}
 ", All = $@"
 {AllInput}
 {AllControlFlow}
-{AllPanel}
 {Slider}
 {Toggle}
 {FrameCounter}
+{AllPanel}
 ";
 	}
  }
