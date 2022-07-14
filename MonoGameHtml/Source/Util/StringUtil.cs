@@ -9,14 +9,6 @@ namespace MonoGameHtml {
             return (c == ' ' || c == '\n' || c == '\r' || c == '\t'); // TODO: this isn't exhaustive! i think.
         }
 
-        public static bool IsLetter(this char c) {
-            return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
-        }
-        
-        public static bool IsAlphanumeric(this char c) {
-            return (c >= '0' && c <= '9') || c.IsLetter();
-        }
-
         public static bool IsValidReferenceNameCharacter(this char c) { // major oversimplification TODO: improve?
             return c == '@' || c == '_' || c.IsAlphanumeric();
         }
@@ -133,6 +125,23 @@ namespace MonoGameHtml {
 
         public static string afterPair(this string str, DelimPair pair) {
             return str.Substring(pair.AfterClose);
+        }
+        
+        public static bool IsLetter(this char c) {
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        }
+		
+        public static bool IsNumber(this char c) {
+            return c >= '0' && c <= '9';
+        }
+		
+        public static bool IsAlphanumeric(this char c) {
+            return c.IsLetter() || c.IsNumber();
+        }
+
+        public static bool EqualsAnyCase(this char c, char nonCaseSensitiveMatchChar) {
+            return c == nonCaseSensitiveMatchChar.ToString().ToLower()[0] ||
+                   c == nonCaseSensitiveMatchChar.ToString().ToUpper()[0];
         }
     }
 }

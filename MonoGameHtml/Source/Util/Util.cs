@@ -412,7 +412,11 @@ namespace MonoGameHtml {
         public static IEnumerable<T> GetValues<T>() {
             return Enum.GetValues(typeof(T)).Cast<T>();
         }
-        
+
+        public static string GetName<T>(this T value) where T : Enum {
+            return Enum.GetName(typeof(T), value);
+        }
+
         public static string cutoffString(string str, SpriteFont font, float width, string end = "...") {
             try {
                 if (!(font.MeasureString(str).X > width)) return str;
