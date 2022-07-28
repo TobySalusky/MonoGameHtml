@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MonoGameHtml.Tokenization.Patterns;
 
 namespace MonoGameHtml.Tokenization {
 	public static class Tokenizer {
 
-		public static TokenType[] patternOrder = Enum.GetValues(typeof(TokenType)).Cast<TokenType>().ToArray();
+		public static TokenType[] patternOrder = Util.GetValues<TokenType>().ToArray();
 
-		public static IEnumerable<Token> Tokenize(string fileStr) {
+		public static Token[] Tokenize(string fileStr) {
 			int i = 0;
+			var output = new List<Token>();
 
 			while (i < fileStr.Length) {
 				foreach (var type in patternOrder) {
@@ -17,12 +19,12 @@ namespace MonoGameHtml.Tokenization {
 					
 					var (success, countMoved) = pattern.Apply(fileStr, i);
 					if (success) {
-						yield return new Token { 
+						output.Add(new Token { 
 							type = type, 
 							index = i, 
 							length = countMoved, 
 							value = fileStr.Substring(i, countMoved)
-						};
+						});
 						i += countMoved;
 						goto continueWhile;
 					}
@@ -35,11 +37,13 @@ namespace MonoGameHtml.Tokenization {
 			if (i > fileStr.Length) { 
 				throw new Exception("Over-tokenized string.");
 			}
+			
+			return output.ToArray();
 		}
 
-		public static IEnumerable<Token> RemoveSuperfluous(this IEnumerable<Token> tokens) { 
+		public static Token[] RemoveSuperfluous(this IEnumerable<Token> tokens) { 
 			return tokens
-				.Where(token => token.type != TokenType.WhiteSpace && token.type != TokenType.Comment);
+				.Where(token => token.type != TokenType.WhiteSpace && token.type != TokenType.Comment).ToArray();
 		}
 	}
 }

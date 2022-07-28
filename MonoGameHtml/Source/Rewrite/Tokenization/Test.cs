@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Numerics;
 using MonoGameHtml.Parser;
 
@@ -28,16 +29,29 @@ float Calc(float f1, float f2 = 0.0f) {
 }
 
 ";
-			
+			var stopwatch = new Stopwatch();
+
+			stopwatch.Start();
 			var tokens = Tokenizer.Tokenize(testFileStr).RemoveSuperfluous();
+			stopwatch.Stop();
+			var (tokenizationMillis, tokenizationSeconds) = (stopwatch.Elapsed.Milliseconds, stopwatch.Elapsed.TotalSeconds);
+
+			stopwatch.Start();
+			var parse = Parser.Parser.Parse(tokens, "file");
+			stopwatch.Stop();
+			var (parseMillis, parseSeconds) = (stopwatch.Elapsed.Milliseconds, stopwatch.Elapsed.TotalSeconds);
 			
-			var lex = Parser.Parser.Parse(tokens, "file");
-			
-			foreach (var token in tokens) {
-				Console.WriteLine($"{token.type}{(token.type == TokenType.WhiteSpace ? "" : $" (`{token.value}`)")}");
+			// logging
+			if (!parse.Succeeded) {
+				Console.WriteLine("====================================================");
+				foreach (var token in tokens) {
+					Console.WriteLine($"{token.type}{(token.type == TokenType.WhiteSpace ? "" : $" (`{token.value}`)")}");
+				}
+				Console.WriteLine("====================================================");
 			}
-			
-			Console.WriteLine($"{lex.Succeeded}");
+			Console.WriteLine($" Tokenization: {tokenizationMillis}ms | {tokenizationSeconds:N3} seconds.");
+			Console.WriteLine($"        Parse: {parseMillis}ms | {parseSeconds:N3} seconds.");
+			Console.WriteLine($"      Success: {parse.Succeeded}");
 
 
 

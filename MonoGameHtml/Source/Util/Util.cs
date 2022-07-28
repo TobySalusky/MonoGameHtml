@@ -409,10 +409,10 @@ namespace MonoGameHtml {
         }
 
         // FROM: https://stackoverflow.com/questions/972307/how-to-loop-through-all-enum-values-in-c
-        public static IEnumerable<T> GetValues<T>() {
+        public static IEnumerable<T> GetValues<T>() where T : Enum {
             return Enum.GetValues(typeof(T)).Cast<T>();
         }
-
+        
         public static string GetName<T>(this T value) where T : Enum {
             return Enum.GetName(typeof(T), value);
         }
