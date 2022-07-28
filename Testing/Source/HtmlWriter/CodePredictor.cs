@@ -55,7 +55,7 @@ namespace Testing {
         }
 
         private static List<string> PredictHtmlAttribute(string searchFor, string code, int index) {
-            var htmlPairs = Parser.FindHtmlPairs(code);
+            var htmlPairs = MonoGameHtmlParser.FindHtmlPairs(code);
             
             foreach (HtmlPair pair in htmlPairs) {
                 string header = pair.headerContents(code);

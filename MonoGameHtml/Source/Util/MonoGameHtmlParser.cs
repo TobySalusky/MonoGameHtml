@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework;
 using Range = MonoGameHtml.ColorConsole.Range;
 
 namespace MonoGameHtml {
-	public static class Parser {
+	public static class MonoGameHtmlParser {
 
 		public static string ExpandSelfClosedHtmlTags(string code) {
 			var braceDict = DelimPair.genPairDict(code, DelimPair.CurlyBrackets);

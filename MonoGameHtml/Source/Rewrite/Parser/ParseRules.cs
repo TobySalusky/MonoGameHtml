@@ -1,7 +1,8 @@
-﻿namespace MonoGameHtml.Lexical {
-	public static class LexerRules {
+﻿namespace MonoGameHtml.Parser {
+	public static class ParseRules {
 
 		public const string LEXER_RULES = @"
+// TODO: remove
 test {
 	method
 }
@@ -32,8 +33,9 @@ operation {
 	expression operator expression
 }
 
+// type_caster is problematic due to lack of recursive look-back (collides with parenthetical_clause)
 unary_operation {
-	
+	Plus | Minus
 }
 
 unary_operator {
@@ -95,7 +97,15 @@ method_call_arg {
 // NEW - OBJECT CONSTRUCTION -----------------------------------------------------------------
 
 new_object {
-	'new' type_name
+	'new' type_name (method_call_args named_initializer_list? | named_initializer_list)
+}
+
+named_initializer_list {
+	OpenBrace (named_initializer (Comma named_initializer)*)? CloseBrace
+}
+
+named_initializer {
+	Identifier Equals expression
 }
 
 // LAMBDA -----------------------------------------------------------------

@@ -151,7 +151,7 @@ namespace MonoGameHtml.ColorConsole {
 
                     }
                     
-                    if (Parser.EndingHtml(code, i, out int endIndex)) {
+                    if (MonoGameHtmlParser.EndingHtml(code, i, out int endIndex)) {
                         SetRange(i, 2, "HtmlBrackets");
                         SetRange(i + 2, endIndex - i - 2, GetTagType(code.Substring(i + 2, endIndex - i - 2)));
                         SetRange(endIndex, 1, "HtmlBrackets");

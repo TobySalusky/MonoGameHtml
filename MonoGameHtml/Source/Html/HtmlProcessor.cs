@@ -76,7 +76,7 @@ namespace MonoGameHtml {
 
 			//if (node == "<html></html>") return "null";
 
-			var htmlPairs = Parser.FindHtmlPairs(node, true);
+			var htmlPairs = MonoGameHtmlParser.FindHtmlPairs(node, true);
 			
 			HtmlPair mainPair = htmlPairs[^1];
 			
@@ -551,7 +551,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 	return ___node;
 }}
 ";
-			var basePairs = Parser.FindHtmlPairs(output).Where(htmlPair => htmlPair.nestCount == 0).Reverse();
+			var basePairs = MonoGameHtmlParser.FindHtmlPairs(output).Where(htmlPair => htmlPair.nestCount == 0).Reverse();
 
 			foreach (HtmlPair htmlPair in basePairs) {
 				output = output[..htmlPair.openIndex] + StringifyNode(htmlPair.whole(output)) + output[(htmlPair.closeIndex + htmlPair.closeLen)..];
@@ -608,7 +608,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 
 		internal static string preprocess(string code, Dictionary<string, string> macros) { // applies macros and expands tags
 			code = ApplyMacros(code, macros);
-			code = Parser.ExpandSelfClosedHtmlTags(code);
+			code = MonoGameHtmlParser.ExpandSelfClosedHtmlTags(code);
 			code = code.Replace("\"", "'");
 			code = InlineActionFuncCasts(code);
 			return code;

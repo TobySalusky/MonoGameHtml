@@ -1,4 +1,4 @@
-﻿namespace MonoGameHtml.Lexical {
+﻿namespace MonoGameHtml.Parser {
 	public class TokenGroup : TokenLike {
 		public string Name { get; }
 		public TokenLike[] TokenLikes { get; }

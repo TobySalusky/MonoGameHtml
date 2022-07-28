@@ -17,7 +17,7 @@ namespace Testing {
 	        const string html = "<App/>";
             StatePack statePack = null;
 
-            Func<string, Task<List<List<(Color, int)>>>> colorHtml = async (code) => await Parser.ColorSyntaxHighlightedCSharpHtml(code);
+            Func<string, Task<List<List<(Color, int)>>>> colorHtml = async (code) => await MonoGameHtmlParser.ColorSyntaxHighlightedCSharpHtml(code);
             
             Func<int, string, Task<(HtmlNode, Exception, int)>> updateHtml = async (updateCount, text) => {
 	            HtmlNode node = null;

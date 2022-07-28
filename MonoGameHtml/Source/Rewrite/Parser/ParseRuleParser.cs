@@ -3,20 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using MonoGameHtml.Tokenization;
 
-namespace MonoGameHtml.Lexical {
-	public static class LexerRuleParser {
-		
-		public static Dictionary<string, LexerRule> ParseLexerRules() {
-			var tokens = Tokenizer.Tokenize(LexerRules.LEXER_RULES)
+namespace MonoGameHtml.Parser {
+	public static class ParseRuleParser {
+
+		public static Dictionary<string, ParseRule> ParseLexerRules() {
+			
+			var tokens = Tokenizer.Tokenize(ParseRules.LEXER_RULES)
 				.RemoveSuperfluous();
 
-			var specialRules = new (string name, LexerRule rule)[] {
-				("__EOF__", new LexerRule.EndOfFile()) 
+			var specialRules = new (string name, ParseRule rule)[] {
+				("__EOF__", new ParseRule.EndOfFile()) 
 			};
 			
 			var tokenTypeRules = Util.GetValues<TokenType>().Select(tokenType => {
 				var name = tokenType.GetName();
-				var rule = (LexerRule) new LexerRule.One { Predicate = t => t.type == tokenType };
+				var rule = (ParseRule) new ParseRule.One { Predicate = t => t.type == tokenType };
 				return (name, rule);
 			});
 
@@ -38,33 +39,33 @@ namespace MonoGameHtml.Lexical {
 			return allNamedRules.ToDictionary(val => val.name, val => val.rule);
 		}
 
-		public static LexerRule ComposeRule(IEnumerable<Token> ruleContents) {
+		public static ParseRule ComposeRule(IEnumerable<Token> ruleContents) {
 			var tokenArr = ruleContents.ToArray();
-			var outputRules = new List<LexerRule>();
+			var outputRules = new List<ParseRule>();
 			
 			for (int i = 0; i < tokenArr.Length; i++) {
 				var token = tokenArr[i];
 				switch (token.type) {
 					case TokenType.Identifier:
 						// use other rules
-						outputRules.Add(new LexerRule.Named { Name = token.value });
+						outputRules.Add(new ParseRule.Named { Name = token.value });
 						break;
 					case TokenType.Character:
 						// keywords
-						outputRules.Add(new LexerRule.One { Predicate = t => t.type == TokenType.Identifier && t.value == token.value[1..^1] });
+						outputRules.Add(new ParseRule.One { Predicate = t => t.type == TokenType.Identifier && t.value == token.value[1..^1] });
 						break;
 					case TokenType.QuestionMark:
 						// optional
-						outputRules[^1] = new LexerRule.Optional { Proxy = outputRules[^1] };
+						outputRules[^1] = new ParseRule.Optional { Proxy = outputRules[^1] };
 						break;
 					case TokenType.Plus:
 						// one or more
-						outputRules[^1] = new LexerRule.OneOrMore { Proxy = outputRules[^1] };
+						outputRules[^1] = new ParseRule.OneOrMore { Proxy = outputRules[^1] };
 						break;
 					case TokenType.Asterisk:
 						// none or more
-						outputRules[^1] = new LexerRule.Optional { 
-							Proxy = new LexerRule.OneOrMore { Proxy = outputRules[^1] }
+						outputRules[^1] = new ParseRule.Optional { 
+							Proxy = new ParseRule.OneOrMore { Proxy = outputRules[^1] }
 						};
 						break;
 					case TokenType.OpenParen:
@@ -84,9 +85,9 @@ namespace MonoGameHtml.Lexical {
 						break;
 					case TokenType.Bar:
 						// or
-						outputRules = new List<LexerRule> {
-							new LexerRule.Any { Rules = new []{
-								new LexerRule.All { Rules = outputRules }, 
+						outputRules = new List<ParseRule> {
+							new ParseRule.Any { Rules = new []{
+								new ParseRule.All { Rules = outputRules }, 
 								ComposeRule(tokenArr.Skip(i + 1))
 							}}
 						};
@@ -98,7 +99,7 @@ namespace MonoGameHtml.Lexical {
 			
 			Finished: { }
 
-			return new LexerRule.All { Rules = outputRules };
+			return new ParseRule.All { Rules = outputRules };
 		}
 	}
 }

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Numerics;
-using MonoGameHtml.Lexical;
+using MonoGameHtml.Parser;
 
 namespace MonoGameHtml.Tokenization {
 	public class Test {
@@ -31,7 +31,7 @@ float Calc(float f1, float f2 = 0.0f) {
 			
 			var tokens = Tokenizer.Tokenize(testFileStr).RemoveSuperfluous();
 			
-			var lex = Lexer.Lex(tokens, "file");
+			var lex = Parser.Parser.Parse(tokens, "file");
 			
 			foreach (var token in tokens) {
 				Console.WriteLine($"{token.type}{(token.type == TokenType.WhiteSpace ? "" : $" (`{token.value}`)")}");

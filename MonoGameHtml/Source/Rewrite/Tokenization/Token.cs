@@ -1,4 +1,4 @@
-﻿using MonoGameHtml.Lexical;
+﻿using MonoGameHtml.Parser;
 
 namespace MonoGameHtml.Tokenization {
 	public struct Token : TokenLike {
