@@ -48,6 +48,7 @@ namespace MonoGameHtml.Parser {
 		}
 
 		public class All : ParseRule {
+			public string Name { get; set; } = "All";
 			public IEnumerable<ParseRule> Rules { get; set; }
 			public ParseResult Apply(IEnumerable<Token> tokens) {
 				var currentContinuation = tokens;
@@ -62,7 +63,7 @@ namespace MonoGameHtml.Parser {
 					currentContinuation = result.Continuation;
 					groupingList.Add(result.Matched);
 				}
-				return new ParseResult(true, new TokenGroup(nameof(All), groupingList.ToArray()), currentContinuation);
+				return new ParseResult(true, new TokenGroup(Name, groupingList.ToArray()), currentContinuation);
 			}
 		}
 		

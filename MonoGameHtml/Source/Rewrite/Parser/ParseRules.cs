@@ -16,7 +16,7 @@ parenthetical_grouping {
 }
 
 expression {
-	literal | Identifier | html_literal | parenthetical_grouping
+	literal | Identifier | html_literal | new_object | parenthetical_grouping
 }
 
 statement {
@@ -95,6 +95,10 @@ method_call_arg {
 
 
 // NEW - OBJECT CONSTRUCTION -----------------------------------------------------------------
+
+new_array {
+	'new' 
+}
 
 new_object {
 	'new' type_name (method_call_args named_initializer_list? | named_initializer_list)

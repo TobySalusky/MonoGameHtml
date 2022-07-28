@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Numerics;
+using MonoGameHtml.MainMethod.Rewrite.AST;
 using MonoGameHtml.Parser;
 
 namespace MonoGameHtml.Tokenization {
@@ -49,6 +50,12 @@ float Calc(float f1, float f2 = 0.0f) {
 				}
 				Console.WriteLine("====================================================");
 			}
+			
+			Console.WriteLine("====================================================");
+			AbstractSyntaxTree.WalkSyntax(parse.Matched);
+			Console.WriteLine("====================================================");
+
+
 			Console.WriteLine($" Tokenization: {tokenizationMillis}ms | {tokenizationSeconds:N3} seconds.");
 			Console.WriteLine($"        Parse: {parseMillis}ms | {parseSeconds:N3} seconds.");
 			Console.WriteLine($"      Success: {parse.Succeeded}");

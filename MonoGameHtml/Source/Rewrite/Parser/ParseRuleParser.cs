@@ -26,7 +26,7 @@ namespace MonoGameHtml.Parser {
 			var composedRules = ruleSections.Select(section => {
 				string name = section[0].value;
 				var contents = section[2..];
-				var rule = ComposeRule(contents);
+				var rule = ComposeRule(contents, name);
 				return (name, rule);
 			}).ToArray();
 
@@ -39,7 +39,7 @@ namespace MonoGameHtml.Parser {
 			return allNamedRules.ToDictionary(val => val.name, val => val.rule);
 		}
 
-		public static ParseRule ComposeRule(IEnumerable<Token> ruleContents) {
+		public static ParseRule ComposeRule(IEnumerable<Token> ruleContents, string name = nameof(ParseRule.All)) {
 			var tokenArr = ruleContents.ToArray();
 			var outputRules = new List<ParseRule>();
 			
@@ -99,7 +99,7 @@ namespace MonoGameHtml.Parser {
 			
 			Finished: { }
 
-			return new ParseRule.All { Rules = outputRules };
+			return new ParseRule.All { Rules = outputRules, Name = name };
 		}
 	}
 }
