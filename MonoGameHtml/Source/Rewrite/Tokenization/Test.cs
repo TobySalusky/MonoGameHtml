@@ -20,7 +20,7 @@ void Yo() {
 	(
 		<div>
 			<span class={'huh'}>yoo</span>
-			<sep/>
+			   <sep/>
 		</div>
 	);
 }
@@ -31,12 +31,12 @@ float Calc(float f1, float f2 = 0.0f) {
 
 ";
 			var stopwatch = new Stopwatch();
-
+			
 			stopwatch.Start();
 			var tokens = Tokenizer.Tokenize(testFileStr).RemoveSuperfluous();
 			stopwatch.Stop();
 			var (tokenizationMillis, tokenizationSeconds) = (stopwatch.Elapsed.Milliseconds, stopwatch.Elapsed.TotalSeconds);
-
+			
 			stopwatch.Start();
 			var parse = Parser.Parser.Parse(tokens, "file");
 			stopwatch.Stop();
@@ -54,7 +54,7 @@ float Calc(float f1, float f2 = 0.0f) {
 			Console.WriteLine("====================================================");
 			AbstractSyntaxTree.WalkSyntax(parse.Matched);
 			Console.WriteLine("====================================================");
-
+			
 
 			Console.WriteLine($" Tokenization: {tokenizationMillis}ms | {tokenizationSeconds:N3} seconds.");
 			Console.WriteLine($"        Parse: {parseMillis}ms | {parseSeconds:N3} seconds.");

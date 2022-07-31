@@ -140,11 +140,7 @@ lambda_body_multiline {
 // DECLARATION -----------------------------------------------------------------
 
 declaration {
-	typed_identifier (Equals expression)?
-}
-
-declaration_modifier {
-	'const'
+	'const'? typed_identifier (Equals expression)?
 }
 
 visibility_modifier {
@@ -163,8 +159,23 @@ assignment {
 
 // TYPES -----------------------------------------------------------------
 
+// TODO: dotted types ex. T.T1.T2, T<T1, T2>.T3.T4
+// TODO: arrays, pointers, and nullable '?' types
+
 type_name {
-	Identifier | generic_type | tuple_type
+	(dottable_type | tuple_type) (array_chunk | Asterisk | QuestionMark)*
+}
+
+array_chunk {
+	OpenBracket Comma* CloseBracket
+}
+
+dottable_type {
+	dottable_segment (Dot dottable_segment)*
+}
+
+dottable_segment {
+	Identifier | generic_type
 }
 
 generic_type {
@@ -172,7 +183,12 @@ generic_type {
 }
 
 tuple_type {
-	OpenParen type_name (Comma type_name)* CloseParen
+	OpenParen tuple_segment (Comma tuple_segment)* CloseParen
+}
+
+// (tuple members can optionally have names)
+tuple_segment {
+	type_name Identifier?
 }
 
 // HTML -----------------------------------------------------------------
