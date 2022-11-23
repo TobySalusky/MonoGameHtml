@@ -71,7 +71,7 @@ namespace MonoGameHtml {
 		}
 
 		private void StartGenerateTask() {
-			Logger.log("unique", Util.randInt(100000));
+			Logger.Log("unique", Util.randInt(100000));
 			GenerateTask().Start();
 		}
 
@@ -80,7 +80,7 @@ namespace MonoGameHtml {
 				try {
 					generateRunner.Invoke().ContinueWith(task => { currentInstance = task.Result; });
 				} catch (Exception e) { 
-					Logger.log(e);
+					Logger.Log(e);
 				}
 			});
 		}

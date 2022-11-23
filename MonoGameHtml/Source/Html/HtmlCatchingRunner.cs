@@ -15,7 +15,7 @@ namespace MonoGameHtml {
 			try {
 				wrappedInstance.Update(gameTime, mouseState, keyState);
 			} catch (Exception e) { 
-				Logger.log(e);
+				Logger.Log(e);
 			}
 		}
 
@@ -23,7 +23,7 @@ namespace MonoGameHtml {
 			try {
 				wrappedInstance.Render(spriteBatch);
 			} catch (Exception e) { 
-				Logger.log(e);
+				Logger.Log(e);
 			}
 		}
 	}

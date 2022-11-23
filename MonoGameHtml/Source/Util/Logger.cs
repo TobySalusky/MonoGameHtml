@@ -6,17 +6,17 @@ namespace MonoGameHtml {
         public static void logColor(ConsoleColor color, params object[] strs) {
             ConsoleColor storeColor = Console.ForegroundColor;
             if (HtmlMain.loggerSettings.allowColor) Console.ForegroundColor = color;
-            log(strs);
+            Log(strs);
             Console.ForegroundColor = storeColor;
         }
 
-        public static void log(object str) {
-            if (!HtmlMain.loggerSettings.logOutput) return;
+        public static void Log(object str) {
+            // if (!HtmlMain.loggerSettings.logOutput) return;
 
             Console.WriteLine(str);
         }
 
-        public static void log(params object[] strs) {
+        public static void Log(params object[] strs) {
             if (!HtmlMain.loggerSettings.logOutput) return;
             
             Console.Write(strs[0]);

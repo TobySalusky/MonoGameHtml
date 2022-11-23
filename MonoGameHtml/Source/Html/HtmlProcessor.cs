@@ -636,7 +636,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 			string[] inputArr = new List<string> {code}.Concat(components).ToArray();
 
 			if (HtmlSettings.useCache && HtmlCache.IsCached(inputArr, statePack)) {
-				Logger.log("Using Cached HTML");
+				Logger.Log("Using Cached HTML");
 				return statePack.cachedNode();
 			}
 
@@ -648,7 +648,7 @@ HtmlNode Create{tag}(string tag, Dictionary<string, object> props = null, string
 
 			// HTML CONSOLE LOG
 			Logger.logColor(ConsoleColor.Yellow, HtmlOutput.OUTPUT_HTML);
-			Logger.log(code);
+			Logger.Log(code);
 			Logger.logColor(ConsoleColor.Yellow, HtmlOutput.OUTPUT_END);
 
 			if (assemblies != null) {
@@ -704,7 +704,7 @@ using Microsoft.Xna.Framework.Graphics;
 				Task.Run(() => ConsoleMain.AsyncPrintCS(code)); // (runs in background)
 			} else {
 				Logger.logColor(ConsoleColor.Red, HtmlOutput.OUTPUT_CS);
-				Logger.log(code);
+				Logger.Log(code);
 				Logger.logColor(ConsoleColor.Red, HtmlOutput.NEW_OUTPUT_END);
 			}
 
@@ -735,7 +735,7 @@ using Microsoft.Xna.Framework.Graphics;
 			HtmlNode node = await GenHtml(code, statePack, assemblies, imports, macros, components);
 
 			watch.Stop();
-			Logger.log($"generating HTML took: {watch.Elapsed.TotalSeconds} seconds");
+			Logger.Log($"generating HTML took: {watch.Elapsed.TotalSeconds} seconds");
 
 			
 			return new HtmlRunner { node=node, statePack=statePack};

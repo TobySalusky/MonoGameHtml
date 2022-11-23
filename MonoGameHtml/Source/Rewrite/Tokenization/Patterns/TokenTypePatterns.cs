@@ -31,10 +31,10 @@ namespace MonoGameHtml.Tokenization.Patterns {
 			
 			var normalStringRule = new All( // TODO: add special strings!
 				Exact('"'),
-				new OneOrMore(new Any(
+				new Optional(new OneOrMore(new Any(
 					new One(c => c != '"'),
 					LookingBack(1, new Match("\\\""))
-					)),
+				))),
 				Exact('"')
 				);
 			
@@ -88,6 +88,28 @@ namespace MonoGameHtml.Tokenization.Patterns {
 				TokenType.OpenAngle => Exact('<'),
 				TokenType.CloseAngle => Exact('>'),
 				
+				TokenType.PlusEquals => new Match("+="),
+				TokenType.MinusEquals => new Match("-="),
+				TokenType.TimesEquals => new Match("*="),
+				TokenType.DivideEquals => new Match("/="),
+				TokenType.ModEquals => new Match("%="),
+				TokenType.LeftShiftEquals => new Match("<<="),
+				TokenType.RightShiftEquals => new Match(">>="),
+				TokenType.AndEquals => new Match("&="),
+				TokenType.OrEquals => new Match("|="),
+				TokenType.XorEquals => new Match("^="),
+				TokenType.NullCoalesceEquals => new Match("??="),
+				
+				TokenType.EqualsEquals => new Match("=="),
+				TokenType.NotEquals => new Match("!="),
+				TokenType.DotDot => new Match(".."),
+				TokenType.LogicalAnd => new Match("&&"),
+				TokenType.LogicalOr => new Match("||"),
+				TokenType.NullCoalesce => new Match("??"),
+				TokenType.LeftShift => new Match("<<"),
+				TokenType.RightShift => new Match(">>"),
+				TokenType.RightTripleShift => new Match(">>>"),
+				
 				TokenType.Semicolon => Exact(';'),
 				TokenType.Colon => Exact(':'),
 				TokenType.At => Exact('@'),
@@ -109,6 +131,8 @@ namespace MonoGameHtml.Tokenization.Patterns {
 				TokenType.Bar => Exact('|'),
 				TokenType.Comma => Exact(','),
 				TokenType.FatArrow => new Match("=>"),
+				TokenType.GreaterThanOrEqual => new Match("<="),
+				TokenType.LessThanOrEqual => new Match(">="),
 
 				// TokenType.Keyword => AnyString(keywords),
 				TokenType.WhiteSpace => new OneOrMore(StringUtil.IsWhiteSpace),

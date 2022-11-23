@@ -12,8 +12,8 @@ namespace MonoGameHtml.Tokenization {
 		public static Token[] Tokenize(string fileStr) {
 			int i = 0;
 			var output = new List<Token>();
-
 			while (i < fileStr.Length) {
+				
 				foreach (var type in patternOrder) {
 					var pattern = TokenTypePatterns.GetPatternFor(type);
 					
@@ -29,8 +29,8 @@ namespace MonoGameHtml.Tokenization {
 						goto continueWhile;
 					}
 				}
-
-				throw new Exception("Failed to fully tokenize string.");
+				
+				throw new Exception($"Failed to fully tokenize string. (at: i={i} w/ { string.Join(", ", output.Select(token => token.type)) }) & failed here =>\"{fileStr[i..]}\"");
 				continueWhile: { }
 			}
 

@@ -61,7 +61,7 @@ namespace MonoGameHtml {
 				___vars[name] = obj;
 				___types[name] = type;
 				
-				Logger.log($"\t\"{name}\" ({type}): {obj}");
+				Logger.Log($"\t\"{name}\" ({type}): {obj}");
 			}
 			Logger.logColor(ConsoleColor.Green, HtmlOutput.OUTPUT_END);
 		}

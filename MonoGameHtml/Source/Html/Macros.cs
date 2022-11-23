@@ -26,15 +26,14 @@ namespace MonoGameHtml {
 		
 		public static Dictionary<string, string> create(params string[] macroList) {
 			macroList = macroList.Concat(defaults).ToArray();
-			Dictionary<string, string> macros = new Dictionary<string, string>();
-			
+			Dictionary<string, string> macros = new();
 			for (int i = 0; i < macroList.Length; i += 2) {
 				string macroID = macroList[i];
 				string value = macroList[i + 1];
 
 				macros[macroID] = value;
 			}
-
+			
 			return macros;
 		}
 	}

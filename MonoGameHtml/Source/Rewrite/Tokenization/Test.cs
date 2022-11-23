@@ -1,37 +1,20 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Numerics;
 using MonoGameHtml.MainMethod.Rewrite.AST;
 using MonoGameHtml.Parser;
 
 namespace MonoGameHtml.Tokenization {
+	
 	public class Test {
+
 		public static void RunTest() {
-			const string testFileStr = @"
-
-void Hi(int i, Action f) {
-	var test = 1;
-	int i = 0;
-	float f;
-}
-
-void Yo() {
-	HtmlNode node = 
-	(
-		<div>
-			<span class={'huh'}>yoo</span>
-			   <sep/>
-		</div>
-	);
-}
-
-float Calc(float f1, float f2 = 0.0f) {
-	float f;
-}
-
-";
-			var stopwatch = new Stopwatch();
 			
+			
+			string testFileStr = File.ReadAllText("/Users/toby/Documents/GitHub/MonoGameHtml/MonoGameHtml/Source/Html/BakedDefaultAssets.cs");
+			var stopwatch = new Stopwatch();
+
 			stopwatch.Start();
 			var tokens = Tokenizer.Tokenize(testFileStr).RemoveSuperfluous();
 			stopwatch.Stop();

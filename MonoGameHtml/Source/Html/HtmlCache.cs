@@ -32,7 +32,7 @@
 					UpdateCache(input, outputCode);
 				}
 				catch (Exception e) {
-					Logger.log("FAILED TO CACHE!", e);
+					Logger.Log("FAILED TO CACHE!", e);
 				}
 			} else {
 				for (int i = 0; i < input.Length; i++) {
@@ -41,7 +41,7 @@
 							UpdateCache(input, outputCode);
 						}
 						catch (Exception e) {
-							Logger.log("FAILED TO CACHE!", e);
+							Logger.Log("FAILED TO CACHE!", e);
 						}
 					}
 				}

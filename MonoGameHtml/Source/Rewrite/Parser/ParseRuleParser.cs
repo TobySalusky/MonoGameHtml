@@ -58,6 +58,10 @@ namespace MonoGameHtml.Parser {
 						// optional
 						outputRules[^1] = new ParseRule.Optional { Proxy = outputRules[^1] };
 						break;
+					case TokenType.Caret:
+						// not (only works for single token)
+						outputRules[^1] = new ParseRule.Not { Proxy = outputRules[^1] };
+						break;
 					case TokenType.Plus:
 						// one or more
 						outputRules[^1] = new ParseRule.OneOrMore { Proxy = outputRules[^1] };

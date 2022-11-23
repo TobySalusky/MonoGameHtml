@@ -10,7 +10,7 @@ namespace MonoGameHtml.Parser {
 		public ParseResult Apply(IEnumerable<Token> tokens);
 
 		public class One : ParseRule {
-			public Func<Token, bool> Predicate { get; set; }
+			public Func<Token, bool> Predicate { get; init; }
 
 			public ParseResult Apply(IEnumerable<Token> tokens) {
 				if (!tokens.Any()) {
@@ -23,7 +23,7 @@ namespace MonoGameHtml.Parser {
 		}
 		
 		public class OneOrMore : ParseRule {
-			public ParseRule Proxy { get; set; }
+			public ParseRule Proxy { get; init; }
 			public ParseResult Apply(IEnumerable<Token> tokens) {
 				bool hasSucceeded = false;
 				var currentContinuation = tokens;
@@ -48,8 +48,8 @@ namespace MonoGameHtml.Parser {
 		}
 
 		public class All : ParseRule {
-			public string Name { get; set; } = "All";
-			public IEnumerable<ParseRule> Rules { get; set; }
+			public string Name { get; init; } = "All";
+			public IEnumerable<ParseRule> Rules { get; init; }
 			public ParseResult Apply(IEnumerable<Token> tokens) {
 				var currentContinuation = tokens;
 				var groupingList = new List<TokenLike>();
@@ -68,7 +68,7 @@ namespace MonoGameHtml.Parser {
 		}
 		
 		public class Any : ParseRule {
-			public IEnumerable<ParseRule> Rules { get; set; }
+			public IEnumerable<ParseRule> Rules { get; init; }
 			public ParseResult Apply(IEnumerable<Token> tokens) {
 
 				foreach (var rule in Rules) {
@@ -82,7 +82,7 @@ namespace MonoGameHtml.Parser {
 		}
 
 		public class Optional : ParseRule {
-			public ParseRule Proxy { get; set; }
+			public ParseRule Proxy { get; init; }
 			public ParseResult Apply(IEnumerable<Token> tokens) {
 				
 				var result = Proxy.Apply(tokens);
@@ -92,12 +92,32 @@ namespace MonoGameHtml.Parser {
 					result.Succeeded ? result.Continuation : tokens);
 			}
 		}
-
-		public class Named : ParseRule {
-			public string Name { get; set; }
+		
+		public class Not : ParseRule {
+			public ParseRule Proxy { get; init; }
 
 			public ParseResult Apply(IEnumerable<Token> tokens) {
-				return namedRules[Name].Apply(tokens);
+				var result = Proxy.Apply(tokens);
+
+				if (result.Succeeded || !tokens.Any()) {
+					return ParseResult.Fail;
+				}
+				
+				var token = tokens.First();
+				return new ParseResult(true, token, tokens.Skip(1));
+			}
+		}
+
+		public class Named : ParseRule {
+			public string Name { get; init; }
+			// public int Count { get; set; }
+
+			public ParseResult Apply(IEnumerable<Token> tokens) {
+				// Logger.Log(Count++);
+				// if (Count > 10) { return ParseResult.Fail; }
+				var res = namedRules[Name].Apply(tokens);
+				// Logger.Log($"{Name} {res.Succeeded}");
+				return res;
 			}
 		}
 

@@ -68,8 +68,8 @@ namespace MonoGameHtml.Fonts {
                 return existingFonts[fontName].GetFont(size);
             }
             catch (Exception e) {
-                Logger.log(e, e.StackTrace, e.Message);
-                Logger.log($"Failed to load font {fontName} size {size}");
+                Logger.Log(e, e.StackTrace, e.Message);
+                Logger.Log($"Failed to load font {fontName} size {size}");
                 return getFontSafe("___fallback", size);
             }
         }

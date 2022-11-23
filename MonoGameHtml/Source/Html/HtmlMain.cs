@@ -37,7 +37,7 @@ namespace MonoGameHtml {
 			screenWidth = (int) screenDimen.X;
 			screenHeight = (int) screenDimen.Y;
 			
-			Logger.log("Screen Dimensions:", screenDimen);
+			Logger.Log("Screen Dimensions:", screenDimen);
 			Textures.loadTextures();
 		}
 

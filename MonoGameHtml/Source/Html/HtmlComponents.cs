@@ -1,37 +1,38 @@
-﻿﻿using System.Collections.Generic;
+﻿using System.Collections.Generic;
  using System.IO;
  using System.Linq;
 
- namespace MonoGameHtml {
-	public static class HtmlComponents {
-		public static string[] Create(params string[] componentFileContents) {
-			var componentStrings = new List<string>();
+namespace MonoGameHtml; 
+
+public static class HtmlComponents {
+	public static string[] Create(params string[] componentFileContents) {
+		var componentStrings = new List<string>();
 			
-			// extract multiple components from single strings
-			foreach (string componentFile in componentFileContents) {
+		// extract multiple components from single strings
+		foreach (string componentFile in componentFileContents) {
 				
-				var bracketPairs = DelimPair.genPairs(componentFile, DelimPair.CurlyBrackets).Where(pair => pair.nestCount == 0).ToArray();
+			var bracketPairs = DelimPair.genPairs(componentFile, DelimPair.CurlyBrackets).Where(pair => pair.nestCount == 0).ToArray();
 
-				for (int i = 0; i < bracketPairs.Length; i++) {
-					string component = componentFile.Sub((i == 0) ? 0 : bracketPairs[i - 1].AfterClose, bracketPairs[i].AfterClose);
-					componentStrings.Add(component);
-				}
+			for (int i = 0; i < bracketPairs.Length; i++) {
+				string component = componentFile.Sub((i == 0) ? 0 : bracketPairs[i - 1].AfterClose, bracketPairs[i].AfterClose);
+				componentStrings.Add(component);
 			}
-			return componentStrings.ToArray();
 		}
+		return componentStrings.ToArray();
+	}
 
-		public static string[] AllScriptFilePaths(string folderAbsolutePath, bool subfolders = true) { 
-			return Directory.GetFiles(folderAbsolutePath, 
-				"*.monohtml", subfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-		}
+	public static string[] AllScriptFilePaths(string folderAbsolutePath, bool subfolders = true) { 
+		return Directory.GetFiles(folderAbsolutePath, 
+			"*.monohtml", subfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+	}
 
-		public static string ReadFrom(string folderAbsolutePath, bool subfolders = true) {
-			string[] filePaths = AllScriptFilePaths(folderAbsolutePath, subfolders);
-			var contents = filePaths.Select(File.ReadAllText);
-			return string.Join("\n", contents);
-		}
+	public static string ReadFrom(string folderAbsolutePath, bool subfolders = true) {
+		string[] filePaths = AllScriptFilePaths(folderAbsolutePath, subfolders);
+		var contents = filePaths.Select(File.ReadAllText);
+		return string.Join("\n", contents);
+	}
 
-		public const string Slider = @"
+	public const string Slider = @"
 const Slider = (
 	Action<float> onChange,
 	object back: 'darkgray',
@@ -61,7 +62,7 @@ const Slider = (
 	);
 }
 ",
-			Toggle = @"
+		Toggle = @"
 const Toggle = (
     Action<bool> onChange,
     object back: 'darkgray',
@@ -84,7 +85,7 @@ const Toggle = (
 	);
 }
 ",
-			TextInput = @"
+		TextInput = @"
 const TextInput = (
 	Func<string> text, Action<string> setText, Func<bool> active, bool multiline = false, Func<string,string,string> diff,
 	Action<TypingState> useTypingState
@@ -114,7 +115,7 @@ const TextInput = (
 	);
 }
 ",
-			TextBox = @"
+		TextBox = @"
 const TextBox = (
 	Func<string> text, Action<string> setText, Func<string,string,string> diff, bool multiline = false, bool cursorVisible = true,
 	Action<TypingState> useTypingState, Action onEnter, string label, bool scrollable = false, Color selectionColor: new Color(0F, 0F, 1F, 0.3F)
@@ -166,12 +167,12 @@ const TextBox = (
 	);
 }
 ",
-			KeyInput = @"
+		KeyInput = @"
 const KeyInput = () => {
     return (<todo/>);
 }
 ",
-			FrameCounter = @"
+		FrameCounter = @"
 const FrameCounter = (float updateTime = 1F) => {
 
 	var fpsCounter = new FrameCounter();
@@ -189,7 +190,7 @@ const FrameCounter = (float updateTime = 1F) => {
 	);
 }
 ", // TODO: recursion on Switch? perhaps add RecursiveSwitch/DeepSwitch component?
-			Switch = @"
+		Switch = @"
 const Switch = (object __parens__) => {
 
 	if (__parens__ == null) throw new Exception('Switch-value may not be null');
@@ -555,7 +556,7 @@ const Splitter = () => {
 }
 ";
 
-		public static string AllInput = @$"
+	public static string AllInput = @$"
 {TextInput}
 {TextBox}
 {KeyInput}
@@ -580,5 +581,4 @@ const Splitter = () => {
 {FrameCounter}
 {AllPanel}
 ";
-	}
- }
+}
